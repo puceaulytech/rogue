@@ -1,6 +1,15 @@
 import random
 
-class AbstractCoord:
+class Element:
+    def __init__(self, elem_id, position, difficulty):
+        self.id = elem_id
+        self.position = position
+        self.difficulty = difficulty
+
+    def __repr__(self):
+        return f"<mapgen.Element id={self.id},position={self.position},difficulty={self.difficulty}>"
+
+class Coord:
     def __init__(self, x, y):
         self.x = x
         self.y = y
@@ -25,18 +34,18 @@ class AbstractCoord:
         return f"({self.x},{self.y})"
 
     def __repr__(self):
-        return f"<mapgen.AbstractCoord x={self.x},y={self.y}>"
+        return f"<mapgen.Coord x={self.x},y={self.y}>"
 
     def __add__(self, other):
-        return AbstractCoord(self.x + other.x, self.y + other.y)
+        return Coord(self.x + other.x, self.y + other.y)
 
-class AbstractPath:
+class Path:
     def __init__(self):
         self.points = []
 
     def __contains__(self, coord):
-        if not isinstance(coord, AbstractCoord):
-            raise TypeError("Not an AbstractCoord")
+        if not isinstance(coord, Coord):
+            raise TypeError("Not an Coord")
         return coord in self.points
     
     def __getitem__(self, key):
@@ -49,13 +58,13 @@ class AbstractPath:
         return len(self.points)
 
     def __repr__(self):
-        return f"<mapgen.AbstractPath nb_points={len(self.points)}>"
+        return f"<mapgen.Path nb_points={len(self.points)}>"
 
     def add_point(self, coord):
         """Add new point to new path"""
         self.points.append(coord)
 
-class AbstractRoom:
+class Room:
     def __init__(self, top_left, width, height):
         self.top_left = top_left
         self.width = width
@@ -63,17 +72,17 @@ class AbstractRoom:
 
     @property
     def bottom_right(self):
-        return self.top_left + AbstractCoord(self.width - 1, self.height - 1)
+        return self.top_left + Coord(self.width - 1, self.height - 1)
     
     def center(self):
-        return AbstractCoord((self.top_left.x + self.bottom_right.x) // 2, (self.top_left.y + self.bottom_right.y) // 2)
+        return Coord((self.top_left.x + self.bottom_right.x) // 2, (self.top_left.y + self.bottom_right.y) // 2)
 
     def __repr__(self):
-        return f"<mapgen.AbstractRoom top_left={self.top_left},width={self.width},height={self.height}>"
+        return f"<mapgen.Room top_left={self.top_left},width={self.width},height={self.height}>"
 
     def __contains__(self, coord):
-        if not isinstance(coord, AbstractCoord):
-            raise TypeError("Not an AbstractCoord")
+        if not isinstance(coord, Coord):
+            raise TypeError("Not an Coord")
         correct_x = self.top_left.x <= coord.x <= self.top_left.x + self.width - 1
         correct_y = self.top_left.y <= coord.y <= self.top_left.y + self.height - 1
         return correct_x and correct_y
@@ -94,16 +103,17 @@ class AbstractRoom:
         """Check intersection between multiples rooms"""
         return any([self.intersect_with(room) for room in room_list])
 
-class AbstractMap:
+class Map:
     def __init__(self, width, height, max_rooms=4):
         self.width = width
         self.height = height
         self.max_rooms = max_rooms
         self.rooms = []
         self.paths = []
+        self.elements = []
 
     def __repr__(self):
-        return f"<mapgen.AbstractMap width={self.width},height={self.height},nb_rooms={len(self.rooms)}>"
+        return f"<mapgen.Map width={self.width},height={self.height},nb_rooms={len(self.rooms)}>"
 
     def random_room(self):
         """Generate a random room"""
@@ -111,7 +121,7 @@ class AbstractMap:
         y = random.randint(0, self.height - 3)
         width = random.randint(3, 8)
         height = random.randint(3, 8)
-        return AbstractRoom(AbstractCoord(x, y), width, height)
+        return Room(Coord(x, y), width, height)
 
     def generate_random(self):
         """Fill map with random rooms"""
@@ -119,7 +129,18 @@ class AbstractMap:
             room = self.random_room()
             if not room.is_overlapping(self.rooms):
                 self.rooms.append(room)
+        self.fill_with_elements()
         self.make_paths()
+
+    def fill_with_elements(self):
+        for room in self.rooms:
+            nb_elem = random.randint(1, 2)
+            for _ in range(nb_elem):
+                abs_pos_x = random.randint(0, room.width - 1)
+                abs_pos_y = random.randint(0, room.height - 1)
+                position = Coord(room.top_left.x + abs_pos_x, room.top_left.y + abs_pos_y)
+                element = Element("generic", position, 1)
+                self.elements.append(element)
 
     def make_paths(self):
         """Create paths between rooms"""
@@ -129,13 +150,13 @@ class AbstractMap:
             start = first.center()
             end = second.center()
             direction = None
-            position = AbstractCoord(start.x, start.y)
-            path = AbstractPath()
+            position = Coord(start.x, start.y)
+            path = Path()
 
             if start.y > end.y:
-                direction = AbstractCoord(0, -1)
+                direction = Coord(0, -1)
             else:
-                direction = AbstractCoord(0, 1)
+                direction = Coord(0, 1)
 
             for i in range(abs(end.y - start.y)):
                 path.add_point(position)
@@ -143,9 +164,9 @@ class AbstractMap:
                 path.add_point(position)
 
             if start.x > end.x:
-                direction = AbstractCoord(-1, 0)
+                direction = Coord(-1, 0)
             else:
-                direction = AbstractCoord(1, 0)
+                direction = Coord(1, 0)
 
             for i in range(abs(end.x - start.x)):
                 path.add_point(position)
@@ -155,19 +176,30 @@ class AbstractMap:
             self.paths.append(path)
 
     def slice(self, top_left, width, height):
-        raise NotImplementedError("slice not implemented")
+        original_grid = self.grid()
+        result = []
+        for row in original_grid[top_left.y:top_left.y + width - 1]:
+            result.append(row[top_left.x:top_left.x + height - 1])
+        return result
 
-    def display(self):
+    def display(self, custom_grid=None):
         """Display grid on stdout"""
-        grid = self.grid()
+        grid = self.grid() if custom_grid is None else custom_grid
         for line in grid:
             for elem in line:
                 print(elem, end='')
             print("\n", end='')
 
+    def get_character_at(self, coord):
+        if any([coord == element.position for element in self.elements]):
+            return "x"
+        elif any([coord in room for room in self.rooms]):
+            return "#"
+        elif any([coord in path for path in self.paths]): 
+            return "%"
+        return "."
+
     def grid(self):
         """Generate map grid"""
-        is_room = lambda x, y: any([AbstractCoord(x, y) in room for room in self.rooms])
-        is_path = lambda x, y: any([AbstractCoord(x, y) in path for path in self.paths])
-        return [['#' if is_room(x, y) or is_path(x, y) else "." for x in range(self.height)] for y in range(self.width)]
+        return [[self.get_character_at(Coord(x, y)) for x in range(self.height)] for y in range(self.width)]
 
