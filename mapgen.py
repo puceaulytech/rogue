@@ -5,6 +5,19 @@ class AbstractCoord:
         self.x = x
         self.y = y
 
+    def __getitem__(self, key):
+        if key in (0, 1):
+            return (self.x, self.y)[key]
+        raise IndexError("Invalid key")
+
+    def __setitem__(self, key, value):
+        if key == 0:
+            self.x = value
+        elif key == 1:
+            self.y = value
+        else:
+            raise IndexError("Invalid key")
+
     def __eq__(self, other):
         return self.x == other.x and self.y == other.y
 
@@ -25,13 +38,22 @@ class AbstractPath:
         if not isinstance(coord, AbstractCoord):
             raise TypeError("Not an AbstractCoord")
         return coord in self.points
+    
+    def __getitem__(self, key):
+        return self.points[key]
+
+    def __seitem__(self, key, value):
+        self.points[key] = value
+
+    def __len__(self):
+        return len(self.points)
+
+    def __repr__(self):
+        return f"<mapgen.AbstractPath nb_points={len(self.points)}>"
 
     def add_point(self, coord):
         """Add new point to new path"""
         self.points.append(coord)
-
-    def __repr__(self):
-        return f"<mapgen.AbstractPath nb_points={len(self.points)}>"
 
 class AbstractRoom:
     def __init__(self, top_left, width, height):
@@ -91,12 +113,13 @@ class AbstractMap:
         height = random.randint(3, 8)
         return AbstractRoom(AbstractCoord(x, y), width, height)
 
-    def random_map(self):
+    def generate_random(self):
         """Fill map with random rooms"""
         for _ in range(self.max_rooms):
             room = self.random_room()
             if not room.is_overlapping(self.rooms):
                 self.rooms.append(room)
+        self.make_paths()
 
     def make_paths(self):
         """Create paths between rooms"""
