@@ -1,4 +1,5 @@
 import random
+import copy
 
 class Element:
     def __init__(self, elem_id, position, difficulty):
@@ -8,6 +9,14 @@ class Element:
 
     def __repr__(self):
         return f"<mapgen.Element id={self.id},position={self.position},difficulty={self.difficulty}>"
+
+class Creature(Element):
+    def __init__(self, elem_id, position, difficulty):
+        super().__init__(elem_id, position, difficulty)
+
+class Item(Element):
+    def __init__(self, elem_id, position, difficulty):
+        super().__init__(elem_id, position, difficulty)
 
 class Coord:
     def __init__(self, x, y):
@@ -104,13 +113,17 @@ class Room:
         return any([self.intersect_with(room) for room in room_list])
 
 class Map:
+    available_creatures = [ Creature("dragon", None, 3), Creature("gobelin", None, 1) ]
+    available_items = [ Item("potion", None, 1), Item("strength", None, 2) ]
+
     def __init__(self, width, height, max_rooms=4):
         self.width = width
         self.height = height
         self.max_rooms = max_rooms
         self.rooms = []
         self.paths = []
-        self.elements = []
+        self.creatures = []
+        self.items = []
 
     def __repr__(self):
         return f"<mapgen.Map width={self.width},height={self.height},nb_rooms={len(self.rooms)}>"
@@ -132,15 +145,31 @@ class Map:
         self.fill_with_elements()
         self.make_paths()
 
+    def find_valid_random_coord(self, room):
+        valid_coord = False
+        position = None
+        while not valid_coord:
+            abs_pos_x = random.randint(0, room.width - 1)
+            abs_pos_y = random.randint(0, room.height - 1)
+            position = Coord(room.top_left.x + abs_pos_x, room.top_left.y + abs_pos_y)
+            valid_coord = all([position != element.position for element in self.creatures + self.items])
+        return position
+
+
     def fill_with_elements(self):
         for room in self.rooms:
-            nb_elem = random.randint(1, 2)
-            for _ in range(nb_elem):
-                abs_pos_x = random.randint(0, room.width - 1)
-                abs_pos_y = random.randint(0, room.height - 1)
-                position = Coord(room.top_left.x + abs_pos_x, room.top_left.y + abs_pos_y)
-                element = Element("generic", position, 1)
-                self.elements.append(element)
+            nb_creatures = random.randint(0, 2)
+            for _ in range(nb_creatures):
+                position = self.find_valid_random_coord(room)
+                creature = copy.copy(random.choice(self.available_creatures))
+                creature.position = position
+                self.creatures.append(creature)
+            nb_items = random.randint(0, 2)
+            for _ in range(nb_creatures):
+                position = self.find_valid_random_coord(room)
+                item = copy.copy(random.choice(self.available_items))
+                item.position = position
+                self.items.append(item)
 
     def make_paths(self):
         """Create paths between rooms"""
@@ -191,8 +220,10 @@ class Map:
             print("\n", end='')
 
     def get_character_at(self, coord):
-        if any([coord == element.position for element in self.elements]):
+        if any([coord == creature.position for creature in self.creatures]):
             return "x"
+        elif any([coord == item.position for item in self.items]):
+            return "o"
         elif any([coord in room for room in self.rooms]):
             return "#"
         elif any([coord in path for path in self.paths]): 
