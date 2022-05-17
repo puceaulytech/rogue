@@ -80,12 +80,9 @@ class Wall(pygame.sprite.Sprite):
         screen.blit(self.image, translated_rect(self.origin_rect))
 
 class Background(pygame.sprite.Sprite):
-    def __init__(self, initial_position=None):
+    def __init__(self):
         super().__init__(self.containers)
         self.rect = self.image.get_rect(center=SCREENRECT.center)
-        if initial_position is None:
-            initial_position = (-1000, -1000)
-        (self.rect.x, self.rect.y) = initial_position
 
     def move(self, direction, delta_time):
         direction = tuple([round(0.05 * delta_time * c) for c in direction])
