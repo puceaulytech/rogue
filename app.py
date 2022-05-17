@@ -77,7 +77,7 @@ class Wall(pygame.sprite.Sprite):
 class Floor(pygame.sprite.Sprite):
     def __init__(self, initial_position=None):
         super().__init__(self.containers)
-        self.image = random.choice(random.choices(self.images,[1,10]))
+        self.image = random.choice(random.choices(self.images,[1,50,1,1,1,1]))
         self.origin_rect = self.image.get_rect()
         if initial_position is None:
             initial_position = (0, 0)
@@ -180,7 +180,7 @@ FPSCounter.containers = all_sprites
 
 Player.image = loadify("terro.png", size=-10)
 Wall.image = loadify("stonebrick_cracked.png")
-Floor.images = [loadify("floor1.png"), loadify("deepslate.png")]
+Floor.images = [loadify("floor1.png"), loadify("deepslate.png"),loadify("floor3.png"),loadify("floor4.png"),loadify("floor5.png"),loadify("floor6.png")]
 BlackCreature.image = loadify("monster.png", size=-30)
 
 Cursor.image = loadify("cursor.png")
