@@ -184,7 +184,7 @@ class Map:
             room = self.random_room()
             if not room.is_overlapping(self.rooms):
                 self.rooms.append(room)
-        self.make_paths()
+        
 
     def find_valid_random_coord(self, room):
         valid_coord = False
