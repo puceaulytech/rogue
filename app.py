@@ -16,7 +16,7 @@ SCREENRECT = pygame.Rect(0, 0, width, height)
 screen = pygame.display.set_mode(size)
 pygame.display.set_caption("ChadRogue")
 pygame.mouse.set_visible(False)
-pygame.mixer.music.load("music.ogg")
+pygame.mixer.music.load("dungeon-music.mp3")
 pygame.mixer.music.play(-1)
 clock = pygame.time.Clock()
 
