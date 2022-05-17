@@ -12,8 +12,10 @@ class Element:
         return f"<mapgen.Element id={self.id},position={self.position},difficulty={self.difficulty}>"
 
 class Creature(Element):
-    def __init__(self, elem_id, position, difficulty):
+    creatures = [ ("tank.png", 1, 0.1), ("dragon.png", 2, 0.2) ]
+    def __init__(self, elem_id, position, difficulty, speed):
         super().__init__(elem_id, position, difficulty)
+        self.speed = speed
 
 class Item(Element):
     def __init__(self, elem_id, position, difficulty):
@@ -148,9 +150,6 @@ class Room:
         return any([self.intersect_with(room) for room in room_list])
 
 class Map:
-    available_creatures = [ Creature("dragon", None, 3), Creature("gobelin", None, 1) ]
-    available_items = [ Item("potion", None, 1), Item("strength", None, 2) ]
-
     def __init__(self, width, height, max_rooms=4):
         self.width = width
         self.height = height
@@ -207,9 +206,12 @@ class Map:
     def fill_with_elements(self):
         for room in self.rooms[1:]:
             nb_creatures = random.randint(0, 2)
+            weights = list(map(lambda c: 1/c[1], Creature.creatures))
             for _ in range(nb_creatures):
                 position = self.find_valid_random_coord(room)
-                creature = copy.copy(random.choice(self.available_creatures))
+                attribs = copy.copy(random.choices(Creature.creatures, weights, k=1)[0])
+                asset_id, difficulty, speed = attribs
+                creature = Creature(asset_id, None, difficulty=difficulty, speed=speed)
                 creature.position = position
                 self.creatures.append(creature)
             # nb_items = random.randint(0, 2)

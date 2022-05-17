@@ -190,16 +190,15 @@ class ParticleEffect:
 
 
 class BlackCreature(pygame.sprite.Sprite):
-    speed = 0.1
-
-    def __init__(self, initial_position=None):
+    def __init__(self, initial_position, asset, speed=0.1):
         super().__init__(self.containers)
         self.health = 3
+        self.speed = speed
         self.last_attack = 0
         self.attack_cooldown = 1
+        self.image = loadify(asset, size=-30)
         self.origin_rect = self.image.get_rect()
-        if initial_position is not None:
-            (self.origin_rect.x, self.origin_rect.y) = initial_position
+        (self.origin_rect.x, self.origin_rect.y) = initial_position
 
     @property
     def rect(self):
@@ -266,7 +265,6 @@ HealthIcon.containers = all_sprites, hud_groud, healthbar_group
 Player.image = loadify("terro.png", size=-10)
 Wall.image = loadify("stonebrick_cracked.png")
 Ground.images = [loadify("floor1.png"), loadify("deepslate.png"),loadify("floor3.png"),loadify("floor4.png"),loadify("floor5.png"),loadify("floor6.png")]
-BlackCreature.image = loadify("monster.png", size=-30)
 Background.image = loadify("background.png", keep_ratio=True, size=2000)
 Cursor.image = loadify("cursor.png", size=-20)
 HealthIcon.image = loadify("heart.png", size=-25)
@@ -284,13 +282,14 @@ for y, row in enumerate(map_grid):
         elif elem in ('%', '#', 'x'):
             Ground((x * dpi, y * dpi))
             if elem == 'x':
-                creature_positions.append((x * dpi, y * dpi))
+                creature_positions.append((x, y))
         elif elem == '.':
             if check_adjacent(x, y, map_grid):
                 Wall((x * dpi, y * dpi))
 
-for pos in creature_positions:
-    BlackCreature(pos)
+for x, y in creature_positions:
+    abstract_creature = list(filter(lambda c: c.position == mapgen.Coord(x, y), abstract_map.creatures))[0]
+    BlackCreature((x * dpi, y * dpi), abstract_creature.id, abstract_creature.speed)
             
 player = Player(initial_position=(spawn_point.x * dpi, spawn_point.y * dpi))
 camera_x = spawn_point.x * dpi - width / 2 + player.origin_rect.width // 2
