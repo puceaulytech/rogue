@@ -4,6 +4,7 @@ import sys
 import pygame
 import mapgen
 import itertools
+import time
 
 size = width, height = 900, 900
 black = 0, 0, 0
@@ -95,6 +96,7 @@ class Player(pygame.sprite.Sprite):
 
     def __init__(self, initial_position=None):
         super().__init__(self.containers)
+        self.health = 5
         self.origin_rect = self.image.get_rect(center=SCREENRECT.center)
         if initial_position is not None:
             (self.origin_rect.x, self.origin_rect.y) = initial_position
@@ -122,6 +124,8 @@ class BlackCreature(pygame.sprite.Sprite):
 
     def __init__(self, initial_position=None):
         super().__init__(self.containers)
+        self.last_attack = 0
+        self.attack_cooldown = 1
         self.origin_rect = self.image.get_rect()
         if initial_position is not None:
             (self.origin_rect.x, self.origin_rect.y) = initial_position
@@ -136,6 +140,9 @@ class BlackCreature(pygame.sprite.Sprite):
             dx = (player.origin_rect.x - self.origin_rect.x) / (distance_to_player + 0.000001)
             dy = (player.origin_rect.y - self.origin_rect.y) / (distance_to_player + 0.000001)
             self.move((dx, dy), ticked)
+            if pygame.sprite.collide_rect(player, self) and time.time() - self.last_attack > self.attack_cooldown:
+                player.health -= 1
+                self.last_attack = time.time()
 
     def move(self, direction, delta_time):
         direction = tuple([round(self.speed * delta_time * c) for c in direction])
@@ -214,6 +221,10 @@ while True:
     all_sprites.clear(screen, background)
 
     all_sprites.update()
+
+    print(f"HP: {player.health}")
+    if player.health <= 0:
+        player.kill()
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT: sys.exit()
