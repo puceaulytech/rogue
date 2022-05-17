@@ -150,17 +150,19 @@ class Particle(pygame.sprite.Sprite):
         self.image = image
         self.radius = radius
         if image != None : 
-            self.origin_rect = self.image.get_rect()
-            (self.origin_rect.x, self.origin_rect.y) = coords
+            self.rect = self.image.get_rect()
+            (self.rect.x, self.rect.y) = coords
         else : 
-            self.origin_rect = pygame.Rect(coords, (radius,radius))
+            self.rect = pygame.Rect(coords, (radius,radius))
+    
     def move(self, direction): 
-        self.origin_rect.move_ip(direction)
+        self.rect.move_ip(direction)
     def draw(self): 
         if self.image != None : 
-            screen.blit(self.image, self.origin_rect)
+            screen.blit(self.image, self.rect)
         else : 
-            pygame.draw.circle(screen,(100,100,100,self.lifetime),radius=self.radius,center=(self.origin_rect.x,self.origin_rect.y))
+            pygame.draw.circle(screen,(100,100,100,self.lifetime),radius=self.radius,center=(self.rect.x,self.rect.y))
+
 class ParticleEffect:
     def __init__(self,number = 100, lifetime = 100,images = None, forces = None, spawner = None):
         self.number  = number
@@ -185,8 +187,6 @@ class ParticleEffect:
     def draw(self):
         for part in self.particle_list:
             part.draw()
-
-
 
 
 class BlackCreature(pygame.sprite.Sprite):
@@ -251,8 +251,8 @@ obstacle_group = pygame.sprite.Group()
 creature_group = pygame.sprite.Group()
 hud_groud = pygame.sprite.Group()
 healthbar_group = pygame.sprite.Group()
-particle_group = pygame.sprite.Group()
-ParticleEffect.containers = all_sprites, particle_group
+#particle_group = pygame.sprite.Group()
+#ParticleEffect.containers = all_sprites, particle_group
 Player.containers = all_sprites
 Ground.containers = all_sprites
 Background.containers = all_sprites
@@ -300,12 +300,13 @@ FPSCounter()
 
 for i in range(player.health):
     HealthIcon(offset=i)
-parts = ParticleEffect(100,100,spawner=screen.get_rect())
+
+#parts = ParticleEffect(100,100,spawner=screen.get_rect())
 
 while True:
     ticked = clock.tick(60)
     all_sprites.clear(screen, background)
-    parts.update(ticked)
+    #parts.update(ticked)
     
     all_sprites.update()
 
@@ -330,7 +331,7 @@ while True:
     if keys[pygame.K_d]:
         direction = (1, 0)
         player.move(direction, ticked)
-    parts.draw()
+    #parts.draw()
     dirty = all_sprites.draw(screen)
     pygame.display.update(dirty)
     fps = clock.get_fps()
