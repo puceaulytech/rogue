@@ -132,7 +132,7 @@ camera_x = spawn_point.x * dpi - width / 2 + player.origin_rect.width // 2
 camera_y = spawn_point.y * dpi - height / 2 + player.origin_rect.height // 2
 
 while True:
-    clock.tick(240)
+    ticked = clock.tick(240)
     all_sprites.clear(screen, background)
 
     all_sprites.update()
@@ -142,16 +142,16 @@ while True:
 
     keys = pygame.key.get_pressed()
     if keys[pygame.K_z]:
-        direction = (0, -1)
+        direction = (0, (-1)*ticked)
         player.move(direction)
     if keys[pygame.K_q]:
-        direction = (-1, 0)
+        direction = ((-1)*ticked, 0)
         player.move(direction)
     if keys[pygame.K_s]:
-        direction = (0, 1)
+        direction = (0, ticked*1)
         player.move(direction)
     if keys[pygame.K_d]:
-        direction = (1, 0)
+        direction = (ticked*1, 0)
         player.move(direction)
 
     dirty = all_sprites.draw(screen)
