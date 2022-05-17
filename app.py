@@ -18,7 +18,7 @@ pygame.display.set_caption("ChadRogue")
 pygame.mouse.set_visible(False)
 clock = pygame.time.Clock()
 
-camera_size = 22
+camera_size = 12
 camera_x, camera_y = 0, 0
 
 dpi = width / camera_size
@@ -85,7 +85,7 @@ class Floor(pygame.sprite.Sprite):
         screen.blit(self.image, translated_rect(self.origin_rect))
 
 class Player(pygame.sprite.Sprite):
-    speed = 2
+    speed = 0.35
 
     def __init__(self, initial_position=None):
         super().__init__(self.containers)
@@ -93,9 +93,9 @@ class Player(pygame.sprite.Sprite):
         if initial_position is not None:
             (self.origin_rect.x, self.origin_rect.y) = initial_position
 
-    def move(self, direction):
+    def move(self, direction, delta_time):
         global camera_x, camera_y
-        direction = tuple([self.speed * c for c in direction])
+        direction = tuple([round(self.speed * delta_time * c) for c in direction])
         camera_x += direction[0]
         camera_y += direction[1]
         self.origin_rect.move_ip(direction)
@@ -176,17 +176,17 @@ while True:
 
     keys = pygame.key.get_pressed()
     if keys[pygame.K_z]:
-        direction = (0, (-1)*ticked)
-        player.move(direction)
+        direction = (0, -1)
+        player.move(direction, ticked)
     if keys[pygame.K_q]:
-        direction = ((-1)*ticked, 0)
-        player.move(direction)
+        direction = (-1, 0)
+        player.move(direction, ticked)
     if keys[pygame.K_s]:
-        direction = (0, ticked*1)
-        player.move(direction)
+        direction = (0, 1)
+        player.move(direction, ticked)
     if keys[pygame.K_d]:
-        direction = (ticked*1, 0)
-        player.move(direction)
+        direction = (1, 0)
+        player.move(direction, ticked)
 
     dirty = all_sprites.draw(screen)
     pygame.display.update(dirty)
