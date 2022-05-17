@@ -72,6 +72,7 @@ class Wall(pygame.sprite.Sprite):
 class Floor(pygame.sprite.Sprite):
     def __init__(self, initial_position=None):
         super().__init__(self.containers)
+        self.image = random.choice(random.choices(self.images,[1,10]))
         self.origin_rect = self.image.get_rect()
         if initial_position is None:
             initial_position = (0, 0)
@@ -145,7 +146,8 @@ FPSCounter.containers = all_sprites
 
 Player.image = loadify("player.png", size=-10)
 Wall.image = loadify("wall.png")
-Floor.image = loadify("floor1.png")
+Floor.images = [loadify("floor1.png"), loadify("deepslate.png")]
+
 Cursor.image = loadify("cursor.png")
 
 map_grid = abstract_map.grid()
