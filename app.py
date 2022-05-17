@@ -279,7 +279,9 @@ creature_positions = [] # TODO: use layers
 
 for y, row in enumerate(map_grid):
     for x, elem in enumerate(row):
-        if elem in ('%', '#', 'x'):
+        if x in (0, len(row) - 1) or y in (0, len(map_grid) - 1):
+            Wall((x * dpi, y * dpi))
+        elif elem in ('%', '#', 'x'):
             Ground((x * dpi, y * dpi))
             if elem == 'x':
                 creature_positions.append((x * dpi, y * dpi))
@@ -308,7 +310,6 @@ while True:
     
     all_sprites.update()
 
-    print(f"HP: {player.health}")
     if player.health <= 0:
         player.kill()
 
@@ -316,6 +317,8 @@ while True:
         if event.type == pygame.QUIT: sys.exit()
 
     keys = pygame.key.get_pressed()
+    if keys[pygame.K_ESCAPE]:
+        sys.exit(0)
     if keys[pygame.K_z]:
         direction = (0, -1)
         player.move(direction, ticked)
