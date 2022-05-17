@@ -63,6 +63,10 @@ class FPSCounter(pygame.sprite.Sprite):
     def update(self):
         self.image = self.font.render(f"FPS: {round(fps)}", False, self.color)
 
+class HealthIcon(pygame.sprite.Sprite):
+    def __init__(self, offset):
+        super().__init__(self.containers)
+        self.rect = self.image.get_rect().move(0 + offset * 50, height - 50)
 
 class Wall(pygame.sprite.Sprite):
     def __init__(self, initial_position=None):
@@ -162,6 +166,8 @@ class BlackCreature(pygame.sprite.Sprite):
             self.move((dx, dy), ticked)
             if pygame.sprite.collide_rect(player, self) and time.time() - self.last_attack > self.attack_cooldown:
                 player.health -= 1
+                if not player.health < 0: # TODO: juste pour éviter le crash
+                    healthbar_group.sprites()[-1].kill()
                 self.last_attack = time.time()
 
     def move(self, direction, delta_time):
@@ -197,14 +203,17 @@ pygame.display.flip()
 all_sprites = pygame.sprite.OrderedUpdates()
 obstacle_group = pygame.sprite.Group()
 creature_group = pygame.sprite.Group()
+hud_groud = pygame.sprite.Group()
+healthbar_group = pygame.sprite.Group()
 
 Player.containers = all_sprites
 Ground.containers = all_sprites
 Background.containers = all_sprites
 Wall.containers = all_sprites, obstacle_group
 BlackCreature.containers = all_sprites, creature_group
-Cursor.containers = all_sprites
-FPSCounter.containers = all_sprites
+Cursor.containers = all_sprites, hud_groud
+FPSCounter.containers = all_sprites, hud_groud
+HealthIcon.containers = all_sprites, hud_groud, healthbar_group
 
 Player.image = loadify("terro.png", size=-10)
 Wall.image = loadify("stonebrick_cracked.png")
@@ -212,6 +221,7 @@ Ground.images = [loadify("floor1.png"), loadify("deepslate.png"),loadify("floor3
 BlackCreature.image = loadify("monster.png", size=-30)
 Background.image = loadify("background.png", keep_ratio=True, size=2000)
 Cursor.image = loadify("cursor.png", size=-20)
+HealthIcon.image = loadify("heart.png", size=-25)
 
 background_sprite = Background()
 
@@ -238,6 +248,9 @@ camera_y = spawn_point.y * dpi - height / 2 + player.origin_rect.height // 2
 
 Cursor()
 FPSCounter()
+
+for i in range(player.health):
+    HealthIcon(offset=i)
 
 while True:
     ticked = clock.tick(60)
