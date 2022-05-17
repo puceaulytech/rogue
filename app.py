@@ -138,6 +138,19 @@ class Player(pygame.sprite.Sprite):
     def draw(self, screen):
         screen.blit(self.image, translated_rect(self.origin_rect))
 
+class Particle(pygame.sprite.Sprite):
+    def __init__(self,coords,image = None,radius = None): 
+        super().__init__(self.containers)
+        if image != None : 
+            self.origin_rect = self.image.get_rect()
+            (self.origin_rect.x, self.origin_rect.y) = coords
+        else : 
+            self.origin_rect = pygame.rect(coords, (radius,radius))
+    def move(self, direction): 
+        self.origin_rect.move_ip(direction)
+
+
+
 class BlackCreature(pygame.sprite.Sprite):
     speed = 0.1
 
