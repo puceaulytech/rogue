@@ -205,7 +205,7 @@ class Map:
 
 
     def fill_with_elements(self):
-        for room in self.rooms:
+        for room in self.rooms[1:]:
             nb_creatures = random.randint(0, 2)
             for _ in range(nb_creatures):
                 position = self.find_valid_random_coord(room)
