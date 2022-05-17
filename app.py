@@ -7,6 +7,9 @@ import itertools
 size = width, height = 900, 900
 black = 0, 0, 0
 white = 255, 255, 255
+fps = 0
+
+pygame.init()
 
 SCREENRECT = pygame.Rect(0, 0, width, height)
 
@@ -38,6 +41,18 @@ def check_adjacent(x, y, grid):
         if grid[y + dy][x + dx] != ".":
             return True
     return False
+
+class FPSCounter(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__(self.containers)
+        self.font = pygame.font.SysFont("Consolas", 20)
+        self.color = "white"
+        self.update()
+        self.rect = self.image.get_rect().move(0, 0)
+
+    def update(self):
+        self.image = self.font.render(f"FPS: {round(fps)}", False, self.color)
+
 
 class Wall(pygame.sprite.Sprite):
     def __init__(self, initial_position=None):
@@ -126,6 +141,7 @@ Player.containers = all_sprites
 Floor.containers = all_sprites
 Wall.containers = all_sprites, obstacle_group
 Cursor.containers = all_sprites
+FPSCounter.containers = all_sprites
 
 Player.image = loadify("player.png", size=-10)
 Wall.image = loadify("wall.png")
@@ -147,6 +163,7 @@ camera_x = spawn_point.x * dpi - width / 2 + player.origin_rect.width // 2
 camera_y = spawn_point.y * dpi - height / 2 + player.origin_rect.height // 2
 
 Cursor()
+FPSCounter()
 
 while True:
     ticked = clock.tick(240)
@@ -172,7 +189,6 @@ while True:
         player.move(direction)
 
     dirty = all_sprites.draw(screen)
-    
     pygame.display.update(dirty)
-
+    fps = clock.get_fps()
     
