@@ -28,7 +28,7 @@ dpi = width / camera_size
 
 def loadify(path, size=0):
     global dpi
-    return pygame.transform.scale(pygame.image.load(path), (dpi + size, dpi + size))
+    return pygame.transform.scale(pygame.image.load(path).convert_alpha(), (dpi + size, dpi + size))
 
 def inverse_direction(direction):
     return (-direction[0], -direction[1])
