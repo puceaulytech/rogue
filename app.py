@@ -1,4 +1,5 @@
 import random
+import math
 import sys
 import pygame
 import mapgen
@@ -8,6 +9,7 @@ size = width, height = 900, 900
 black = 0, 0, 0
 white = 255, 255, 255
 fps = 0
+ticked = 0
 
 pygame.init()
 
@@ -116,6 +118,8 @@ class Player(pygame.sprite.Sprite):
         screen.blit(self.image, translated_rect(self.origin_rect))
 
 class BlackCreature(pygame.sprite.Sprite):
+    speed = 0.1
+
     def __init__(self, initial_position=None):
         super().__init__(self.containers)
         self.origin_rect = self.image.get_rect()
@@ -125,6 +129,20 @@ class BlackCreature(pygame.sprite.Sprite):
     @property
     def rect(self):
         return translated_rect(self.origin_rect)
+
+    def update(self):
+        distance_to_player = math.sqrt((self.origin_rect.x - player.origin_rect.x)**2 + (self.origin_rect.y - player.origin_rect.y)**2)
+        if distance_to_player < 5 * dpi:
+            dx = (player.origin_rect.x - self.origin_rect.x) / (distance_to_player + 0.000001)
+            dy = (player.origin_rect.y - self.origin_rect.y) / (distance_to_player + 0.000001)
+            print(dx)
+            self.move((dx, dy), ticked)
+
+    def move(self, direction, delta_time):
+        direction = tuple([round(self.speed * delta_time * c) for c in direction])
+        self.origin_rect.move_ip(direction)
+        if any(pygame.sprite.spritecollide(self, obstacle_group, False)):
+            self.origin_rect.move_ip(inverse_direction(direction))
 
 class Cursor(pygame.sprite.Sprite):
     def __init__(self):
@@ -186,7 +204,7 @@ FPSCounter()
 BlackCreature(initial_position=(spawn_point.x * dpi, spawn_point.y * dpi))
 
 while True:
-    ticked = clock.tick(240)
+    ticked = clock.tick(60)
     all_sprites.clear(screen, background)
 
     all_sprites.update()
