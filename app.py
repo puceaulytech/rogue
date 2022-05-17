@@ -16,7 +16,7 @@ SCREENRECT = pygame.Rect(0, 0, width, height)
 screen = pygame.display.set_mode(size)
 pygame.display.set_caption("ChadRogue")
 pygame.mouse.set_visible(False)
-pygame.mixer.music.load("dungeon-music.mp3")
+pygame.mixer.music.load("music.ogg")
 pygame.mixer.music.play(-1)
 clock = pygame.time.Clock()
 
@@ -148,7 +148,7 @@ Cursor.containers = all_sprites
 FPSCounter.containers = all_sprites
 
 Player.image = loadify("player.png", size=-10)
-Wall.image = loadify("wall.png")
+Wall.image = loadify("stonebrick_cracked.png")
 Floor.images = [loadify("floor1.png"), loadify("deepslate.png")]
 
 Cursor.image = loadify("cursor.png")
