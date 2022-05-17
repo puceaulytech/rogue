@@ -13,7 +13,7 @@ SCREENRECT = pygame.Rect(0, 0, width, height)
 screen = pygame.display.set_mode(size)
 clock = pygame.time.Clock()
 
-camera_size = 12
+camera_size = 22
 camera_x, camera_y = 0, 0
 
 dpi = width / camera_size
@@ -98,7 +98,7 @@ class Player(pygame.sprite.Sprite):
 abstract_map = mapgen.Map(40, 40)
 abstract_map.generate_random()
 abstract_map.generate_random_circle()
-
+abstract_map.make_paths()
 abstract_map.display()
 
 spawn_point = abstract_map.rooms[0].center
@@ -132,6 +132,7 @@ camera_x = spawn_point.x * dpi - width / 2 + player.origin_rect.width // 2
 camera_y = spawn_point.y * dpi - height / 2 + player.origin_rect.height // 2
 
 while True:
+    clock.tick(240)
     all_sprites.clear(screen, background)
 
     all_sprites.update()
@@ -157,4 +158,4 @@ while True:
     
     pygame.display.update(dirty)
 
-    clock.tick(240)
+    
