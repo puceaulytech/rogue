@@ -1,6 +1,7 @@
 import random
 import math
 import sys
+import os
 import pygame
 import mapgen
 import itertools
@@ -19,7 +20,7 @@ SCREENRECT = pygame.Rect(0, 0, width, height)
 screen = pygame.display.set_mode(size)
 pygame.display.set_caption("ChadRogue")
 pygame.mouse.set_visible(False)
-pygame.mixer.music.load("music.ogg")
+pygame.mixer.music.load("assets/music.ogg")
 pygame.mixer.music.play(-1)
 clock = pygame.time.Clock()
 
@@ -31,7 +32,8 @@ dpi = width / camera_size
 
 def loadify(path, size=0):
     global dpi
-    return pygame.transform.scale(pygame.image.load(path).convert_alpha(), (dpi + size, dpi + size))
+    good_path = os.path.join("assets", path)
+    return pygame.transform.scale(pygame.image.load(good_path).convert_alpha(), (dpi + size, dpi + size))
 
 def inverse_direction(direction):
     return (-direction[0], -direction[1])
@@ -124,6 +126,7 @@ class BlackCreature(pygame.sprite.Sprite):
 
     def __init__(self, initial_position=None):
         super().__init__(self.containers)
+        self.health = 3
         self.last_attack = 0
         self.attack_cooldown = 1
         self.origin_rect = self.image.get_rect()
@@ -190,7 +193,7 @@ Wall.image = loadify("stonebrick_cracked.png")
 Floor.images = [loadify("floor1.png"), loadify("deepslate.png"),loadify("floor3.png"),loadify("floor4.png"),loadify("floor5.png"),loadify("floor6.png")]
 BlackCreature.image = loadify("monster.png", size=-30)
 
-Cursor.image = loadify("cursor.png")
+Cursor.image = loadify("cursor.png", size=-20)
 
 map_grid = abstract_map.grid()
 
