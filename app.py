@@ -77,7 +77,7 @@ class Wall(pygame.sprite.Sprite):
     def draw(self, screen):
         screen.blit(self.image, translated_rect(self.origin_rect))
 
-class Floor(pygame.sprite.Sprite):
+class Ground(pygame.sprite.Sprite):
     def __init__(self, initial_position=None):
         super().__init__(self.containers)
         self.image = random.choice(random.choices(self.images,[1,50,1,1,1,1]))
@@ -182,7 +182,7 @@ obstacle_group = pygame.sprite.Group()
 creature_group = pygame.sprite.Group()
 
 Player.containers = all_sprites
-Floor.containers = all_sprites
+Ground.containers = all_sprites
 Wall.containers = all_sprites, obstacle_group
 BlackCreature.containers = all_sprites, creature_group
 Cursor.containers = all_sprites
@@ -190,7 +190,7 @@ FPSCounter.containers = all_sprites
 
 Player.image = loadify("terro.png", size=-10)
 Wall.image = loadify("stonebrick_cracked.png")
-Floor.images = [loadify("floor1.png"), loadify("deepslate.png"),loadify("floor3.png"),loadify("floor4.png"),loadify("floor5.png"),loadify("floor6.png")]
+Ground.images = [loadify("floor1.png"), loadify("deepslate.png"),loadify("floor3.png"),loadify("floor4.png"),loadify("floor5.png"),loadify("floor6.png")]
 BlackCreature.image = loadify("monster.png", size=-30)
 
 Cursor.image = loadify("cursor.png", size=-20)
@@ -202,7 +202,7 @@ creature_positions = [] # TODO: use layers
 for y, row in enumerate(map_grid):
     for x, elem in enumerate(row):
         if elem in ('%', '#', 'x'):
-            Floor((x * dpi, y * dpi))
+            Ground((x * dpi, y * dpi))
             if elem == 'x':
                 creature_positions.append((x * dpi, y * dpi))
         elif elem == '.':
