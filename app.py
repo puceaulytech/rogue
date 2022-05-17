@@ -22,7 +22,7 @@ dpi = width / camera_size
 
 def loadify(path, size=0):
     global dpi
-    return pygame.transform.scale(pygame.image.load(path), (dpi - size, dpi - size)).convert()
+    return pygame.transform.scale(pygame.image.load(path), (dpi + size, dpi + size))
 
 def inverse_direction(direction):
     return (-direction[0], -direction[1])
@@ -96,6 +96,17 @@ class Player(pygame.sprite.Sprite):
     def draw(self, screen):
         screen.blit(self.image, translated_rect(self.origin_rect))
 
+class Cursor(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__(self.containers)
+        self.rect = self.image.get_rect()
+        self.update_pos()
+
+    def update_pos(self):
+        (self.rect.x, self.rect.y) = pygame.mouse.get_pos()
+
+    def update(self):
+        self.update_pos()
 
 abstract_map = mapgen.Map(40, 40)
 abstract_map.generate_random()
@@ -114,10 +125,12 @@ obstacle_group = pygame.sprite.Group()
 Player.containers = all_sprites
 Floor.containers = all_sprites
 Wall.containers = all_sprites, obstacle_group
+Cursor.containers = all_sprites
 
-Player.image = loadify("player.png", size=10)
+Player.image = loadify("player.png", size=-10)
 Wall.image = loadify("wall.png")
 Floor.image = loadify("floor1.png")
+Cursor.image = loadify("cursor.png")
 
 map_grid = abstract_map.grid()
 
@@ -132,6 +145,8 @@ for y, row in enumerate(map_grid):
 player = Player(initial_position=(spawn_point.x * dpi, spawn_point.y * dpi))
 camera_x = spawn_point.x * dpi - width / 2 + player.origin_rect.width // 2
 camera_y = spawn_point.y * dpi - height / 2 + player.origin_rect.height // 2
+
+Cursor()
 
 while True:
     ticked = clock.tick(240)
