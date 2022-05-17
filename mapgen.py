@@ -190,9 +190,16 @@ class Map:
         valid_coord = False
         position = None
         while not valid_coord:
-            abs_pos_x = random.randint(0, room.width - 1)
-            abs_pos_y = random.randint(0, room.height - 1)
-            position = Coord(room.top_left.x + abs_pos_x, room.top_left.y + abs_pos_y)
+            if isinstance(room, Room):
+                abs_pos_x = random.randint(0, room.width - 1)
+                abs_pos_y = random.randint(0, room.height - 1)
+                position = Coord(room.top_left.x + abs_pos_x, room.top_left.y + abs_pos_y)
+            elif isinstance(room, CircleRoom):
+                distance = random.randint(0, room.radius)
+                angle = random.uniform(0, 2 * math.pi)
+                abs_pos_x = round(distance * math.cos(angle))
+                abs_pos_y = round(distance * math.sin(angle))
+                position = Coord(room.center.x + abs_pos_x, room.center.y + abs_pos_y)
             valid_coord = all([position != element.position for element in self.creatures + self.items])
         return position
 
@@ -205,12 +212,12 @@ class Map:
                 creature = copy.copy(random.choice(self.available_creatures))
                 creature.position = position
                 self.creatures.append(creature)
-            nb_items = random.randint(0, 2)
-            for _ in range(nb_creatures):
-                position = self.find_valid_random_coord(room)
-                item = copy.copy(random.choice(self.available_items))
-                item.position = position
-                self.items.append(item)
+            # nb_items = random.randint(0, 2)
+            # for _ in range(nb_items):
+            #     position = self.find_valid_random_coord(room)
+            #     item = copy.copy(random.choice(self.available_items))
+            #     item.position = position
+            #     self.items.append(item)
 
     def generate_random_circle(self):
         for i in range(self.max_exot_rooms):

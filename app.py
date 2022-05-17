@@ -135,7 +135,6 @@ class BlackCreature(pygame.sprite.Sprite):
         if distance_to_player < 5 * dpi:
             dx = (player.origin_rect.x - self.origin_rect.x) / (distance_to_player + 0.000001)
             dy = (player.origin_rect.y - self.origin_rect.y) / (distance_to_player + 0.000001)
-            print(dx)
             self.move((dx, dy), ticked)
 
     def move(self, direction, delta_time):
@@ -160,6 +159,7 @@ abstract_map = mapgen.Map(40, 40)
 abstract_map.generate_random()
 abstract_map.generate_random_circle()
 abstract_map.make_paths()
+abstract_map.fill_with_elements()
 abstract_map.display()
 
 spawn_point = abstract_map.rooms[0].center
@@ -181,19 +181,26 @@ FPSCounter.containers = all_sprites
 Player.image = loadify("terro.png", size=-10)
 Wall.image = loadify("stonebrick_cracked.png")
 Floor.images = [loadify("floor1.png"), loadify("deepslate.png")]
-BlackCreature.image = loadify("monster.png", size=-12)
+BlackCreature.image = loadify("monster.png", size=-30)
 
 Cursor.image = loadify("cursor.png")
 
 map_grid = abstract_map.grid()
 
+creature_positions = [] # TODO: use layers
+
 for y, row in enumerate(map_grid):
     for x, elem in enumerate(row):
-        if elem in ('%', '#'):
+        if elem in ('%', '#', 'x'):
             Floor((x * dpi, y * dpi))
+            if elem == 'x':
+                creature_positions.append((x * dpi, y * dpi))
         elif elem == '.':
             if check_adjacent(x, y, map_grid):
                 Wall((x * dpi, y * dpi))
+
+for pos in creature_positions:
+    BlackCreature(pos)
             
 player = Player(initial_position=(spawn_point.x * dpi, spawn_point.y * dpi))
 camera_x = spawn_point.x * dpi - width / 2 + player.origin_rect.width // 2
@@ -201,7 +208,6 @@ camera_y = spawn_point.y * dpi - height / 2 + player.origin_rect.height // 2
 
 Cursor()
 FPSCounter()
-BlackCreature(initial_position=(spawn_point.x * dpi, spawn_point.y * dpi))
 
 while True:
     ticked = clock.tick(60)
