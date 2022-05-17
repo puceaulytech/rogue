@@ -148,7 +148,7 @@ Cursor.containers = all_sprites
 FPSCounter.containers = all_sprites
 
 Player.image = loadify("player.png", size=-10)
-Wall.image = loadify("wall.png")
+Wall.image = loadify("stonebrick_cracked.png")
 Floor.images = [loadify("floor1.png"), loadify("deepslate.png")]
 
 Cursor.image = loadify("cursor.png")
