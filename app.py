@@ -115,6 +115,17 @@ class Player(pygame.sprite.Sprite):
     def draw(self, screen):
         screen.blit(self.image, translated_rect(self.origin_rect))
 
+class BlackCreature(pygame.sprite.Sprite):
+    def __init__(self, initial_position=None):
+        super().__init__(self.containers)
+        self.origin_rect = self.image.get_rect()
+        if initial_position is not None:
+            (self.origin_rect.x, self.origin_rect.y) = initial_position
+
+    @property
+    def rect(self):
+        return translated_rect(self.origin_rect)
+
 class Cursor(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__(self.containers)
@@ -140,16 +151,19 @@ pygame.display.flip()
 
 all_sprites = pygame.sprite.OrderedUpdates()
 obstacle_group = pygame.sprite.Group()
+creature_group = pygame.sprite.Group()
 
 Player.containers = all_sprites
 Floor.containers = all_sprites
 Wall.containers = all_sprites, obstacle_group
+BlackCreature.containers = all_sprites, creature_group
 Cursor.containers = all_sprites
 FPSCounter.containers = all_sprites
 
 Player.image = loadify("terro.png", size=-10)
 Wall.image = loadify("stonebrick_cracked.png")
 Floor.images = [loadify("floor1.png"), loadify("deepslate.png")]
+BlackCreature.image = loadify("monster.png", size=-12)
 
 Cursor.image = loadify("cursor.png")
 
@@ -169,6 +183,7 @@ camera_y = spawn_point.y * dpi - height / 2 + player.origin_rect.height // 2
 
 Cursor()
 FPSCounter()
+BlackCreature(initial_position=(spawn_point.x * dpi, spawn_point.y * dpi))
 
 while True:
     ticked = clock.tick(240)
