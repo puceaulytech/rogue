@@ -11,6 +11,8 @@ white = 255, 255, 255
 SCREENRECT = pygame.Rect(0, 0, width, height)
 
 screen = pygame.display.set_mode(size)
+pygame.display.set_caption("ChadRogue")
+pygame.mouse.set_visible(False)
 clock = pygame.time.Clock()
 
 camera_size = 22
