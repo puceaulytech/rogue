@@ -30,10 +30,12 @@ camera_x, camera_y = 0, 0
 
 dpi = width / camera_size
 
-def loadify(path, size=0):
+def loadify(path, size=0, keep_ratio=False):
     global dpi
     good_path = os.path.join("assets", path)
-    return pygame.transform.scale(pygame.image.load(good_path).convert_alpha(), (dpi + size, dpi + size))
+    image = pygame.image.load(good_path).convert_alpha()
+    ratio = image.get_width() / image.get_height() if keep_ratio else 1
+    return pygame.transform.scale(image, ((dpi + size) * ratio, dpi + size))
 
 def inverse_direction(direction):
     return (-direction[0], -direction[1])
@@ -77,6 +79,21 @@ class Wall(pygame.sprite.Sprite):
     def draw(self, screen):
         screen.blit(self.image, translated_rect(self.origin_rect))
 
+class Background(pygame.sprite.Sprite):
+    def __init__(self, initial_position=None):
+        super().__init__(self.containers)
+        self.rect = self.image.get_rect(center=SCREENRECT.center)
+        if initial_position is None:
+            initial_position = (-1000, -1000)
+        (self.rect.x, self.rect.y) = initial_position
+
+    def move(self, direction, delta_time):
+        direction = tuple([round(0.05 * delta_time * c) for c in direction])
+        self.rect.move_ip(inverse_direction(direction))
+
+    def draw(self, screen):
+        screen.blit(self.image, translated_rect(self.rect))
+
 class Ground(pygame.sprite.Sprite):
     def __init__(self, initial_position=None):
         super().__init__(self.containers)
@@ -105,14 +122,17 @@ class Player(pygame.sprite.Sprite):
 
     def move(self, direction, delta_time):
         global camera_x, camera_y
+        origin_direction = direction
         direction = tuple([round(self.speed * delta_time * c) for c in direction])
         camera_x += direction[0]
         camera_y += direction[1]
         self.origin_rect.move_ip(direction)
+        background_sprite.move(origin_direction, delta_time)
         if any(pygame.sprite.spritecollide(self, obstacle_group, False)):
-            self.origin_rect.move_ip(inverse_direction(direction))
             camera_x -= direction[0]
             camera_y -= direction[1]
+            self.origin_rect.move_ip(inverse_direction(direction))
+            background_sprite.move(inverse_direction(origin_direction), delta_time)
 
     @property
     def rect(self):
@@ -183,6 +203,7 @@ creature_group = pygame.sprite.Group()
 
 Player.containers = all_sprites
 Ground.containers = all_sprites
+Background.containers = all_sprites
 Wall.containers = all_sprites, obstacle_group
 BlackCreature.containers = all_sprites, creature_group
 Cursor.containers = all_sprites
@@ -192,8 +213,10 @@ Player.image = loadify("terro.png", size=-10)
 Wall.image = loadify("stonebrick_cracked.png")
 Ground.images = [loadify("floor1.png"), loadify("deepslate.png"),loadify("floor3.png"),loadify("floor4.png"),loadify("floor5.png"),loadify("floor6.png")]
 BlackCreature.image = loadify("monster.png", size=-30)
-
+Background.image = loadify("background.png", keep_ratio=True, size=2000)
 Cursor.image = loadify("cursor.png", size=-20)
+
+background_sprite = Background()
 
 map_grid = abstract_map.grid()
 
