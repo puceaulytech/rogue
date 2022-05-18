@@ -315,7 +315,7 @@ Ground.images = [
     loadify("floor6.png"),
 ]
 Background.image = loadify("background.png", keep_ratio=True, size=2000)
-Cursor.image = loadify("cursor.png", size=-20)
+Cursor.image = loadify("cursor.png", size=10)
 HealthIcon.image = loadify("heart.png", size=-25)
 
 background_sprite = Background()
