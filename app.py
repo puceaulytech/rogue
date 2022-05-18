@@ -28,7 +28,7 @@ pygame.mixer.music.play(-1)
 clock = pygame.time.Clock()
 
 plane = pygame.Surface((size), pygame.SRCALPHA)
-camera_size = 12
+camera_size = 14
 camera_x, camera_y = 0, 0
 
 dpi = width / camera_size
@@ -81,7 +81,9 @@ class FPSCounter(pygame.sprite.Sprite):
 class HealthIcon(pygame.sprite.Sprite):
     def __init__(self, offset):
         super().__init__(self.containers)
-        self.rect = self.image.get_rect().move(0 + offset * dpi * 0.8, height - dpi * 0.8)
+        self.rect = self.image.get_rect().move(
+            0 + offset * dpi * 0.8, height - dpi * 0.8
+        )
 
 
 class Wall(pygame.sprite.Sprite):
@@ -161,6 +163,7 @@ class Player(pygame.sprite.Sprite):
     def draw(self, screen):
         screen.blit(self.image, translated_rect(self.origin_rect))
 
+
 """
 class Particle(pygame.sprite.Sprite):
     def __init__(self, coords, image=None, radius=None, lifetime=200):
@@ -222,6 +225,8 @@ class ParticleEffect:
             self.particle_list[i].draw()
 
 """
+
+
 class BlackCreature(pygame.sprite.Sprite):
     def __init__(self, initial_position, asset, speed=0.1):
         super().__init__(self.containers)
@@ -299,8 +304,6 @@ healthbar_group = pygame.sprite.Group()
 particle_group = pygame.sprite.Group()
 
 
-
-
 Player.containers = all_sprites
 Ground.containers = all_sprites
 Background.containers = all_sprites
@@ -366,8 +369,6 @@ while True:
     ticked = clock.tick(360)
     all_sprites.clear(screen, background)
 
-
-
     all_sprites.update()
 
     if player.health <= 0:
@@ -380,11 +381,15 @@ while True:
             if event.key == pygame.K_f:
                 if not fullscreen:
                     screen_backup = screen.copy()
-                    screen = pygame.display.set_mode(SCREENRECT.size, winstyle | pygame.FULLSCREEN, bestdepth)
+                    screen = pygame.display.set_mode(
+                        SCREENRECT.size, winstyle | pygame.FULLSCREEN, bestdepth
+                    )
                     screen.blit(screen_backup, (0, 0))
                 else:
                     screen_backup = screen.copy()
-                    screen = pygame.display.set_mode(SCREENRECT.size, winstyle, bestdepth)
+                    screen = pygame.display.set_mode(
+                        SCREENRECT.size, winstyle, bestdepth
+                    )
                     screen.blit(screen_backup, (0, 0))
                 pygame.display.flip()
                 fullscreen = not fullscreen
