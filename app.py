@@ -20,8 +20,8 @@ pygame.init()
 
 SCREENRECT = pygame.Rect(0, 0, width, height)
 
-bestdepth = pygame.display.mode_ok(SCREENRECT.size, winstyle, 32)
-screen = pygame.display.set_mode(SCREENRECT.size, winstyle, bestdepth)
+bestdepth = pygame.display.mode_ok(SCREENRECT.size, winstyle | pygame.DOUBLEBUF, 32)
+screen = pygame.display.set_mode(SCREENRECT.size, winstyle | pygame.DOUBLEBUF, bestdepth)
 pygame.display.set_caption("ChadRogue")
 pygame.mouse.set_visible(False)
 pygame.mixer.music.load("assets/music.ogg")
@@ -144,12 +144,18 @@ class InventoryObject(pygame.sprite.Sprite):
         super().__init__(self.containers)
         path, size = asset
         self.image = loadify(path, size=size)
+        self.picked_up = False
         self.origin_rect = self.image.get_rect()
         (self.origin_rect.x, self.origin_rect.y) = initial_position
 
     @property
     def rect(self):
         return translated_rect(self.origin_rect)
+
+    def move(self, direction, delta_time):
+        direction = tuple([round(delta_time * c) for c in direction])
+        self.rect.move_ip(inverse_direction(direction))
+
 
 
 class Weapon(InventoryObject):
@@ -186,8 +192,6 @@ class Player(pygame.sprite.Sprite):
     def __init__(self, initial_position=None):
         super().__init__(self.containers)
         self.health = 5
-        self.inventory = []
-        self.picked_object = 0
         self.origin_rect = self.image.get_rect(center=SCREENRECT.center)
         if initial_position is not None:
             (self.origin_rect.x, self.origin_rect.y) = initial_position
@@ -203,7 +207,7 @@ class Player(pygame.sprite.Sprite):
         for inventory_object in pygame.sprite.spritecollide(
             self, inventoryobject_group, False
         ):
-            print("picked up something")
+            inventory_object.picked_up = True
         if any(pygame.sprite.spritecollide(self, obstacle_group, False)):
             camera_x -= direction[0]
             camera_y -= direction[1]
@@ -473,13 +477,13 @@ while True:
                 if not fullscreen:
                     screen_backup = screen.copy()
                     screen = pygame.display.set_mode(
-                        SCREENRECT.size, winstyle | pygame.FULLSCREEN, bestdepth
+                        SCREENRECT.size, winstyle | pygame.FULLSCREEN | pygame.DOUBLEBUF, bestdepth
                     )
                     screen.blit(screen_backup, (0, 0))
                 else:
                     screen_backup = screen.copy()
                     screen = pygame.display.set_mode(
-                        SCREENRECT.size, winstyle, bestdepth
+                        SCREENRECT.size, winstyle | pygame.DOUBLEBUF, bestdepth
                     )
                     screen.blit(screen_backup, (0, 0))
                 pygame.display.flip()
