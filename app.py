@@ -49,8 +49,9 @@ def inverse_direction(direction):
 
 def rotate_image(image, angle, x, y):
     rotated_image = pygame.transform.rotate(image, angle)
-    new_rect = rotated_image.get_rect(center = image.get_rect(center = (x, y)).center)
+    new_rect = rotated_image.get_rect(center=image.get_rect(center=(x, y)).center)
     return rotated_image, new_rect
+
 
 def translated_rect(rect):
     global camera_x, camera_y
@@ -137,15 +138,47 @@ class Ground(pygame.sprite.Sprite):
     def draw(self, screen):
         screen.blit(self.image, translated_rect(self.origin_rect))
 
-class Sword(pygame.sprite.Sprite):
-    def __init__(self, initial_position):
-        super().__init__(self.containers)
-        self.angle = 0
-        self.rect = self.image.get_rect()
-        (self.rect.x, self.rect.y) = initial_position
 
-    def update(self):
-        self.angle += 0.3
+class InventoryObject(pygame.sprite.Sprite):
+    def __init__(self, initial_position, asset):
+        super().__init__(self.containers)
+        path, size = asset
+        self.image = loadify(path, size=size)
+        self.origin_rect = self.image.get_rect()
+        (self.origin_rect.x, self.origin_rect.y) = initial_position
+
+    @property
+    def rect(self):
+        return translated_rect(self.origin_rect)
+
+
+class Weapon(InventoryObject):
+    def __init__(self, initial_position, asset, attack_cooldown, durability):
+        super().__init__(initial_position, asset)
+        self.attack_cooldown = attack_cooldown
+        self.last_attack = 0
+        self.durability = durability
+
+
+class Potion(InventoryObject):
+    def __init__(self, initial_position, asset):
+        super().__init__(initial_position, asset)
+
+
+class Spell(InventoryObject):
+    def __init__(self, initial_position, asset):
+        super().__init__(initial_position, asset)
+
+
+class Sword(Weapon):
+    def __init__(self, initial_position):
+        super().__init__(
+            initial_position,
+            asset=("sword.png", 40),
+            attack_cooldown=2,
+            durability=math.inf,
+        )
+
 
 class Player(pygame.sprite.Sprite):
     speed = 0.35
@@ -153,6 +186,8 @@ class Player(pygame.sprite.Sprite):
     def __init__(self, initial_position=None):
         super().__init__(self.containers)
         self.health = 5
+        self.inventory = []
+        self.picked_object = 0
         self.origin_rect = self.image.get_rect(center=SCREENRECT.center)
         if initial_position is not None:
             (self.origin_rect.x, self.origin_rect.y) = initial_position
@@ -165,6 +200,10 @@ class Player(pygame.sprite.Sprite):
         camera_y += direction[1]
         self.origin_rect.move_ip(direction)
         background_sprite.move(origin_direction, delta_time)
+        for inventory_object in pygame.sprite.spritecollide(
+            self, inventoryobject_group, False
+        ):
+            print("picked up something")
         if any(pygame.sprite.spritecollide(self, obstacle_group, False)):
             camera_x -= direction[0]
             camera_y -= direction[1]
@@ -264,7 +303,7 @@ class ParticleEffect:
 
 
 
-class BlackCreature(pygame.sprite.Sprite):
+class Creature(pygame.sprite.Sprite):
     def __init__(self, initial_position, asset, speed=0.1):
         super().__init__(self.containers)
         self.health = 3
@@ -338,15 +377,15 @@ obstacle_group = pygame.sprite.Group()
 creature_group = pygame.sprite.Group()
 hud_groud = pygame.sprite.Group()
 healthbar_group = pygame.sprite.Group()
-
-
+particle_group = pygame.sprite.Group()
+inventoryobject_group = pygame.sprite.Group()
 
 Player.containers = all_sprites
-Sword.containers = all_sprites
+InventoryObject.containers = all_sprites, inventoryobject_group
 Ground.containers = all_sprites
 Background.containers = all_sprites
 Wall.containers = all_sprites, obstacle_group
-BlackCreature.containers = all_sprites, creature_group
+Creature.containers = all_sprites, creature_group
 Cursor.containers = all_sprites, hud_groud
 FPSCounter.containers = all_sprites, hud_groud
 HealthIcon.containers = all_sprites, hud_groud, healthbar_group
@@ -354,7 +393,6 @@ HealthIcon.containers = all_sprites, hud_groud, healthbar_group
 
 
 Player.image = loadify("terro.png", size=-10)
-Sword.image = loadify("sword.png")
 Wall.image = loadify("stonebrick_cracked.png")
 Ground.images = [
     loadify("floor1.png"),
@@ -390,7 +428,7 @@ for x, y in creature_positions:
     abstract_creature = list(
         filter(lambda c: c.position == mapgen.Coord(x, y), abstract_map.creatures)
     )[0]
-    BlackCreature((x * dpi, y * dpi), abstract_creature.id, abstract_creature.speed)
+    Creature((x * dpi, y * dpi), abstract_creature.id, abstract_creature.speed)
 
 player = Player(initial_position=(spawn_point.x * dpi, spawn_point.y * dpi))
 camera_x = spawn_point.x * dpi - width / 2 + player.origin_rect.width // 2
@@ -398,7 +436,7 @@ camera_y = spawn_point.y * dpi - height / 2 + player.origin_rect.height // 2
 
 Cursor()
 FPSCounter()
-Sword((width / 2, height / 2))
+Sword((spawn_point.x * dpi, spawn_point.y * dpi))
 
 for i in range(player.health):
     HealthIcon(offset=i)
