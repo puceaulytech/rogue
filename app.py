@@ -7,17 +7,20 @@ import mapgen
 import itertools
 import time
 
-size = width, height = 900, 900
+size = width, height = 1024, 576
 black = 0, 0, 0
 white = 255, 255, 255
 fps = 0
 ticked = 0
+winstyle = 0
+fullscreen = False
 
 pygame.init()
 
 SCREENRECT = pygame.Rect(0, 0, width, height)
 
-screen = pygame.display.set_mode(size)
+bestdepth = pygame.display.mode_ok(SCREENRECT.size, winstyle, 32)
+screen = pygame.display.set_mode(SCREENRECT.size, winstyle, bestdepth)
 pygame.display.set_caption("ChadRogue")
 pygame.mouse.set_visible(False)
 pygame.mixer.music.load("assets/music.ogg")
@@ -78,7 +81,7 @@ class FPSCounter(pygame.sprite.Sprite):
 class HealthIcon(pygame.sprite.Sprite):
     def __init__(self, offset):
         super().__init__(self.containers)
-        self.rect = self.image.get_rect().move(0 + offset * 50, height - 50)
+        self.rect = self.image.get_rect().move(0 + offset * dpi * 0.8, height - dpi * 0.8)
 
 
 class Wall(pygame.sprite.Sprite):
@@ -373,6 +376,18 @@ while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             sys.exit()
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_f:
+                if not fullscreen:
+                    screen_backup = screen.copy()
+                    screen = pygame.display.set_mode(SCREENRECT.size, winstyle | pygame.FULLSCREEN, bestdepth)
+                    screen.blit(screen_backup, (0, 0))
+                else:
+                    screen_backup = screen.copy()
+                    screen = pygame.display.set_mode(SCREENRECT.size, winstyle, bestdepth)
+                    screen.blit(screen_backup, (0, 0))
+                pygame.display.flip()
+                fullscreen = not fullscreen
 
     keys = pygame.key.get_pressed()
     if keys[pygame.K_ESCAPE]:
