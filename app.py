@@ -142,11 +142,11 @@ class Player(pygame.sprite.Sprite):
     def draw(self, screen):
         screen.blit(self.image, translated_rect(self.origin_rect))
 
-class Particle(pygame.sprite.Sprite):
-    def __init__(self,coords,image = None,radius = None,lifetime = 100): 
+class Particle():
+    def __init__(self,coords,image = None,radius = None,lifetime = 200): 
 
         self.lifetime= lifetime
-        super().__init__(self.containers)
+        
         self.image = image
         self.radius = radius
         if image != None : 
@@ -164,18 +164,18 @@ class Particle(pygame.sprite.Sprite):
             pygame.draw.circle(screen,(100,100,100,self.lifetime),radius=self.radius,center=(self.rect.x,self.rect.y))
 
 class ParticleEffect:
-    def __init__(self,number = 100, lifetime = 100,images = None, forces = None, spawner = None):
+    def __init__(self,number = 100, lifetime = 200,images = None, forces = None, spawner = None):
         self.number  = number
         self.images = images
         self.forces = forces
         self.spawner = spawner
         self.lifetime = lifetime
-        Particle.containers = self.containers
+        
         self.particle_list = []
         for i in range(number) : 
             x = random.randint(spawner.x, spawner.width + spawner.x)
             y = random.randint(spawner.y, spawner.height + spawner.y)
-            self.particle_list.append(Particle((x,y),self.images,2,self.lifetime+ random.randint(-20,20)))
+            self.particle_list.append(Particle((x,y),self.images,10,self.lifetime+ random.randint(-20,20)))
             
     def update(self,delta):
         for i in range(len(self.particle_list)):
@@ -183,10 +183,9 @@ class ParticleEffect:
                 self.particle_list[i].move(self.forces*delta)
             self.particle_list[i].lifetime -= 1
             if self.particle_list[i].lifetime == 0:
-                self.particle_list[i] = Particle((x,y),self.images,2,self.lifetime+ random.randint(-20,20))
-    def draw(self):
-        for part in self.particle_list:
-            part.draw()
+                self.particle_list[i] = Particle((x,y),self.images,10,self.lifetime+ random.randint(-20,20))
+            self.particle_list[i].draw()
+
 
 
 class BlackCreature(pygame.sprite.Sprite):
@@ -301,12 +300,12 @@ FPSCounter()
 for i in range(player.health):
     HealthIcon(offset=i)
 
-#parts = ParticleEffect(100,100,spawner=screen.get_rect())
+parts = ParticleEffect(100,200,spawner=screen.get_rect())
 
 while True:
     ticked = clock.tick(60)
     all_sprites.clear(screen, background)
-    #parts.update(ticked)
+    parts.update(ticked)
     
     all_sprites.update()
 
@@ -331,8 +330,9 @@ while True:
     if keys[pygame.K_d]:
         direction = (1, 0)
         player.move(direction, ticked)
-    #parts.draw()
+
     dirty = all_sprites.draw(screen)
     pygame.display.update(dirty)
+
     fps = clock.get_fps()
     
