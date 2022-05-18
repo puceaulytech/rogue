@@ -24,7 +24,7 @@ pygame.mixer.music.load("assets/music.ogg")
 pygame.mixer.music.play(-1)
 clock = pygame.time.Clock()
 
-
+plane = pygame.Surface((size), pygame.SRCALPHA)
 camera_size = 12
 camera_x, camera_y = 0, 0
 
@@ -158,10 +158,10 @@ class Player(pygame.sprite.Sprite):
     def draw(self, screen):
         screen.blit(self.image, translated_rect(self.origin_rect))
 
-
-class Particle:
+"""
+class Particle(pygame.sprite.Sprite):
     def __init__(self, coords, image=None, radius=None, lifetime=200):
-
+        super().__init__(self.containers)
         self.lifetime = lifetime
 
         self.image = image
@@ -177,10 +177,10 @@ class Particle:
 
     def draw(self):
         if self.image != None:
-            screen.blit(self.image, self.rect)
+            plane.blit(self.image, self.rect)
         else:
             pygame.draw.circle(
-                screen,
+                plane,
                 (100, 100, 100, self.lifetime),
                 radius=self.radius,
                 center=(self.rect.x, self.rect.y),
@@ -196,14 +196,14 @@ class ParticleEffect:
         self.forces = forces
         self.spawner = spawner
         self.lifetime = lifetime
-
+        Particle.containers = self.containers
         self.particle_list = []
         for i in range(number):
             x = random.randint(spawner.x, spawner.width + spawner.x)
             y = random.randint(spawner.y, spawner.height + spawner.y)
             self.particle_list.append(
                 Particle(
-                    (x, y), self.images, 10, self.lifetime + random.randint(-20, 20)
+                    (x, y),self.images, 10, self.lifetime + random.randint(-20, 20)
                 )
             )
 
@@ -218,7 +218,7 @@ class ParticleEffect:
                 )
             self.particle_list[i].draw()
 
-
+"""
 class BlackCreature(pygame.sprite.Sprite):
     def __init__(self, initial_position, asset, speed=0.1):
         super().__init__(self.containers)
@@ -293,8 +293,11 @@ obstacle_group = pygame.sprite.Group()
 creature_group = pygame.sprite.Group()
 hud_groud = pygame.sprite.Group()
 healthbar_group = pygame.sprite.Group()
-# particle_group = pygame.sprite.Group()
-# ParticleEffect.containers = all_sprites, particle_group
+particle_group = pygame.sprite.Group()
+
+
+
+
 Player.containers = all_sprites
 Ground.containers = all_sprites
 Background.containers = all_sprites
@@ -303,6 +306,8 @@ BlackCreature.containers = all_sprites, creature_group
 Cursor.containers = all_sprites, hud_groud
 FPSCounter.containers = all_sprites, hud_groud
 HealthIcon.containers = all_sprites, hud_groud, healthbar_group
+
+particle_img = loadify("particle.png")
 
 Player.image = loadify("terro.png", size=-10)
 Wall.image = loadify("stonebrick_cracked.png")
@@ -352,12 +357,13 @@ FPSCounter()
 for i in range(player.health):
     HealthIcon(offset=i)
 
-parts = ParticleEffect(100, 200, spawner=screen.get_rect())
 
+###########################################   MAIN LOOP  ###########################################
 while True:
-    ticked = clock.tick(60)
+    ticked = clock.tick(360)
     all_sprites.clear(screen, background)
-    parts.update(ticked)
+
+
 
     all_sprites.update()
 
@@ -385,6 +391,7 @@ while True:
         player.move(direction, ticked)
 
     dirty = all_sprites.draw(screen)
+
     pygame.display.update(dirty)
 
     fps = clock.get_fps()
