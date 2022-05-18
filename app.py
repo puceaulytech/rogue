@@ -8,7 +8,7 @@ import mapgen
 import itertools
 import time
 
-size = width, height = 1024, 576
+size = width, height = 1920, 1080
 black = 0, 0, 0
 white = 255, 255, 255
 fps = 0
@@ -242,8 +242,8 @@ class Particle():
             self.rect = pygame.Rect(coords, (radius, radius))
     def __repr__(self):
         return f"Particle at {(self.rect.x,self.rect.y)} with {self.lifetime} remaining , radius = {self.radius}, image = {self.image}"
-    def move(self, direction):
-        self.rect.move_ip(direction)
+    def move(self, direction_x,direction_y):
+        self.rect.move_ip((direction_x,direction_y))
 
     def draw(self):
         if self.image != None:
@@ -268,6 +268,7 @@ class ParticleEffect:
         self.lifetime = lifetime
 
         self.particle_list = []
+        """
         for i in range(number):
             x = random.randint(spawner.x, spawner.width + spawner.x)
             y = random.randint(spawner.y, spawner.height + spawner.y)
@@ -276,18 +277,26 @@ class ParticleEffect:
                     (x, y),self.images,10, self.lifetime + random.randint(-20, 20)
                 )
             )
-
+"""
     def update(self, delta):
-        for i in range(len(self.particle_list)):
-            if self.forces:
-                self.particle_list[i].move(self.forces * delta)
-            self.particle_list[i].lifetime -= 1
-            if self.particle_list[i].lifetime == 0:
+        if len(self.particle_list) < self.number-10 :
+            for j in range(random.randint(0,1)):
                 x = random.randint(self.spawner.x, self.spawner.width + self.spawner.x)
                 y = random.randint(self.spawner.y, self.spawner.height + self.spawner.y)
-                self.particle_list[i] = Particle(
+                self.particle_list.append(Particle(
                     (x, y), self.images, 10, self.lifetime + random.randint(-20, 20)
-                )
+                ))
+        for i in range(len(self.particle_list)):
+            if self.forces:
+                self.particle_list[i].move(self.forces[0] * delta,self.forces[1]* delta)
+            self.particle_list[i].lifetime -= 1
+            if self.particle_list[i].lifetime == 0:
+                self.particle_list.pop(i)
+                x = random.randint(self.spawner.x, self.spawner.width + self.spawner.x)
+                y = random.randint(self.spawner.y, self.spawner.height + self.spawner.y)
+                self.particle_list.append(Particle(
+                    (x, y), self.images, 10, self.lifetime + random.randint(-20, 20)
+                ))
             self.particle_list[i].draw()
 
 
@@ -440,10 +449,14 @@ Sword((spawn_point.x * dpi, spawn_point.y * dpi))
 
 for i in range(player.health):
     HealthIcon(offset=i)
-particle_system = ParticleEffect(100,200,spawner=screen.get_rect())
-
+particle_system = ParticleEffect(100,200,spawner=screen.get_rect(),forces= [0,-0.1])
+frame_index = 0
 ###########################################   MAIN LOOP  ###########################################
 while True:
+    frame_index+=1
+    if frame_index%5 == 0:
+
+        plane.fill((0,0,0,0))
     ticked = clock.tick(360)
     all_sprites.clear(screen, background)
     
