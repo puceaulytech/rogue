@@ -2,6 +2,7 @@ import random
 import copy
 import math
 
+
 class Element:
     def __init__(self, elem_id, position, difficulty):
         self.id = elem_id
@@ -11,15 +12,19 @@ class Element:
     def __repr__(self):
         return f"<mapgen.Element id={self.id},position={self.position},difficulty={self.difficulty}>"
 
+
 class Creature(Element):
-    creatures = [ ("tank.png", 1, 0.1), ("dragon.png", 2, 0.2) ]
+    creatures = [("tank.png", 1, 0.1), ("dragon.png", 2, 0.2)]
+
     def __init__(self, elem_id, position, difficulty, speed):
         super().__init__(elem_id, position, difficulty)
         self.speed = speed
 
+
 class Item(Element):
     def __init__(self, elem_id, position, difficulty):
         super().__init__(elem_id, position, difficulty)
+
 
 class Coord:
     def __init__(self, x, y):
@@ -51,10 +56,11 @@ class Coord:
     def __add__(self, other):
         return Coord(self.x + other.x, self.y + other.y)
 
-    def distance(self,other):
-        if not isinstance(other,Coord):
+    def distance(self, other):
+        if not isinstance(other, Coord):
             raise TypeError("Not a coord")
-        return math.sqrt((self.x - other.x)**2 + (self.y - other.y)**2)
+        return math.sqrt((self.x - other.x) ** 2 + (self.y - other.y) ** 2)
+
 
 class Path:
     def __init__(self):
@@ -64,7 +70,7 @@ class Path:
         if not isinstance(coord, Coord):
             raise TypeError("Not an Coord")
         return coord in self.points
-    
+
     def __getitem__(self, key):
         return self.points[key]
 
@@ -81,10 +87,11 @@ class Path:
         """Add new point to new path"""
         self.points.append(coord)
 
+
 class CircleRoom:
     def __init__(self, center, radius):
         self.center = center
-        self.radius = radius 
+        self.radius = radius
 
     def __repr__(self):
         return f"<mapgen.CircleRoom center={self.center},radius={self.radius}>"
@@ -99,15 +106,18 @@ class CircleRoom:
         return self.center.distance(other.center) <= self.radius + other.radius
 
     def intersect_rect(self, other):
-        return self.center.distance(other.center) <= self.radius + math.sqrt((other.width**2 + other.height**2))
+        return self.center.distance(other.center) <= self.radius + math.sqrt(
+            (other.width**2 + other.height**2)
+        )
 
-    def intersect_with(self, other): 
+    def intersect_with(self, other):
         if isinstance(other, CircleRoom):
             return self.intersect_circle(other)
         return self.intersect_rect(other)
 
     def is_overlapping(self, room_list):
         return any([self.intersect_with(room) for room in room_list])
+
 
 class Room:
     def __init__(self, top_left, width, height):
@@ -118,10 +128,13 @@ class Room:
     @property
     def bottom_right(self):
         return self.top_left + Coord(self.width - 1, self.height - 1)
-    
+
     @property
     def center(self):
-        return Coord((self.top_left.x + self.bottom_right.x) // 2, (self.top_left.y + self.bottom_right.y) // 2)
+        return Coord(
+            (self.top_left.x + self.bottom_right.x) // 2,
+            (self.top_left.y + self.bottom_right.y) // 2,
+        )
 
     def __repr__(self):
         return f"<mapgen.Room top_left={self.top_left},width={self.width},height={self.height}>"
@@ -135,11 +148,21 @@ class Room:
 
     def intersect_x(self, other):
         """Check x axis intersection between two rooms"""
-        return other.top_left.y <= self.top_left.y <= other.bottom_right.y or other.top_left.y <= self.bottom_right.y <= other.bottom_right.y or self.top_left.y <= other.top_left.y <= self.bottom_right.y or self.top_left.y <= other.bottom_right.y <= self.bottom_right.y
+        return (
+            other.top_left.y <= self.top_left.y <= other.bottom_right.y
+            or other.top_left.y <= self.bottom_right.y <= other.bottom_right.y
+            or self.top_left.y <= other.top_left.y <= self.bottom_right.y
+            or self.top_left.y <= other.bottom_right.y <= self.bottom_right.y
+        )
 
     def intersect_y(self, other):
         """Check y axis intersection between two rooms"""
-        return other.top_left.x <= self.top_left.x <= other.bottom_right.x or other.top_left.x <= self.bottom_right.x <= other.bottom_right.x or self.top_left.x <= other.top_left.x <= self.bottom_right.x or self.top_left.x <= other.bottom_right.x <= self.bottom_right.x
+        return (
+            other.top_left.x <= self.top_left.x <= other.bottom_right.x
+            or other.top_left.x <= self.bottom_right.x <= other.bottom_right.x
+            or self.top_left.x <= other.top_left.x <= self.bottom_right.x
+            or self.top_left.x <= other.bottom_right.x <= self.bottom_right.x
+        )
 
     def intersect_with(self, other):
         """Check intersection between two rooms"""
@@ -148,6 +171,7 @@ class Room:
     def is_overlapping(self, room_list):
         """Check intersection between multiples rooms"""
         return any([self.intersect_with(room) for room in room_list])
+
 
 class Map:
     def __init__(self, width, height, max_rooms=4):
@@ -183,7 +207,6 @@ class Map:
             room = self.random_room()
             if not room.is_overlapping(self.rooms):
                 self.rooms.append(room)
-        
 
     def find_valid_random_coord(self, room):
         valid_coord = False
@@ -192,21 +215,27 @@ class Map:
             if isinstance(room, Room):
                 abs_pos_x = random.randint(0, room.width - 1)
                 abs_pos_y = random.randint(0, room.height - 1)
-                position = Coord(room.top_left.x + abs_pos_x, room.top_left.y + abs_pos_y)
+                position = Coord(
+                    room.top_left.x + abs_pos_x, room.top_left.y + abs_pos_y
+                )
             elif isinstance(room, CircleRoom):
                 distance = random.randint(0, room.radius)
                 angle = random.uniform(0, 2 * math.pi)
                 abs_pos_x = round(distance * math.cos(angle))
                 abs_pos_y = round(distance * math.sin(angle))
                 position = Coord(room.center.x + abs_pos_x, room.center.y + abs_pos_y)
-            valid_coord = all([position != element.position for element in self.creatures + self.items])
+            valid_coord = all(
+                [
+                    position != element.position
+                    for element in self.creatures + self.items
+                ]
+            )
         return position
-
 
     def fill_with_elements(self):
         for room in self.rooms[1:]:
             nb_creatures = random.randint(0, 2)
-            weights = list(map(lambda c: 1/c[1], Creature.creatures))
+            weights = list(map(lambda c: 1 / c[1], Creature.creatures))
             for _ in range(nb_creatures):
                 position = self.find_valid_random_coord(room)
                 attribs = copy.copy(random.choices(Creature.creatures, weights, k=1)[0])
@@ -257,14 +286,14 @@ class Map:
                 path.add_point(position)
                 position += direction
                 path.add_point(position)
-            
+
             self.paths.append(path)
 
     def slice(self, top_left, width, height):
         original_grid = self.grid()
         result = []
-        for row in original_grid[top_left.y:top_left.y + width - 1]:
-            result.append(row[top_left.x:top_left.x + height - 1])
+        for row in original_grid[top_left.y : top_left.y + width - 1]:
+            result.append(row[top_left.x : top_left.x + height - 1])
         return result
 
     def display(self, custom_grid=None):
@@ -272,8 +301,8 @@ class Map:
         grid = self.grid() if custom_grid is None else custom_grid
         for line in grid:
             for elem in line:
-                print(elem, end='')
-            print("\n", end='')
+                print(elem, end="")
+            print("\n", end="")
 
     def get_character_at(self, coord):
         if any([coord == creature.position for creature in self.creatures]):
@@ -282,11 +311,13 @@ class Map:
             return "o"
         elif any([coord in room for room in self.rooms]):
             return "#"
-        elif any([coord in path for path in self.paths]): 
+        elif any([coord in path for path in self.paths]):
             return "%"
         return "."
 
     def grid(self):
         """Generate map grid"""
-        return [[self.get_character_at(Coord(x, y)) for x in range(self.height)] for y in range(self.width)]
-
+        return [
+            [self.get_character_at(Coord(x, y)) for x in range(self.height)]
+            for y in range(self.width)
+        ]
