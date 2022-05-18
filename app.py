@@ -1,3 +1,4 @@
+from hashlib import new
 import random
 import math
 import sys
@@ -178,10 +179,19 @@ class Player(pygame.sprite.Sprite):
         screen.blit(self.image, translated_rect(self.origin_rect))
 
 
-"""
-class Particle(pygame.sprite.Sprite):
+
+
+
+
+
+
+
+
+
+
+class Particle():
     def __init__(self, coords, image=None, radius=None, lifetime=200):
-        super().__init__(self.containers)
+
         self.lifetime = lifetime
 
         self.image = image
@@ -191,7 +201,8 @@ class Particle(pygame.sprite.Sprite):
             (self.rect.x, self.rect.y) = coords
         else:
             self.rect = pygame.Rect(coords, (radius, radius))
-
+    def __repr__(self):
+        return f"Particle at {(self.rect.x,self.rect.y)} with {self.lifetime} remaining , radius = {self.radius}, image = {self.image}"
     def move(self, direction):
         self.rect.move_ip(direction)
 
@@ -201,29 +212,29 @@ class Particle(pygame.sprite.Sprite):
         else:
             pygame.draw.circle(
                 plane,
-                (100, 100, 100, self.lifetime),
-                radius=self.radius,
+                (255, 255, 255, self.lifetime),
+                radius=random.randint(1,3),
                 center=(self.rect.x, self.rect.y),
             )
-
-
+"""self.lifetime"""
+"""self.radius""",
 class ParticleEffect:
     def __init__(
         self, number=100, lifetime=200, images=None, forces=None, spawner=None
     ):
         self.number = number
-        self.images = images
+        self.images = images or None
         self.forces = forces
         self.spawner = spawner
         self.lifetime = lifetime
-        Particle.containers = self.containers
+
         self.particle_list = []
         for i in range(number):
             x = random.randint(spawner.x, spawner.width + spawner.x)
             y = random.randint(spawner.y, spawner.height + spawner.y)
             self.particle_list.append(
                 Particle(
-                    (x, y),self.images, 10, self.lifetime + random.randint(-20, 20)
+                    (x, y),self.images,10, self.lifetime + random.randint(-20, 20)
                 )
             )
 
@@ -233,12 +244,24 @@ class ParticleEffect:
                 self.particle_list[i].move(self.forces * delta)
             self.particle_list[i].lifetime -= 1
             if self.particle_list[i].lifetime == 0:
+                x = random.randint(self.spawner.x, self.spawner.width + self.spawner.x)
+                y = random.randint(self.spawner.y, self.spawner.height + self.spawner.y)
                 self.particle_list[i] = Particle(
                     (x, y), self.images, 10, self.lifetime + random.randint(-20, 20)
                 )
             self.particle_list[i].draw()
 
-"""
+
+
+
+
+
+
+
+
+
+
+
 
 
 class BlackCreature(pygame.sprite.Sprite):
@@ -315,7 +338,7 @@ obstacle_group = pygame.sprite.Group()
 creature_group = pygame.sprite.Group()
 hud_groud = pygame.sprite.Group()
 healthbar_group = pygame.sprite.Group()
-particle_group = pygame.sprite.Group()
+
 
 
 Player.containers = all_sprites
@@ -328,7 +351,7 @@ Cursor.containers = all_sprites, hud_groud
 FPSCounter.containers = all_sprites, hud_groud
 HealthIcon.containers = all_sprites, hud_groud, healthbar_group
 
-particle_img = loadify("particle.png")
+
 
 Player.image = loadify("terro.png", size=-10)
 Sword.image = loadify("sword.png")
@@ -379,13 +402,13 @@ Sword((width / 2, height / 2))
 
 for i in range(player.health):
     HealthIcon(offset=i)
-
+particle_system = ParticleEffect(100,200,spawner=screen.get_rect())
 
 ###########################################   MAIN LOOP  ###########################################
 while True:
     ticked = clock.tick(360)
     all_sprites.clear(screen, background)
-
+    
     all_sprites.update()
 
     if player.health <= 0:
@@ -427,8 +450,12 @@ while True:
         direction = (1, 0)
         player.move(direction, ticked)
 
-    dirty = all_sprites.draw(screen)
 
+    
+    dirty = all_sprites.draw(screen)
+    particle_system.update(ticked)
+    screen.blit(plane,(0,0))
     pygame.display.update(dirty)
 
+    
     fps = clock.get_fps()
