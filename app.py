@@ -30,6 +30,7 @@ camera_x, camera_y = 0, 0
 
 dpi = width / camera_size
 
+
 def loadify(path, size=0, keep_ratio=False):
     global dpi
     good_path = os.path.join("assets", path)
@@ -37,20 +38,30 @@ def loadify(path, size=0, keep_ratio=False):
     ratio = image.get_width() / image.get_height() if keep_ratio else 1
     return pygame.transform.scale(image, ((dpi + size) * ratio, dpi + size))
 
+
 def inverse_direction(direction):
     return (-direction[0], -direction[1])
+
 
 def translated_rect(rect):
     global camera_x, camera_y
     return pygame.Rect(rect.x - camera_x, rect.y - camera_y, rect.width, rect.height)
 
+
 def check_adjacent(x, y, grid):
     for dx, dy in itertools.product((-1, 0, 1), (-1, 0, 1)):
-        if (dx == 0 and dy == 0) or (x == 0 and dx == -1) or (y == 0 and dy == -1) or (x == len(grid[0]) - 1 and dx == 1) or (y == len(grid) - 1 and dy == 1):
+        if (
+            (dx == 0 and dy == 0)
+            or (x == 0 and dx == -1)
+            or (y == 0 and dy == -1)
+            or (x == len(grid[0]) - 1 and dx == 1)
+            or (y == len(grid) - 1 and dy == 1)
+        ):
             continue
         if grid[y + dy][x + dx] != ".":
             return True
     return False
+
 
 class FPSCounter(pygame.sprite.Sprite):
     def __init__(self):
@@ -63,10 +74,12 @@ class FPSCounter(pygame.sprite.Sprite):
     def update(self):
         self.image = self.font.render(f"FPS: {round(fps)}", False, self.color)
 
+
 class HealthIcon(pygame.sprite.Sprite):
     def __init__(self, offset):
         super().__init__(self.containers)
         self.rect = self.image.get_rect().move(0 + offset * 50, height - 50)
+
 
 class Wall(pygame.sprite.Sprite):
     def __init__(self, initial_position=None):
@@ -83,6 +96,7 @@ class Wall(pygame.sprite.Sprite):
     def draw(self, screen):
         screen.blit(self.image, translated_rect(self.origin_rect))
 
+
 class Background(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__(self.containers)
@@ -95,10 +109,11 @@ class Background(pygame.sprite.Sprite):
     def draw(self, screen):
         screen.blit(self.image, translated_rect(self.rect))
 
+
 class Ground(pygame.sprite.Sprite):
     def __init__(self, initial_position=None):
         super().__init__(self.containers)
-        self.image = random.choice(random.choices(self.images,[1,50,1,1,1,1]))
+        self.image = random.choice(random.choices(self.images, [1, 50, 1, 1, 1, 1]))
         self.origin_rect = self.image.get_rect()
         if initial_position is None:
             initial_position = (0, 0)
@@ -110,6 +125,7 @@ class Ground(pygame.sprite.Sprite):
 
     def draw(self, screen):
         screen.blit(self.image, translated_rect(self.origin_rect))
+
 
 class Player(pygame.sprite.Sprite):
     speed = 0.35
@@ -142,48 +158,64 @@ class Player(pygame.sprite.Sprite):
     def draw(self, screen):
         screen.blit(self.image, translated_rect(self.origin_rect))
 
-class Particle(pygame.sprite.Sprite):
-    def __init__(self,coords,image = None,radius = None,lifetime = 100): 
 
-        self.lifetime= lifetime
+class Particle(pygame.sprite.Sprite):
+    def __init__(self, coords, image=None, radius=None, lifetime=100):
+        self.lifetime = lifetime
         super().__init__(self.containers)
         self.image = image
         self.radius = radius
-        if image != None : 
+        if image != None:
             self.rect = self.image.get_rect()
             (self.rect.x, self.rect.y) = coords
-        else : 
-            self.rect = pygame.Rect(coords, (radius,radius))
-    
-    def move(self, direction): 
+        else:
+            self.rect = pygame.Rect(coords, (radius, radius))
+
+    def move(self, direction):
         self.rect.move_ip(direction)
-    def draw(self): 
-        if self.image != None : 
+
+    def draw(self):
+        if self.image != None:
             screen.blit(self.image, self.rect)
-        else : 
-            pygame.draw.circle(screen,(100,100,100,self.lifetime),radius=self.radius,center=(self.rect.x,self.rect.y))
+        else:
+            pygame.draw.circle(
+                screen,
+                (100, 100, 100, self.lifetime),
+                radius=self.radius,
+                center=(self.rect.x, self.rect.y),
+            )
+
 
 class ParticleEffect:
-    def __init__(self,number = 100, lifetime = 100,images = None, forces = None, spawner = None):
-        self.number  = number
+    def __init__(
+        self, number=100, lifetime=100, images=None, forces=None, spawner=None
+    ):
+        self.number = number
         self.images = images
         self.forces = forces
         self.spawner = spawner
         self.lifetime = lifetime
         Particle.containers = self.containers
         self.particle_list = []
-        for i in range(number) : 
+        for i in range(number):
             x = random.randint(spawner.x, spawner.width + spawner.x)
             y = random.randint(spawner.y, spawner.height + spawner.y)
-            self.particle_list.append(Particle((x,y),self.images,2,self.lifetime+ random.randint(-20,20)))
-            
-    def update(self,delta):
+            self.particle_list.append(
+                Particle(
+                    (x, y), self.images, 2, self.lifetime + random.randint(-20, 20)
+                )
+            )
+
+    def update(self, delta):
         for i in range(len(self.particle_list)):
-            if self.forces : 
-                self.particle_list[i].move(self.forces*delta)
+            if self.forces:
+                self.particle_list[i].move(self.forces * delta)
             self.particle_list[i].lifetime -= 1
             if self.particle_list[i].lifetime == 0:
-                self.particle_list[i] = Particle((x,y),self.images,2,self.lifetime+ random.randint(-20,20))
+                self.particle_list[i] = Particle(
+                    (x, y), self.images, 2, self.lifetime + random.randint(-20, 20)
+                )
+
     def draw(self):
         for part in self.particle_list:
             part.draw()
@@ -205,14 +237,24 @@ class BlackCreature(pygame.sprite.Sprite):
         return translated_rect(self.origin_rect)
 
     def update(self):
-        distance_to_player = math.sqrt((self.origin_rect.x - player.origin_rect.x)**2 + (self.origin_rect.y - player.origin_rect.y)**2)
+        distance_to_player = math.sqrt(
+            (self.origin_rect.x - player.origin_rect.x) ** 2
+            + (self.origin_rect.y - player.origin_rect.y) ** 2
+        )
         if distance_to_player < 5 * dpi:
-            dx = (player.origin_rect.x - self.origin_rect.x) / (distance_to_player + 0.000001)
-            dy = (player.origin_rect.y - self.origin_rect.y) / (distance_to_player + 0.000001)
+            dx = (player.origin_rect.x - self.origin_rect.x) / (
+                distance_to_player + 0.000001
+            )
+            dy = (player.origin_rect.y - self.origin_rect.y) / (
+                distance_to_player + 0.000001
+            )
             self.move((dx, dy), ticked)
-            if pygame.sprite.collide_rect(player, self) and time.time() - self.last_attack > self.attack_cooldown:
+            if (
+                pygame.sprite.collide_rect(player, self)
+                and time.time() - self.last_attack > self.attack_cooldown
+            ):
                 player.health -= 1
-                if not player.health < 0: # TODO: juste pour éviter le crash
+                if not player.health < 0:  # TODO: juste pour éviter le crash
                     healthbar_group.sprites()[-1].kill()
                 self.last_attack = time.time()
 
@@ -221,6 +263,7 @@ class BlackCreature(pygame.sprite.Sprite):
         self.origin_rect.move_ip(direction)
         if any(pygame.sprite.spritecollide(self, obstacle_group, False)):
             self.origin_rect.move_ip(inverse_direction(direction))
+
 
 class Cursor(pygame.sprite.Sprite):
     def __init__(self):
@@ -233,6 +276,7 @@ class Cursor(pygame.sprite.Sprite):
 
     def update(self):
         self.update_pos()
+
 
 abstract_map = mapgen.Map(40, 40)
 abstract_map.generate_random()
@@ -251,8 +295,8 @@ obstacle_group = pygame.sprite.Group()
 creature_group = pygame.sprite.Group()
 hud_groud = pygame.sprite.Group()
 healthbar_group = pygame.sprite.Group()
-#particle_group = pygame.sprite.Group()
-#ParticleEffect.containers = all_sprites, particle_group
+# particle_group = pygame.sprite.Group()
+# ParticleEffect.containers = all_sprites, particle_group
 Player.containers = all_sprites
 Ground.containers = all_sprites
 Background.containers = all_sprites
@@ -264,7 +308,14 @@ HealthIcon.containers = all_sprites, hud_groud, healthbar_group
 
 Player.image = loadify("terro.png", size=-10)
 Wall.image = loadify("stonebrick_cracked.png")
-Ground.images = [loadify("floor1.png"), loadify("deepslate.png"),loadify("floor3.png"),loadify("floor4.png"),loadify("floor5.png"),loadify("floor6.png")]
+Ground.images = [
+    loadify("floor1.png"),
+    loadify("deepslate.png"),
+    loadify("floor3.png"),
+    loadify("floor4.png"),
+    loadify("floor5.png"),
+    loadify("floor6.png"),
+]
 Background.image = loadify("background.png", keep_ratio=True, size=2000)
 Cursor.image = loadify("cursor.png", size=-20)
 HealthIcon.image = loadify("heart.png", size=-25)
@@ -273,24 +324,26 @@ background_sprite = Background()
 
 map_grid = abstract_map.grid()
 
-creature_positions = [] # TODO: use layers
+creature_positions = []  # TODO: use layers
 
 for y, row in enumerate(map_grid):
     for x, elem in enumerate(row):
         if x in (0, len(row) - 1) or y in (0, len(map_grid) - 1):
             Wall((x * dpi, y * dpi))
-        elif elem in ('%', '#', 'x'):
+        elif elem in ("%", "#", "x"):
             Ground((x * dpi, y * dpi))
-            if elem == 'x':
+            if elem == "x":
                 creature_positions.append((x, y))
-        elif elem == '.':
+        elif elem == ".":
             if check_adjacent(x, y, map_grid):
                 Wall((x * dpi, y * dpi))
 
 for x, y in creature_positions:
-    abstract_creature = list(filter(lambda c: c.position == mapgen.Coord(x, y), abstract_map.creatures))[0]
+    abstract_creature = list(
+        filter(lambda c: c.position == mapgen.Coord(x, y), abstract_map.creatures)
+    )[0]
     BlackCreature((x * dpi, y * dpi), abstract_creature.id, abstract_creature.speed)
-            
+
 player = Player(initial_position=(spawn_point.x * dpi, spawn_point.y * dpi))
 camera_x = spawn_point.x * dpi - width / 2 + player.origin_rect.width // 2
 camera_y = spawn_point.y * dpi - height / 2 + player.origin_rect.height // 2
@@ -301,20 +354,21 @@ FPSCounter()
 for i in range(player.health):
     HealthIcon(offset=i)
 
-#parts = ParticleEffect(100,100,spawner=screen.get_rect())
+# parts = ParticleEffect(100,100,spawner=screen.get_rect())
 
 while True:
     ticked = clock.tick(60)
     all_sprites.clear(screen, background)
-    #parts.update(ticked)
-    
+    # parts.update(ticked)
+
     all_sprites.update()
 
     if player.health <= 0:
         player.kill()
 
     for event in pygame.event.get():
-        if event.type == pygame.QUIT: sys.exit()
+        if event.type == pygame.QUIT:
+            sys.exit()
 
     keys = pygame.key.get_pressed()
     if keys[pygame.K_ESCAPE]:
@@ -331,8 +385,7 @@ while True:
     if keys[pygame.K_d]:
         direction = (1, 0)
         player.move(direction, ticked)
-    #parts.draw()
+    # parts.draw()
     dirty = all_sprites.draw(screen)
     pygame.display.update(dirty)
     fps = clock.get_fps()
-    
