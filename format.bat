@@ -1,1 +1,1 @@
-black *.py
+python -m black *.py

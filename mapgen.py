@@ -14,11 +14,17 @@ class Element:
 
 
 class Creature(Element):
-    creatures = (["sprite_0.png","sprite_1.png"], 1, 0.1), (["dragon.png"], 2, 0.2)
+    creatures = (["sprite_0.png", "sprite_1.png"], 1, 0.1, True), (
+        ["dragon.png"],
+        2,
+        0.2,
+        False,
+    )
 
-    def __init__(self, elem_id, position, difficulty, speed):
+    def __init__(self, elem_id, position, difficulty, speed, flying):
         super().__init__(elem_id, position, difficulty)
         self.speed = speed
+        self.flying = flying
 
 
 class Item(Element):
@@ -239,8 +245,10 @@ class Map:
             for _ in range(nb_creatures):
                 position = self.find_valid_random_coord(room)
                 attribs = copy.copy(random.choices(Creature.creatures, weights, k=1)[0])
-                asset_id, difficulty, speed = attribs
-                creature = Creature(asset_id, None, difficulty=difficulty, speed=speed)
+                asset_id, difficulty, speed, flying = attribs
+                creature = Creature(
+                    asset_id, None, difficulty=difficulty, speed=speed, flying=flying
+                )
                 creature.position = position
                 self.creatures.append(creature)
             # nb_items = random.randint(0, 2)
