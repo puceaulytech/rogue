@@ -8,7 +8,7 @@ import mapgen
 import itertools
 import time
 
-size = width, height = 1920, 1080
+size = width, height = 1280, 720
 black = 0, 0, 0
 white = 255, 255, 255
 fps = 0
@@ -29,7 +29,7 @@ pygame.mixer.music.play(-1)
 clock = pygame.time.Clock()
 
 plane = pygame.Surface((size), pygame.SRCALPHA)
-camera_size = 14
+camera_size = 20
 camera_x, camera_y = 0, 0
 
 dpi = width / camera_size
@@ -319,7 +319,7 @@ class Creature(pygame.sprite.Sprite):
         self.speed = speed
         self.last_attack = 0
         self.attack_cooldown = 1
-        self.image = loadify(asset, size=-30)
+        self.image = loadify(asset, size=-30,keep_ratio=True)
         self.origin_rect = self.image.get_rect()
         (self.origin_rect.x, self.origin_rect.y) = initial_position
 
@@ -449,14 +449,14 @@ Sword((spawn_point.x * dpi, spawn_point.y * dpi))
 
 for i in range(player.health):
     HealthIcon(offset=i)
-particle_system = ParticleEffect(100,200,spawner=screen.get_rect(),forces= [0,-0.1])
+#particle_system = ParticleEffect(100,200,spawner=screen.get_rect(),forces= [0,-0.1])
 frame_index = 0
 ###########################################   MAIN LOOP  ###########################################
 while True:
     frame_index+=1
     if frame_index%5 == 0:
-
-        plane.fill((0,0,0,0))
+        pass
+    #    plane.fill((0,0,0,0))
     ticked = clock.tick(360)
     all_sprites.clear(screen, background)
     
@@ -504,8 +504,8 @@ while True:
 
     
     dirty = all_sprites.draw(screen)
-    particle_system.update(ticked)
-    screen.blit(plane,(0,0))
+    #particle_system.update(ticked)
+    #screen.blit(plane,(0,0))
     pygame.display.update(dirty)
 
     
