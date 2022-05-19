@@ -317,13 +317,18 @@ class ParticleEffect:
 
 
 class Creature(pygame.sprite.Sprite):
-    def __init__(self, initial_position, asset, speed=0.1):
+    def __init__(self, initial_position, assets, speed=0.1):
+        self.local_frame_index = random.randint(0,100000)
         super().__init__(self.containers)
         self.health = 3
         self.speed = speed
         self.last_attack = 0
         self.attack_cooldown = 1
-        self.image = loadify(asset, size=-30,keep_ratio=True)
+        self.images = []
+        self.currimage = 0 
+        for i in range(len(assets)):
+            self.images.append(loadify(assets[i],10,keep_ratio= True))
+        self.image = self.images[self.currimage]
         self.origin_rect = self.image.get_rect()
         (self.origin_rect.x, self.origin_rect.y) = initial_position
 
@@ -332,6 +337,15 @@ class Creature(pygame.sprite.Sprite):
         return translated_rect(self.origin_rect)
 
     def update(self):
+        
+        self.local_frame_index+=1
+        if len(self.images) != 1:
+            if self.local_frame_index%20 == 0:
+                self.currimage +=1 
+                if (self.currimage ) >= len(self.images):
+                    self.currimage = 0
+                print(self.currimage)
+                self.image = self.images[self.currimage]
         distance_to_player = math.sqrt(
             (self.origin_rect.x - player.origin_rect.x) ** 2
             + (self.origin_rect.y - player.origin_rect.y) ** 2

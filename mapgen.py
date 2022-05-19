@@ -14,7 +14,7 @@ class Element:
 
 
 class Creature(Element):
-    creatures = [("tank.png", 1, 0.1), ("dragon.png", 2, 0.2)]
+    creatures = (["sprite_0.png","sprite_1.png"], 1, 0.1), (["dragon.png"], 2, 0.2)
 
     def __init__(self, elem_id, position, difficulty, speed):
         super().__init__(elem_id, position, difficulty)
