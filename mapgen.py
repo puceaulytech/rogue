@@ -175,7 +175,11 @@ class Room:
 class Map:
     available_creatures = [
         Creature(
-            ["sprite_0.png", "sprite_1.png"], position=None, difficulty=1, speed=0.1, flying=True
+            ["sprite_0.png", "sprite_1.png"],
+            position=None,
+            difficulty=1,
+            speed=0.1,
+            flying=True,
         ),
         Creature(
             ["dragon.png"],
@@ -250,7 +254,9 @@ class Map:
             weights = list(map(lambda c: 1 / c.difficulty, Map.available_creatures))
             for _ in range(nb_creatures):
                 position = self.find_valid_random_coord(room)
-                creature = copy.copy(random.choices(Map.available_creatures, weights, k=1)[0])
+                creature = copy.copy(
+                    random.choices(Map.available_creatures, weights, k=1)[0]
+                )
                 creature.position = position
                 self.creatures.append(creature)
             # nb_items = random.randint(0, 2)
