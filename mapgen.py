@@ -14,13 +14,6 @@ class Element:
 
 
 class Creature(Element):
-    creatures = (["sprite_0.png", "sprite_1.png"], 1, 0.1, True), (
-        ["dragon.png"],
-        2,
-        0.2,
-        False,
-    )
-
     def __init__(self, elem_id, position, difficulty, speed, flying):
         super().__init__(elem_id, position, difficulty)
         self.speed = speed
@@ -180,6 +173,19 @@ class Room:
 
 
 class Map:
+    available_creatures = [
+        Creature(
+            ["sprite_0.png", "sprite_1.png"], position=None, difficulty=1, speed=0.1, flying=True
+        ),
+        Creature(
+            ["dragon.png"],
+            position=None,
+            difficulty=2,
+            speed=0.2,
+            flying=False,
+        ),
+    ]
+
     def __init__(self, width, height, max_rooms=4):
         self.width = width
         self.height = height
@@ -241,14 +247,10 @@ class Map:
     def fill_with_elements(self):
         for room in self.rooms[1:]:
             nb_creatures = random.randint(0, 2)
-            weights = list(map(lambda c: 1 / c[1], Creature.creatures))
+            weights = list(map(lambda c: 1 / c.difficulty, Map.available_creatures))
             for _ in range(nb_creatures):
                 position = self.find_valid_random_coord(room)
-                attribs = copy.copy(random.choices(Creature.creatures, weights, k=1)[0])
-                asset_id, difficulty, speed, flying = attribs
-                creature = Creature(
-                    asset_id, None, difficulty=difficulty, speed=speed, flying=flying
-                )
+                creature = copy.copy(random.choices(Map.available_creatures, weights, k=1)[0])
                 creature.position = position
                 self.creatures.append(creature)
             # nb_items = random.randint(0, 2)
