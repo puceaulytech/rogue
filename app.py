@@ -255,7 +255,7 @@ class Particle:
 
 
 """self.lifetime"""
-"""self.radius""",
+"""self.radius"""
 
 
 class ParticleEffect:
@@ -465,14 +465,14 @@ Sword((spawn_point.x * dpi, spawn_point.y * dpi))
 
 for i in range(player.health):
     HealthIcon(offset=i)
-# particle_system = ParticleEffect(100,200,spawner=screen.get_rect(),forces= [0,-0.1])
+particle_system = ParticleEffect(100,200,spawner=screen.get_rect(),forces= [0,-0.1])
 frame_index = 0
 ###########################################   MAIN LOOP  ###########################################
 while True:
     frame_index += 1
     if frame_index % 5 == 0:
         pass
-    #    plane.fill((0,0,0,0))
+        plane.fill((0,0,0,0))
     ticked = clock.tick(360)
     all_sprites.clear(screen, background)
 
@@ -520,8 +520,8 @@ while True:
         player.move(direction, ticked)
 
     dirty = all_sprites.draw(screen)
-    # particle_system.update(ticked)
-    # screen.blit(plane,(0,0))
+    particle_system.update(ticked)
+    screen.blit(plane,(0,0))
     pygame.display.update(dirty)
 
     fps = clock.get_fps()
