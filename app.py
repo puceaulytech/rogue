@@ -1,4 +1,3 @@
-from hashlib import new
 import random
 import math
 import sys
@@ -15,6 +14,7 @@ fps = 0
 ticked = 0
 winstyle = 0
 fullscreen = False
+player = None
 
 pygame.init()
 
@@ -60,6 +60,17 @@ def translated_rect(rect):
     return pygame.Rect(rect.x - camera_x, rect.y - camera_y, rect.width, rect.height)
 
 
+def fill_open(x, y, grid):
+    if x == 0:
+        Wall((-1 * dpi, y * dpi))
+    elif x == len(grid[0]):
+        Wall((len(grid[0]) * dpi, y * dpi))
+    elif y == 0:
+        Wall((x * dpi, -1 * dpi))
+    elif y == len(grid):
+        Wall((x * dpi, len(grid) * dpi))
+
+
 def check_adjacent(x, y, grid):
     for dx, dy in itertools.product((-1, 0, 1), (-1, 0, 1)):
         if (
@@ -73,6 +84,47 @@ def check_adjacent(x, y, grid):
         if grid[y + dy][x + dx] != ".":
             return True
     return False
+
+def move_player_to_spawn():
+    global camera_x, camera_y, player
+    spawn_point = game_logic.current_map.rooms[0].center
+
+    camera_x = spawn_point.x * dpi - width / 2 + player.origin_rect.width // 2
+    camera_y = spawn_point.y * dpi - height / 2 + player.origin_rect.height // 2
+
+    (player.origin_rect.x, player.origin_rect.y) = (spawn_point.x * dpi, spawn_point.y * dpi)
+
+def draw_map():
+    for s in mapdependent_group.sprites():
+        s.kill()
+    mapdependent_group.clear(screen, SCREENRECT)
+    mapdependent_group.empty()
+    map_grid = game_logic.current_map.grid()
+
+    creature_positions = []  # TODO: use layers
+
+    for y, row in enumerate(map_grid):
+        for x, elem in enumerate(row):
+            if elem in ("%", "#", "x"):
+                Ground((x * dpi, y * dpi))
+                fill_open(x, y, map_grid)
+                if elem == "x":
+                    creature_positions.append((x, y))
+            elif elem == ".":
+                if check_adjacent(x, y, map_grid):
+                    Wall((x * dpi, y * dpi))
+
+    for x, y in creature_positions:
+        abstract_creature = list(
+            filter(lambda c: c.position == mapgen.Coord(x, y), game_logic.current_map.creatures)
+        )[0]
+        Creature(
+            (x * dpi, y * dpi),
+            abstract_creature.id,
+            abstract_creature.speed,
+            abstract_creature.flying,
+        )
+
 
 
 class FPSCounter(pygame.sprite.Sprite):
@@ -330,7 +382,6 @@ class Creature(pygame.sprite.Sprite):
         return translated_rect(self.origin_rect)
 
     def update(self):
-
         self.local_frame_index += 1
         if len(self.images) != 1:
             if self.local_frame_index % 20 == 0:
@@ -381,19 +432,15 @@ class Cursor(pygame.sprite.Sprite):
         self.update_pos()
 
 
-abstract_map = mapgen.Map(40, 40)
-abstract_map.generate_random()
-abstract_map.generate_random_circle()
-abstract_map.make_paths()
-abstract_map.fill_with_elements()
-abstract_map.display()
+game_logic = mapgen.Game(max_levels=3)
+game_logic.current_map.display()
 
-spawn_point = abstract_map.rooms[0].center
 
 background = pygame.Surface(size)
 pygame.display.flip()
 
-all_sprites = pygame.sprite.OrderedUpdates()
+all_sprites = pygame.sprite.LayeredUpdates()
+mapdependent_group = pygame.sprite.Group()
 obstacle_group = pygame.sprite.Group()
 creature_group = pygame.sprite.Group()
 hud_groud = pygame.sprite.Group()
@@ -402,11 +449,11 @@ particle_group = pygame.sprite.Group()
 inventoryobject_group = pygame.sprite.Group()
 
 Player.containers = all_sprites
-InventoryObject.containers = all_sprites, inventoryobject_group
-Ground.containers = all_sprites
+InventoryObject.containers = all_sprites, inventoryobject_group, mapdependent_group
+Ground.containers = all_sprites, mapdependent_group
 Background.containers = all_sprites
-Wall.containers = all_sprites, obstacle_group
-Creature.containers = all_sprites, creature_group
+Wall.containers = all_sprites, obstacle_group, mapdependent_group
+Creature.containers = all_sprites, creature_group, mapdependent_group
 Cursor.containers = all_sprites, hud_groud
 FPSCounter.containers = all_sprites, hud_groud
 HealthIcon.containers = all_sprites, hud_groud, healthbar_group
@@ -426,42 +473,25 @@ Background.image = loadify("background.png", keep_ratio=True, size=2000)
 Cursor.image = loadify("cursor.png", size=10)
 HealthIcon.image = loadify("heart.png", size=-25)
 
+Player._layer = 2
+Wall._layer = 1
+Ground._layer = 1
+Background._layer = 0
+Cursor._layer = 2
+FPSCounter._layer = 2
+HealthIcon._layer = 2
+Creature._layer = 2
+
 background_sprite = Background()
 
-map_grid = abstract_map.grid()
+player = Player(initial_position=(0, 0))
 
-creature_positions = []  # TODO: use layers
+draw_map()
 
-for y, row in enumerate(map_grid):
-    for x, elem in enumerate(row):
-        if x in (0, len(row) - 1) or y in (0, len(map_grid) - 1):
-            Wall((x * dpi, y * dpi))
-        elif elem in ("%", "#", "x"):
-            Ground((x * dpi, y * dpi))
-            if elem == "x":
-                creature_positions.append((x, y))
-        elif elem == ".":
-            if check_adjacent(x, y, map_grid):
-                Wall((x * dpi, y * dpi))
-
-for x, y in creature_positions:
-    abstract_creature = list(
-        filter(lambda c: c.position == mapgen.Coord(x, y), abstract_map.creatures)
-    )[0]
-    Creature(
-        (x * dpi, y * dpi),
-        abstract_creature.id,
-        abstract_creature.speed,
-        abstract_creature.flying,
-    )
-
-player = Player(initial_position=(spawn_point.x * dpi, spawn_point.y * dpi))
-camera_x = spawn_point.x * dpi - width / 2 + player.origin_rect.width // 2
-camera_y = spawn_point.y * dpi - height / 2 + player.origin_rect.height // 2
+move_player_to_spawn()
 
 Cursor()
 FPSCounter()
-Sword((spawn_point.x * dpi, spawn_point.y * dpi))
 
 for i in range(player.health):
     HealthIcon(offset=i)
@@ -485,7 +515,11 @@ while True:
         if event.type == pygame.QUIT:
             sys.exit()
         elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_f:
+            if event.key == pygame.K_e:
+                game_logic.move_up()
+                draw_map()
+                move_player_to_spawn()
+            elif event.key == pygame.K_f:
                 if not fullscreen:
                     screen_backup = screen.copy()
                     screen = pygame.display.set_mode(

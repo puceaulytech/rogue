@@ -337,3 +337,34 @@ class Map:
             [self.get_character_at(Coord(x, y)) for x in range(self.height)]
             for y in range(self.width)
         ]
+
+class Game:
+    def __init__(self, max_levels):
+        self.max_levels = max_levels
+        self.levels = []
+        self.active_level = 0
+        self.add_new_map()
+
+    @property
+    def current_map(self):
+        return self.levels[self.active_level]
+
+    def add_new_map(self):
+        new_map = Map(40, 40)
+        new_map.generate_random()
+        new_map.generate_random_circle()
+        new_map.make_paths()
+        new_map.fill_with_elements()
+        self.levels.append(new_map)
+
+    def move_up(self):
+        if self.active_level + 1 > self.max_levels - 1:
+            raise RuntimeError("Max level reached")
+        if self.active_level + 1 > len(self.levels) - 1:
+            self.add_new_map()
+        self.active_level += 1
+
+    def move_down(self):
+        if self.active_level - 1 < 0:
+            raise RuntimeError("Min level reached")
+        self.active_level -= 1
