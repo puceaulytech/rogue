@@ -29,6 +29,8 @@ pygame.display.set_caption("ChadRogue")
 pygame.mouse.set_visible(False)
 pygame.mixer.music.load("assets/music.ogg")
 pygame.mixer.music.play(-1)
+
+hit_sound = pygame.mixer.Sound("assets/hitted.ogg")
 clock = pygame.time.Clock()
 
 plane = pygame.Surface((size), pygame.SRCALPHA)
@@ -529,6 +531,7 @@ class Creature(pygame.sprite.Sprite):
                 and time.time() - self.last_attack > self.attack_cooldown
             ):
                 player.health -= 1
+                hit_sound.play()
                 if not player.health < 0:  # TODO: juste pour éviter le crash
                     healthbar_group.sprites()[-1].kill()
                 self.last_attack = time.time()
