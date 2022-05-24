@@ -171,10 +171,13 @@ def is_case_goodenough(coo,grid):
     return False
 
 def propagate(start,grid, max_recursive_depth = 5 ):
+
+
     visible = [] 
     to_iter = [start]
     to_iter_next = []
     current_recursion = []
+    already_itered = []
     for i in range(max_recursive_depth):
         for j in to_iter:
             current_recursion = get_adjacent_case(j.x,j.y,grid)
@@ -182,14 +185,16 @@ def propagate(start,grid, max_recursive_depth = 5 ):
             for k in current_recursion : 
                 if k not in visible : 
                     visible.append(k)
-                if is_case_goodenough(k,grid):
+                if is_case_goodenough(k,grid) and k not in already_itered:
                     to_iter_next.append(k)
             current_recursion.clear()
+        already_itered.extend(to_iter_next)
         to_iter.clear()
         to_iter = to_iter_next.copy()
         to_iter_next.clear()
 
     return visible
+
 
 
 
