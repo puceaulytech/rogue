@@ -212,16 +212,16 @@ class Map:
 
     def random_room(self):
         """Generate a random room"""
-        x = random.randint(0, self.width - 3)
-        y = random.randint(0, self.height - 3)
-        width = random.randint(3, 8)
-        height = random.randint(3, 8)
+        x = random.randint(1, self.width - 4)
+        y = random.randint(1, self.height - 4)
+        width = random.randint(3, 8) if x+8 < self.width else random.randint(3,self.width-x-1)
+        height = random.randint(3, 8) if y+8 < self.height else random.randint(3,self.height-y-1)
         return Room(Coord(x, y), width, height)
 
     def random_circle_room(self):
-        x = random.randint(0, self.width - 3)
-        y = random.randint(0, self.height - 3)
         radius = random.randint(3, 5)
+        x = random.randint(radius + 2, self.width - radius-2)
+        y = random.randint(radius + 2, self.height - radius-2)
         return CircleRoom(Coord(x, y), radius)
 
     def generate_random(self):
