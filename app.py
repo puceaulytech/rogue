@@ -134,7 +134,12 @@ def draw_map():
 
 def get_adjacent_case(x,y,grid):
     if x > 0 and x < len(grid[0]) and y > 0 and y < len(grid):
-        return list( mapgen.Coord(x+1,y), mapgen.Coord(x-1,y), mapgen.Coord(x,y+1), mapgen.Coord(x,y-1))
+        res = []
+        res.append(mapgen.Coord(x+1,y))
+        res.append(mapgen.Coord(x-1,y))
+        res.append(mapgen.Coord(x,y+1))
+        res.append( mapgen.Coord(x,y-1))
+        return res
 
 
 
@@ -151,18 +156,19 @@ def propagate(start,grid, max_recursive_depth = 5 ):
     current_recursion = []
     for i in range(max_recursive_depth):
         for j in to_iter:
-            print(j)
+            
             current_recursion = get_adjacent_case(j.x,j.y,grid)
-            print(current_recursion)
+            
             for k in current_recursion : 
                 if k not in visible : 
                     visible.append(k)
-                if is_case_goodenough(k):
+                if is_case_goodenough(k,grid):
                     to_iter_next.append(k)
             current_recursion.clear()
         to_iter.clear()
         to_iter = to_iter_next.copy()
         to_iter_next.clear()
+    print("visible :" + str(visible))
     return visible
 
 
@@ -571,7 +577,8 @@ for i in range(player.health):
     HealthIcon(offset=i)
 particle_system = ParticleEffect(100,200,spawner=screen.get_rect(),forces= [0.1,0.05])
 frame_index = 0
-print(propagate(mapgen.Coord(,player.origin_rect.y),game_logic.current_map.grid()))
+player_grid_pos = get_player_pos_grid()
+print(propagate(mapgen.Coord(player_grid_pos[0],player_grid_pos[1]),game_logic.current_map.grid()))
 ###########################################   MAIN LOOP  ###########################################
 while True:
     frame_index += 1
