@@ -110,7 +110,7 @@ def update_map_near_player():
     for c in coords:
         x, y = c
         elem = game_logic.current_map.get_character_at(c)
-        if elem in ("%", "#", "x", "S"):
+        if elem in ("%", "#", "x", "S","o"):
             if (x, y) not in already_drawn:
                 Ground((x * dpi, y * dpi))
                 already_drawn.append((x, y))
@@ -136,10 +136,11 @@ def draw_map():
     already_drawn.clear()
 
     creature_positions = []  # TODO: use layers
+    item_positions = []
 
     for y, row in enumerate(map_grid):
         for x, elem in enumerate(row):
-            if elem in ("%", "#", "x", "S"):
+            if elem in ("%", "#", "x", "S","o"):
                 #Ground((x * dpi, y * dpi))
                 #fill_open(x, y, map_grid)
                 if elem == "S":
@@ -147,6 +148,8 @@ def draw_map():
                     stairs_list.append([x,y])
                 elif elem == "x":
                     creature_positions.append((x, y))
+                elif elem == "o":
+                    item_positions.append((x,y))
             # elif elem == ".":
             #     if check_adjacent(x, y, map_grid):
             #         Wall((x * dpi, y * dpi))
@@ -161,7 +164,12 @@ def draw_map():
             abstract_creature.speed,
             abstract_creature.flying,
         )
-
+    for x,y in item_positions:
+      abstract_item = list(filter(lambda c : c.position == mapgen.Coord(x,y), game_logic.current_map.items))[0]
+      InventoryObject(
+        (x*dpi,y*dpi),
+        abstract_item.id
+        )
 
 def get_adjacent_case(x,y,grid):
     if x > 0 and x < len(grid[0]) and y > 0 and y < len(grid):
@@ -176,7 +184,7 @@ def get_adjacent_case(x,y,grid):
 
 def is_case_goodenough(coo,grid): 
     case = grid[coo.y][coo.x]
-    if case in ["#", "%", "X","S","x"]:
+    if case in ["#", "%", "X","S","x","o"]:
         return True
     return False
 
@@ -320,8 +328,8 @@ class Stairs(pygame.sprite.Sprite):
 class InventoryObject(pygame.sprite.Sprite):
     def __init__(self, initial_position, asset):
         super().__init__(self.containers)
-        path, size = asset
-        self.image = loadify(path, size=size)
+        path = asset
+        self.image = loadify(path, 10, True)
         self.picked_up = False
         self.origin_rect = self.image.get_rect()
         (self.origin_rect.x, self.origin_rect.y) = initial_position
@@ -377,7 +385,7 @@ class Player(pygame.sprite.Sprite):
         self.origin_rect = self.image.get_rect(center=SCREENRECT.center)
         if initial_position is not None:
             (self.origin_rect.x, self.origin_rect.y) = initial_position
-        self.inventory = [None for i in range(inventory_size)]
+        self.inventory = [None for i in range(Player.inventory_size)]
 
     def move(self, direction, delta_time):
         global camera_x, camera_y
@@ -411,7 +419,7 @@ class Player(pygame.sprite.Sprite):
     def take(self,thing):
       if isinstance(thing,InventoryObject):
         if None in self.inventory:
-          empty_slot = min(list(i for i in range(len(self.inventory)) if i is None))
+          empty_slot = min(list(i for i in range(len(self.inventory)) if self.inventory[i] is None))
           self.inventory[empty_slot] = thing
       else:
         raise TypeError("Not an object")
@@ -632,6 +640,7 @@ FPSCounter._layer = 2
 Dialog._layer = 2
 HealthIcon._layer = 2
 Creature._layer = 2
+InventoryObject._layer = 2
 
 background_sprite = Background()
 
@@ -656,8 +665,6 @@ while True:
 
     target = stairs_list[game_logic.active_level]
     ez = translated_rect(pygame.Rect((target[0]*dpi,target[1]*dpi),(1,1)))
-    print(math.atan2(translated_rect(player.origin_rect).y - ez.y, translated_rect(player.origin_rect).x - ez.x) * 180 /math.pi)
-
 
 
     if frame_index%5 ==0: 

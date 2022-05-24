@@ -195,6 +195,13 @@ class Map:
             flying=False,
         ),
     ]
+    available_items = [
+      Item(
+        "sword.png",
+        position = None,
+        difficulty = 1
+        )
+    ]
 
     def __init__(self, width, height, max_rooms=4):
         self.width = width
@@ -266,12 +273,12 @@ class Map:
                 )
                 creature.position = position
                 self.creatures.append(creature)
-            # nb_items = random.randint(0, 2)
-            # for _ in range(nb_items):
-            #     position = self.find_valid_random_coord(room)
-            #     item = copy.copy(random.choice(self.available_items))
-            #     item.position = position
-            #     self.items.append(item)
+            nb_items = random.randint(0, 2)
+            for _ in range(nb_items):
+                position = self.find_valid_random_coord(room)
+                item = copy.copy(random.choice(self.available_items))
+                item.position = position
+                self.items.append(item)
 
     def generate_stairs(self):
         last_room = self.rooms[-1]
