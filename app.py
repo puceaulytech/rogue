@@ -2,7 +2,6 @@ import random
 import math
 import sys
 import os
-from matplotlib.pyplot import get
 import pygame
 import mapgen
 import itertools
