@@ -333,7 +333,7 @@ class ParticleEffect:
 """
 
     def update(self, delta):
-        if len(self.particle_list) < self.number - 10:
+        if len(self.particle_list) < self.number - 5:
             for j in range(random.randint(0, 1)):
                 x = random.randint(self.spawner.x, self.spawner.width + self.spawner.x)
                 y = random.randint(self.spawner.y, self.spawner.height + self.spawner.y)
@@ -344,8 +344,10 @@ class ParticleEffect:
                 )
         for i in range(len(self.particle_list)):
             if self.forces:
+                x_delta = random.randint(-100,100) / 500
+                y_delta = random.randint(-100,100) / 500
                 self.particle_list[i].move(
-                    self.forces[0] * delta, self.forces[1] * delta
+                    (self.forces[0]+x_delta) * delta , (self.forces[1]+y_delta) * delta
                 )
             self.particle_list[i].lifetime -= 1
             if self.particle_list[i].lifetime == 0:
@@ -495,7 +497,7 @@ FPSCounter()
 
 for i in range(player.health):
     HealthIcon(offset=i)
-particle_system = ParticleEffect(100,200,spawner=screen.get_rect(),forces= [0,-0.1])
+particle_system = ParticleEffect(100,200,spawner=screen.get_rect(),forces= [0.1,0.05])
 frame_index = 0
 ###########################################   MAIN LOOP  ###########################################
 while True:
