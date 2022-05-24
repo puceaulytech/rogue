@@ -60,6 +60,12 @@ class Coord:
             raise TypeError("Not a coord")
         return math.sqrt((self.x - other.x) ** 2 + (self.y - other.y) ** 2)
 
+class Stairs:
+    def __init__(self, position):
+        self.position = position
+
+    def __repr__(self):
+        return f"<mapgen.Stairs position={self.position}>"
 
 class Path:
     def __init__(self):
@@ -199,6 +205,7 @@ class Map:
         self.paths = []
         self.creatures = []
         self.items = []
+        self.next_level_stair = None
 
     def __repr__(self):
         return f"<mapgen.Map width={self.width},height={self.height},nb_rooms={len(self.rooms)}>"
@@ -266,6 +273,10 @@ class Map:
             #     item.position = position
             #     self.items.append(item)
 
+    def generate_stairs(self):
+        last_room = self.rooms[-1]
+        self.next_level_stair = Stairs(last_room.center)
+
     def generate_random_circle(self):
         for i in range(self.max_exot_rooms):
             room = self.random_circle_room()
@@ -321,7 +332,9 @@ class Map:
             print("\n", end="")
 
     def get_character_at(self, coord):
-        if any([coord == creature.position for creature in self.creatures]):
+        if coord == self.next_level_stair.position:
+            return "S"
+        elif any([coord == creature.position for creature in self.creatures]):
             return "x"
         elif any([coord == item.position for item in self.items]):
             return "o"
@@ -345,6 +358,9 @@ class Game:
         self.active_level = 0
         self.add_new_map()
 
+    def __repr__(self):
+        return f"<mapgen.Game max_levels={self.max_levels},active_level={self.active_level}"
+
     @property
     def current_map(self):
         return self.levels[self.active_level]
@@ -354,6 +370,7 @@ class Game:
         new_map.generate_random()
         new_map.generate_random_circle()
         new_map.make_paths()
+        new_map.generate_stairs()
         new_map.fill_with_elements()
         self.levels.append(new_map)
 

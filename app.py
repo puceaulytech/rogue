@@ -105,10 +105,12 @@ def draw_map():
 
     for y, row in enumerate(map_grid):
         for x, elem in enumerate(row):
-            if elem in ("%", "#", "x"):
+            if elem in ("%", "#", "x", "S"):
                 Ground((x * dpi, y * dpi))
                 fill_open(x, y, map_grid)
-                if elem == "x":
+                if elem == "S":
+                    Stairs((x * dpi, y * dpi))
+                elif elem == "x":
                     creature_positions.append((x, y))
             elif elem == ".":
                 if check_adjacent(x, y, map_grid):
@@ -207,6 +209,17 @@ class Ground(pygame.sprite.Sprite):
     def draw(self, screen):
         screen.blit(self.image, translated_rect(self.origin_rect))
 
+class Stairs(pygame.sprite.Sprite):
+    def __init__(self, initial_position=None):
+        super().__init__(self.containers)
+        self.origin_rect = self.image.get_rect()
+        if initial_position is None:
+            initial_position = (0, 0)
+        (self.origin_rect.x, self.origin_rect.y) = initial_position
+
+    @property
+    def rect(self):
+        return translated_rect(self.origin_rect)
 
 class InventoryObject(pygame.sprite.Sprite):
     def __init__(self, initial_position, asset):
@@ -276,6 +289,10 @@ class Player(pygame.sprite.Sprite):
             self, inventoryobject_group, False
         ):
             inventory_object.picked_up = True
+        for stair_object in pygame.sprite.spritecollide(self, stairs_group, False):
+            game_logic.move_up()
+            draw_map()
+            move_player_to_spawn()
         if any(pygame.sprite.spritecollide(self, obstacle_group, False)):
             camera_x -= direction[0]
             camera_y -= direction[1]
@@ -458,6 +475,7 @@ pygame.display.flip()
 
 all_sprites = pygame.sprite.LayeredUpdates()
 mapdependent_group = pygame.sprite.Group()
+stairs_group = pygame.sprite.Group()
 obstacle_group = pygame.sprite.Group()
 creature_group = pygame.sprite.Group()
 hud_groud = pygame.sprite.Group()
@@ -468,6 +486,7 @@ inventoryobject_group = pygame.sprite.Group()
 Player.containers = all_sprites
 InventoryObject.containers = all_sprites, inventoryobject_group, mapdependent_group
 Ground.containers = all_sprites, mapdependent_group
+Stairs.containers = all_sprites, mapdependent_group, stairs_group
 Background.containers = all_sprites
 Wall.containers = all_sprites, obstacle_group, mapdependent_group
 Creature.containers = all_sprites, creature_group, mapdependent_group
@@ -486,6 +505,7 @@ Ground.images = [
     loadify("floor5.png"),
     loadify("floor6.png"),
 ]
+Stairs.image = loadify("portal.png", size=20)
 Background.image = loadify("background.png", keep_ratio=True, size=2000)
 Cursor.image = loadify("cursor.png", size=10)
 HealthIcon.image = loadify("heart.png", size=-25)
@@ -493,6 +513,7 @@ HealthIcon.image = loadify("heart.png", size=-25)
 Player._layer = 2
 Wall._layer = 1
 Ground._layer = 1
+Stairs._layer = 2
 Background._layer = 0
 Cursor._layer = 2
 FPSCounter._layer = 2
