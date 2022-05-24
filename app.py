@@ -127,8 +127,17 @@ def draw_map():
             abstract_creature.flying,
         )
 
-def pathfind(coo, target, max_recursive_depth):
+
+def get_adjacent_case():
+    pass
+
+
+def propagate(start, target, max_recursive_depth):
     visible = [] 
+    to_iter = [start]
+    for i in range(max_recursive_depth):
+        for j in to_iter:
+
 
 
 
