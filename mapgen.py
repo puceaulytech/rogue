@@ -191,7 +191,7 @@ class Map:
             ["dragon.png"],
             position=None,
             difficulty=2,
-            speed=0.2,
+            speed=0.1,
             flying=False,
         ),
     ]
