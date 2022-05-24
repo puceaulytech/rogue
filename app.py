@@ -125,6 +125,21 @@ def draw_map():
             abstract_creature.flying,
         )
 
+def pathfind(coo, target, max_recursive_depth):
+    visible = [] 
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 class FPSCounter(pygame.sprite.Sprite):
