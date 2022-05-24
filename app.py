@@ -36,7 +36,7 @@ camera_size = 20
 camera_x, camera_y = 0, 0
 
 dpi = width / camera_size
-
+stairs_list = []
 
 def loadify(path, size=0, keep_ratio=False):
     global dpi
@@ -120,6 +120,7 @@ def update_map_near_player():
             Wall((x * dpi, y * dpi))
 
 def draw_map():
+    global stairs_list
     for s in mapdependent_group.sprites():
         s.kill()
     mapdependent_group.clear(screen, SCREENRECT)
@@ -135,6 +136,7 @@ def draw_map():
                 #fill_open(x, y, map_grid)
                 if elem == "S":
                     Stairs((x * dpi, y * dpi))
+                    stairs_list.append([x,y])
                 elif elem == "x":
                     creature_positions.append((x, y))
             # elif elem == ".":
@@ -629,6 +631,13 @@ frame_index = 0
 
 ###########################################   MAIN LOOP  ###########################################
 while True:
+
+    target = stairs_list[game_logic.active_level]
+    ez = translated_rect(pygame.Rect((target[0]*dpi,target[1]*dpi),(1,1)))
+    print(math.atan2(translated_rect(player.origin_rect).y - ez.y, translated_rect(player.origin_rect).x - ez.x) * 180 /math.pi)
+
+
+
     if frame_index%5 ==0: 
         # player_grid_pos = get_player_pos_grid()
         # print(propagate(mapgen.Coord(player_grid_pos[0],player_grid_pos[1]),game_logic.current_map.grid()))
