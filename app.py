@@ -648,7 +648,7 @@ while True:
 
 
 
-    if frame_index%5 ==0:
+    if frame_index%1 ==0:
         # player_grid_pos = get_player_pos_grid()
         # print(propagate(mapgen.Coord(player_grid_pos[0],player_grid_pos[1]),game_logic.current_map.grid()))
         update_map_near_player()
