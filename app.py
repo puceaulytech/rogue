@@ -60,7 +60,6 @@ def rotate_image(image, angle):
     
     return rotated_image
 
-
 def translated_rect(rect):
     global camera_x, camera_y
     return pygame.Rect(rect.x - camera_x, rect.y - camera_y, rect.width, rect.height)
@@ -511,11 +510,13 @@ class Creature(pygame.sprite.Sprite):
     def rotate_towards_player(self,playerx,playery):
         angle_towards_player = get_angle(playerx,self.origin_rect.x,playery,self.origin_rect.y)
         delta = angle_towards_player-self.angle
-        if abs(delta)> 10 : 
-            for i in self.images:
-                i = rotate_image(i,delta)
+        if abs(delta)> 10 :
+            for i in range(len(self.images)):
+                self.images[i] = rotate_image(self.images[i],delta)
             self.angle += delta
-            self.origin_rect = self.images[0].get_rect()
+            self.origin_rect = self.image.get_rect(center = self.origin_rect.center)
+
+            
     def update(self):
         
         self.local_frame_index += 1
