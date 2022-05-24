@@ -334,6 +334,9 @@ class InventoryObject(pygame.sprite.Sprite):
         direction = tuple([round(delta_time * c) for c in direction])
         self.rect.move_ip(inverse_direction(direction))
 
+    def update(self):
+        if pygame.sprite.collide_rect(player, self):
+          pass
 
 class Weapon(InventoryObject):
     def __init__(self, initial_position, asset, attack_cooldown, durability):
@@ -365,6 +368,7 @@ class Sword(Weapon):
 
 class Player(pygame.sprite.Sprite):
     speed = 0.35
+    inventory_size = 5
 
     def __init__(self, initial_position=None):
         super().__init__(self.containers)
@@ -372,6 +376,7 @@ class Player(pygame.sprite.Sprite):
         self.origin_rect = self.image.get_rect(center=SCREENRECT.center)
         if initial_position is not None:
             (self.origin_rect.x, self.origin_rect.y) = initial_position
+        self.inventory = [None for i in range(inventory_size)]
 
     def move(self, direction, delta_time):
         global camera_x, camera_y
