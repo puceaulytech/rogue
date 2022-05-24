@@ -16,6 +16,7 @@ ticked = 0
 winstyle = 0
 fullscreen = False
 player = None
+dialog = None
 
 pygame.init()
 
@@ -156,7 +157,6 @@ def propagate(start,grid, max_recursive_depth = 5 ):
     current_recursion = []
     for i in range(max_recursive_depth):
         for j in to_iter:
-            
             current_recursion = get_adjacent_case(j.x,j.y,grid)
             
             for k in current_recursion : 
@@ -189,13 +189,32 @@ def propagate(start,grid, max_recursive_depth = 5 ):
 class FPSCounter(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__(self.containers)
-        self.font = pygame.font.SysFont("Consolas", 20)
+        self.font = pygame.font.Font("assets/Retro_Gaming.ttf", 20)
         self.color = "white"
         self.update()
         self.rect = self.image.get_rect().move(0, 0)
 
     def update(self):
         self.image = self.font.render(f"FPS: {round(fps)}", False, self.color)
+
+class Dialog(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__(self.containers)
+        self.font = pygame.font.Font("assets/Retro_Gaming.ttf", 20)
+        self.color = "red"
+        self.message = ""
+        self.update()
+        self.origin_rect = self.image.get_rect().move(width / 2, 0)
+
+    @property
+    def rect(self):
+        return translated_rect(self.origin_rect)
+
+    def move(self, coord):
+        (self.origin_rect.x, self.origin_rect.y) = coord
+
+    def update(self):
+        self.image = self.font.render(self.message, False, self.color)
 
 
 class HealthIcon(pygame.sprite.Sprite):
@@ -331,10 +350,10 @@ class Player(pygame.sprite.Sprite):
             self, inventoryobject_group, False
         ):
             inventory_object.picked_up = True
+        dialog.message = ""
         for stair_object in pygame.sprite.spritecollide(self, stairs_group, False):
-            game_logic.move_up()
-            draw_map()
-            move_player_to_spawn()
+            dialog.message = "Press E to go up"
+            dialog.move((stair_object.origin_rect.x, stair_object.origin_rect.y - 0.5 * dpi))
         if any(pygame.sprite.spritecollide(self, obstacle_group, False)):
             camera_x -= direction[0]
             camera_y -= direction[1]
@@ -520,7 +539,7 @@ mapdependent_group = pygame.sprite.Group()
 stairs_group = pygame.sprite.Group()
 obstacle_group = pygame.sprite.Group()
 creature_group = pygame.sprite.Group()
-hud_groud = pygame.sprite.Group()
+hud_group = pygame.sprite.Group()
 healthbar_group = pygame.sprite.Group()
 particle_group = pygame.sprite.Group()
 inventoryobject_group = pygame.sprite.Group()
@@ -532,9 +551,10 @@ Stairs.containers = all_sprites, mapdependent_group, stairs_group
 Background.containers = all_sprites
 Wall.containers = all_sprites, obstacle_group, mapdependent_group
 Creature.containers = all_sprites, creature_group, mapdependent_group
-Cursor.containers = all_sprites, hud_groud
-FPSCounter.containers = all_sprites, hud_groud
-HealthIcon.containers = all_sprites, hud_groud, healthbar_group
+Cursor.containers = all_sprites, hud_group
+FPSCounter.containers = all_sprites, hud_group
+HealthIcon.containers = all_sprites, hud_group, healthbar_group
+Dialog.containers = all_sprites, hud_group
 
 
 Player.image = loadify("terro.png", size=-10)
@@ -559,6 +579,7 @@ Stairs._layer = 2
 Background._layer = 0
 Cursor._layer = 2
 FPSCounter._layer = 2
+Dialog._layer = 2
 HealthIcon._layer = 2
 Creature._layer = 2
 
@@ -572,6 +593,8 @@ move_player_to_spawn()
 
 Cursor()
 FPSCounter()
+dialog = Dialog()
+dialog.message = "MEGA CHEVALIER"
 
 for i in range(player.health):
     HealthIcon(offset=i)
@@ -598,9 +621,11 @@ while True:
             sys.exit()
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_e:
-                game_logic.move_up()
-                draw_map()
-                move_player_to_spawn()
+                for _ in pygame.sprite.spritecollide(player, stairs_group, False):
+                    game_logic.move_up()
+                    draw_map()
+                    move_player_to_spawn()
+                    dialog.message = ""
             elif event.key == pygame.K_f:
                 if not fullscreen:
                     screen_backup = screen.copy()
@@ -639,7 +664,5 @@ while True:
     particle_system.update(ticked)
     screen.blit(plane,(0,0))
     pygame.display.update(dirty)
-
-    print(get_player_pos_grid())
 
     fps = clock.get_fps()
