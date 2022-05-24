@@ -161,7 +161,7 @@ def get_adjacent_case(x,y,grid):
 
 
 def is_case_goodenough(coo,grid): 
-    case = grid[coo.x][coo.y]
+    case = grid[coo.y][coo.x]
     if case in ["#", "%", "X","S","x"]:
         return True
     return False
@@ -184,7 +184,7 @@ def propagate(start,grid, max_recursive_depth = 5 ):
         to_iter.clear()
         to_iter = to_iter_next.copy()
         to_iter_next.clear()
-    print("visible :" + str(visible))
+
     return visible
 
 
