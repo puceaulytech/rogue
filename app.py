@@ -98,6 +98,23 @@ def move_player_to_spawn():
 
     (player.origin_rect.x, player.origin_rect.y) = (spawn_point.x * dpi, spawn_point.y * dpi)
 
+def update_map_near_player():
+    player_grid_pos = get_player_pos_grid()
+    coords = propagate(mapgen.Coord(player_grid_pos[0], player_grid_pos[1]), game_logic.current_map.grid())
+    for c in coords:
+        x, y = c
+        elem = game_logic.current_map.get_character_at(c)
+        if elem in ("%", "#", "x", "S"):
+            Ground((x * dpi, y * dpi))
+            # fill_open(x, y, map_grid)
+            # if elem == "S":
+            #     Stairs((x * dpi, y * dpi))
+            # elif elem == "x":
+            #     creature_positions.append((x, y))
+        elif elem == ".":
+            # if check_adjacent(x, y, map_grid):
+            Wall((x * dpi, y * dpi))
+
 def draw_map():
     for s in mapdependent_group.sprites():
         s.kill()
@@ -110,15 +127,15 @@ def draw_map():
     for y, row in enumerate(map_grid):
         for x, elem in enumerate(row):
             if elem in ("%", "#", "x", "S"):
-                Ground((x * dpi, y * dpi))
-                fill_open(x, y, map_grid)
+                #Ground((x * dpi, y * dpi))
+                #fill_open(x, y, map_grid)
                 if elem == "S":
                     Stairs((x * dpi, y * dpi))
                 elif elem == "x":
                     creature_positions.append((x, y))
-            elif elem == ".":
-                if check_adjacent(x, y, map_grid):
-                    Wall((x * dpi, y * dpi))
+            # elif elem == ".":
+            #     if check_adjacent(x, y, map_grid):
+            #         Wall((x * dpi, y * dpi))
 
     for x, y in creature_positions:
         abstract_creature = list(
@@ -602,9 +619,10 @@ frame_index = 0
 
 ###########################################   MAIN LOOP  ###########################################
 while True:
-    if frame_index%60 ==0: 
-        player_grid_pos = get_player_pos_grid()
-        print(propagate(mapgen.Coord(player_grid_pos[0],player_grid_pos[1]),game_logic.current_map.grid()))
+    if frame_index%5 ==0: 
+        # player_grid_pos = get_player_pos_grid()
+        # print(propagate(mapgen.Coord(player_grid_pos[0],player_grid_pos[1]),game_logic.current_map.grid()))
+        update_map_near_player()
         
     frame_index += 1
     if frame_index % 5 == 0:
