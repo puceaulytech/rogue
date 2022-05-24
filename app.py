@@ -644,7 +644,7 @@ while True:
 
     target = stairs_list[game_logic.active_level]
     ez = translated_rect(pygame.Rect((target[0]*dpi,target[1]*dpi),(1,1)))
-    print(math.atan2(translated_rect(player.origin_rect).y - ez.y, translated_rect(player.origin_rect).x - ez.x) * 180 /math.pi)
+    #print(math.atan2(translated_rect(player.origin_rect).y - ez.y, translated_rect(player.origin_rect).x - ez.x) * 180 /math.pi)
 
 
 
