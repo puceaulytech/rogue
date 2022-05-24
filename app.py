@@ -336,7 +336,9 @@ class InventoryObject(pygame.sprite.Sprite):
 
     def update(self):
         if pygame.sprite.collide_rect(player, self):
-          pass
+          player.take(self)
+          self.kill()
+          player_inv_group.add(self)
 
 class Weapon(InventoryObject):
     def __init__(self, initial_position, asset, attack_cooldown, durability):
@@ -364,7 +366,6 @@ class Sword(Weapon):
             attack_cooldown=2,
             durability=math.inf,
         )
-
 
 class Player(pygame.sprite.Sprite):
     speed = 0.35
@@ -407,6 +408,13 @@ class Player(pygame.sprite.Sprite):
     def draw(self, screen):
         screen.blit(self.image, translated_rect(self.origin_rect))
 
+    def take(self,thing):
+      if isinstance(thing,InventoryObject):
+        if None in self.inventory:
+          empty_slot = min(list(i for i in range(len(self.inventory)) if i is None))
+          self.inventory[empty_slot] = thing
+      else:
+        raise TypeError("Not an object")
 
 class Particle:
     def __init__(self, coords, image=None, radius=None, lifetime=200):
@@ -584,6 +592,7 @@ hud_group = pygame.sprite.Group()
 healthbar_group = pygame.sprite.Group()
 particle_group = pygame.sprite.Group()
 inventoryobject_group = pygame.sprite.Group()
+player_inv_group = pygame.sprite.Group()
 
 Player.containers = all_sprites
 InventoryObject.containers = all_sprites, inventoryobject_group, mapdependent_group
