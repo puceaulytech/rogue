@@ -106,7 +106,7 @@ def update_map_near_player():
     # toredraw_group.clear(screen, SCREENRECT)
     # toredraw_group.empty()
     player_grid_pos = get_player_pos_grid()
-    coords = propagate(mapgen.Coord(player_grid_pos[0], player_grid_pos[1]), game_logic.current_map.grid())
+    coords = propagate(mapgen.Coord(player_grid_pos[0], player_grid_pos[1]), map_grid)
     for c in coords:
         x, y = c
         elem = game_logic.current_map.get_character_at(c)
@@ -127,7 +127,7 @@ def update_map_near_player():
 
 
 def draw_map():
-    global stairs_list
+    global stairs_list, map_grid
     for s in mapdependent_group.sprites():
         s.kill()
     mapdependent_group.clear(screen, SCREENRECT)
@@ -563,7 +563,9 @@ class Cursor(pygame.sprite.Sprite):
 
 
 game_logic = mapgen.Game(max_levels=3)
+map_grid = None
 game_logic.current_map.display()
+
 
 
 background = pygame.Surface(size)
@@ -646,7 +648,7 @@ while True:
 
 
 
-    if frame_index%5 ==0: 
+    if frame_index%5 ==0:
         # player_grid_pos = get_player_pos_grid()
         # print(propagate(mapgen.Coord(player_grid_pos[0],player_grid_pos[1]),game_logic.current_map.grid()))
         update_map_near_player()
