@@ -361,7 +361,7 @@ class Player(pygame.sprite.Sprite):
 
     def __init__(self, initial_position=None):
         super().__init__(self.containers)
-        self.health = 5
+        self.health = 8
         self.origin_rect = self.image.get_rect(center=SCREENRECT.center)
         if initial_position is not None:
             (self.origin_rect.x, self.origin_rect.y) = initial_position
@@ -600,7 +600,7 @@ Ground.images = [
 ]
 Stairs.image = loadify("portal.png", size=20)
 Background.image = loadify("background.png", keep_ratio=True, size=2000)
-Cursor.image = loadify("cursor.png", size=10)
+Cursor.image = loadify("cursor.png", size=60)
 HealthIcon.image = loadify("heart.png", size=-25)
 
 Player._layer = 2
