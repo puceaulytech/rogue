@@ -91,6 +91,9 @@ def check_adjacent(x, y, grid):
 def get_player_pos_grid():
     return (round(player.origin_rect.x / dpi), round(player.origin_rect.y / dpi))
 
+def get_creature_pos_grid(creature):
+    return (round(creature.origin_rect.x / dpi), round(creature.origin_rect.y / dpi))
+
 def move_player_to_spawn():
     global camera_x, camera_y, player
     spawn_point = game_logic.current_map.rooms[0].center
@@ -101,10 +104,6 @@ def move_player_to_spawn():
     (player.origin_rect.x, player.origin_rect.y) = (spawn_point.x * dpi, spawn_point.y * dpi)
 
 def update_map_near_player():
-    # for s in toredraw_group.sprites():
-    #     s.kill()
-    # toredraw_group.clear(screen, SCREENRECT)
-    # toredraw_group.empty()
     player_grid_pos = get_player_pos_grid()
     coords = propagate(mapgen.Coord(player_grid_pos[0], player_grid_pos[1]), map_grid)
     for c in coords:
@@ -113,21 +112,23 @@ def update_map_near_player():
         if elem in ("%", "#", "x", "S"):
             if (x, y) not in already_drawn:
                 Ground((x * dpi, y * dpi))
+                if elem == "S":
+                    Stairs((x * dpi, y * dpi))
                 already_drawn.append((x, y))
-            # fill_open(x, y, map_grid)
-            # if elem == "S":
-            #     Stairs((x * dpi, y * dpi))
-            # elif elem == "x":
-            #     creature_positions.append((x, y))
         elif elem == ".":
-            # if check_adjacent(x, y, map_grid):
             if (x, y) not in already_drawn:
                 Wall((x * dpi, y * dpi))
                 already_drawn.append((x, y))
 
+    for creature in creature_group.sprites():
+        if get_creature_pos_grid(creature) in already_drawn:
+            all_sprites.add(creature)
+        else:
+            all_sprites.remove(creature)
+
 
 def draw_map():
-    global stairs_list, map_grid
+    global map_grid
     for s in mapdependent_group.sprites():
         s.kill()
     mapdependent_group.clear(screen, SCREENRECT)
@@ -140,16 +141,8 @@ def draw_map():
     for y, row in enumerate(map_grid):
         for x, elem in enumerate(row):
             if elem in ("%", "#", "x", "S"):
-                #Ground((x * dpi, y * dpi))
-                #fill_open(x, y, map_grid)
-                if elem == "S":
-                    Stairs((x * dpi, y * dpi))
-                    stairs_list.append([x,y])
-                elif elem == "x":
+                if elem == "x":
                     creature_positions.append((x, y))
-            # elif elem == ".":
-            #     if check_adjacent(x, y, map_grid):
-            #         Wall((x * dpi, y * dpi))
 
     for x, y in creature_positions:
         abstract_creature = list(
@@ -641,12 +634,6 @@ frame_index = 0
 
 ###########################################   MAIN LOOP  ###########################################
 while True:
-
-    target = stairs_list[game_logic.active_level]
-    ez = translated_rect(pygame.Rect((target[0]*dpi,target[1]*dpi),(1,1)))
-    #print(math.atan2(translated_rect(player.origin_rect).y - ez.y, translated_rect(player.origin_rect).x - ez.x) * 180 /math.pi)
-
-
 
     if frame_index%1 ==0:
         # player_grid_pos = get_player_pos_grid()
