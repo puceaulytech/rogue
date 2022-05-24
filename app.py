@@ -50,12 +50,13 @@ def loadify(path, size=0, keep_ratio=False):
 
 def inverse_direction(direction):
     return (-direction[0], -direction[1])
+def get_angle(x1,x2,y1,y2):
+    return(math.atan2(y2 - y1, x2 - x1) * 180 /math.pi)
 
-
-def rotate_image(image, angle, x, y):
+def rotate_image(image, angle):
     rotated_image = pygame.transform.rotate(image, angle)
-    new_rect = rotated_image.get_rect(center=image.get_rect(center=(x, y)).center)
-    return rotated_image, new_rect
+    
+    return rotated_image
 
 
 def translated_rect(rect):
@@ -494,6 +495,7 @@ class Creature(pygame.sprite.Sprite):
     def __init__(self, initial_position, assets, speed=0.1, flying=False):
         self.local_frame_index = random.randint(0, 100000)
         super().__init__(self.containers)
+        self.angle = 0
         self.health = 3
         self.flying = flying
         self.speed = speed
@@ -511,7 +513,17 @@ class Creature(pygame.sprite.Sprite):
     def rect(self):
         return translated_rect(self.origin_rect)
 
+    def rotate_towards_player(self,playerx,playery):
+        angle_towards_player = get_angle(playerx,self.origin_rect.x,playery,self.origin_rect.y)
+        delta = angle_towards_player-self.angle
+        print(angle_towards_player)
+        if abs(delta)> 10 : 
+            for i in self.images:
+                i = rotate_image(i,delta)
+            self.angle += delta
+            self.origin_rect = self.images[0].get_rect()
     def update(self):
+        
         self.local_frame_index += 1
         if len(self.images) != 1:
             if self.local_frame_index % 20 == 0:
@@ -519,6 +531,7 @@ class Creature(pygame.sprite.Sprite):
                 if (self.currimage) >= len(self.images):
                     self.currimage = 0
                 self.image = self.images[self.currimage]
+
         distance_to_player = math.sqrt(
             (self.origin_rect.x - player.origin_rect.x) ** 2
             + (self.origin_rect.y - player.origin_rect.y) ** 2
@@ -636,16 +649,18 @@ dialog.message = "MEGA CHEVALIER"
 
 for i in range(player.health):
     HealthIcon(offset=i)
-particle_system = ParticleEffect(100,200,spawner=screen.get_rect(),forces= [0.1,0.05])
+particle_system = ParticleEffect(10,200,spawner=screen.get_rect(),forces= [0.1,0.05])
 frame_index = 0
 
 ###########################################   MAIN LOOP  ###########################################
+print(creature_group.sprites()[0].rect.x)
 while True:
 
-    target = stairs_list[game_logic.active_level]
-    ez = translated_rect(pygame.Rect((target[0]*dpi,target[1]*dpi),(1,1)))
-    #print(math.atan2(translated_rect(player.origin_rect).y - ez.y, translated_rect(player.origin_rect).x - ez.x) * 180 /math.pi)
 
+    #print(math.atan2(translated_rect(player.origin_rect).y - ez.y, translated_rect(player.origin_rect).x - ez.x) * 180 /math.pi)
+    creature_group.sprites()[0].rotate_towards_player(player.origin_rect.x,player.origin_rect.y)
+    
+    #print(player.origin_rect.x)
 
 
     if frame_index%1 ==0:
