@@ -2,6 +2,7 @@ import random
 import math
 import sys
 import os
+from matplotlib.pyplot import get
 import pygame
 import mapgen
 import itertools
@@ -131,15 +132,38 @@ def draw_map():
         )
 
 
-def get_adjacent_case():
-    pass
+def get_adjacent_case(x,y,grid):
+    if x > 0 and x < len(grid[0]) and y > 0 and y < len(grid):
+        return list( mapgen.Coord(x+1,y), mapgen.Coord(x-1,y), mapgen.Coord(x,y+1), mapgen.Coord(x,y-1))
 
 
-def propagate(start, target, max_recursive_depth):
+
+def is_case_goodenough(coo,grid): 
+    case = grid[coo.x][coo.y]
+    if case in ["#", "%", "X","S","x"]:
+        return True
+    return False
+
+def propagate(start,grid, max_recursive_depth = 5 ):
     visible = [] 
     to_iter = [start]
+    to_iter_next = []
+    current_recursion = []
     for i in range(max_recursive_depth):
         for j in to_iter:
+            print(j)
+            current_recursion = get_adjacent_case(j.x,j.y,grid)
+            print(current_recursion)
+            for k in current_recursion : 
+                if k not in visible : 
+                    visible.append(k)
+                if is_case_goodenough(k):
+                    to_iter_next.append(k)
+            current_recursion.clear()
+        to_iter.clear()
+        to_iter = to_iter_next.copy()
+        to_iter_next.clear()
+    return visible
 
 
 
@@ -547,6 +571,7 @@ for i in range(player.health):
     HealthIcon(offset=i)
 particle_system = ParticleEffect(100,200,spawner=screen.get_rect(),forces= [0.1,0.05])
 frame_index = 0
+print(propagate(mapgen.Coord(,player.origin_rect.y),game_logic.current_map.grid()))
 ###########################################   MAIN LOOP  ###########################################
 while True:
     frame_index += 1
