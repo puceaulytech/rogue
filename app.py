@@ -99,6 +99,10 @@ def move_player_to_spawn():
     (player.origin_rect.x, player.origin_rect.y) = (spawn_point.x * dpi, spawn_point.y * dpi)
 
 def update_map_near_player():
+    for s in toredraw_group.sprites():
+        s.kill()
+    toredraw_group.clear(screen, SCREENRECT)
+    toredraw_group.empty()
     player_grid_pos = get_player_pos_grid()
     coords = propagate(mapgen.Coord(player_grid_pos[0], player_grid_pos[1]), game_logic.current_map.grid())
     for c in coords:
@@ -552,6 +556,7 @@ pygame.display.flip()
 
 all_sprites = pygame.sprite.LayeredUpdates()
 mapdependent_group = pygame.sprite.Group()
+toredraw_group = pygame.sprite.Group()
 stairs_group = pygame.sprite.Group()
 obstacle_group = pygame.sprite.Group()
 creature_group = pygame.sprite.Group()
@@ -562,10 +567,10 @@ inventoryobject_group = pygame.sprite.Group()
 
 Player.containers = all_sprites
 InventoryObject.containers = all_sprites, inventoryobject_group, mapdependent_group
-Ground.containers = all_sprites, mapdependent_group
+Ground.containers = all_sprites, mapdependent_group, toredraw_group
 Stairs.containers = all_sprites, mapdependent_group, stairs_group
 Background.containers = all_sprites
-Wall.containers = all_sprites, obstacle_group, mapdependent_group
+Wall.containers = all_sprites, obstacle_group, mapdependent_group, toredraw_group
 Creature.containers = all_sprites, creature_group, mapdependent_group
 Cursor.containers = all_sprites, hud_group
 FPSCounter.containers = all_sprites, hud_group
