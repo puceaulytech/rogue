@@ -85,6 +85,9 @@ def check_adjacent(x, y, grid):
             return True
     return False
 
+def get_player_pos_grid():
+    return (round(player.origin_rect.x / dpi), round(player.origin_rect.y / dpi))
+
 def move_player_to_spawn():
     global camera_x, camera_y, player
     spawn_point = game_logic.current_map.rooms[0].center
@@ -604,5 +607,7 @@ while True:
     particle_system.update(ticked)
     screen.blit(plane,(0,0))
     pygame.display.update(dirty)
+
+    print(get_player_pos_grid())
 
     fps = clock.get_fps()
