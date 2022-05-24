@@ -36,7 +36,9 @@ camera_size = 20
 camera_x, camera_y = 0, 0
 
 dpi = width / camera_size
+
 stairs_list = []
+already_drawn = []
 
 def loadify(path, size=0, keep_ratio=False):
     global dpi
@@ -99,17 +101,19 @@ def move_player_to_spawn():
     (player.origin_rect.x, player.origin_rect.y) = (spawn_point.x * dpi, spawn_point.y * dpi)
 
 def update_map_near_player():
-    for s in toredraw_group.sprites():
-        s.kill()
-    toredraw_group.clear(screen, SCREENRECT)
-    toredraw_group.empty()
+    # for s in toredraw_group.sprites():
+    #     s.kill()
+    # toredraw_group.clear(screen, SCREENRECT)
+    # toredraw_group.empty()
     player_grid_pos = get_player_pos_grid()
     coords = propagate(mapgen.Coord(player_grid_pos[0], player_grid_pos[1]), game_logic.current_map.grid())
     for c in coords:
         x, y = c
         elem = game_logic.current_map.get_character_at(c)
         if elem in ("%", "#", "x", "S"):
-            Ground((x * dpi, y * dpi))
+            if (x, y) not in already_drawn:
+                Ground((x * dpi, y * dpi))
+                already_drawn.append((x, y))
             # fill_open(x, y, map_grid)
             # if elem == "S":
             #     Stairs((x * dpi, y * dpi))
@@ -117,7 +121,10 @@ def update_map_near_player():
             #     creature_positions.append((x, y))
         elif elem == ".":
             # if check_adjacent(x, y, map_grid):
-            Wall((x * dpi, y * dpi))
+            if (x, y) not in already_drawn:
+                Wall((x * dpi, y * dpi))
+                already_drawn.append((x, y))
+
 
 def draw_map():
     global stairs_list
@@ -126,6 +133,7 @@ def draw_map():
     mapdependent_group.clear(screen, SCREENRECT)
     mapdependent_group.empty()
     map_grid = game_logic.current_map.grid()
+    already_drawn.clear()
 
     creature_positions = []  # TODO: use layers
 
