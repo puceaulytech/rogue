@@ -325,8 +325,9 @@ class Map:
 
     def display(self, custom_grid=None):
         """Display grid on stdout"""
-        grid = self.grid() if custom_grid is None else custom_grid
-        for line in grid:
+        if custom_grid is None :
+            custom_grid = self.grid() 
+        for line in custom_grid:
             for elem in line:
                 print(elem, end="")
             print("\n", end="")

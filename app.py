@@ -577,10 +577,13 @@ for i in range(player.health):
     HealthIcon(offset=i)
 particle_system = ParticleEffect(100,200,spawner=screen.get_rect(),forces= [0.1,0.05])
 frame_index = 0
-player_grid_pos = get_player_pos_grid()
-print(propagate(mapgen.Coord(player_grid_pos[0],player_grid_pos[1]),game_logic.current_map.grid()))
+
 ###########################################   MAIN LOOP  ###########################################
 while True:
+    if frame_index%60 ==0: 
+        player_grid_pos = get_player_pos_grid()
+        print(propagate(mapgen.Coord(player_grid_pos[0],player_grid_pos[1]),game_logic.current_map.grid()))
+        
     frame_index += 1
     if frame_index % 5 == 0:
         pass
