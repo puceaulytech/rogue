@@ -655,18 +655,10 @@ particle_system = ParticleEffect(10,200,spawner=screen.get_rect(),forces= [0.1,0
 frame_index = 0
 
 ###########################################   MAIN LOOP  ###########################################
-print(creature_group.sprites()[0].rect.x)
 while True:
 
 
-    #print(math.atan2(translated_rect(player.origin_rect).y - ez.y, translated_rect(player.origin_rect).x - ez.x) * 180 /math.pi)
-
-    #print(player.origin_rect.x)
-
-
     if frame_index%1 ==0:
-        # player_grid_pos = get_player_pos_grid()
-        # print(propagate(mapgen.Coord(player_grid_pos[0],player_grid_pos[1]),game_logic.current_map.grid()))
         update_map_near_player()
         
     frame_index += 1
