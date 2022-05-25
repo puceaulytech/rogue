@@ -39,6 +39,7 @@ camera_x, camera_y = 0, 0
 
 dpi = width / camera_size
 
+
 already_drawn = []
 
 def loadify(path, size=0, keep_ratio=False):
@@ -502,7 +503,7 @@ class Creature(pygame.sprite.Sprite):
             self.images.append(loadify(assets[i], 10, keep_ratio=True))
         self.image = self.images[self.currimage]
         self.origin_rect = self.image.get_rect()
-        (self.origin_rect.x, self.origin_rect.y) = initial_position
+        (self.origin_rect.x, self.origin_rect.y) = initial_position 
 
     @property
     def rect(self):
@@ -654,10 +655,14 @@ particle_system = ParticleEffect(10,200,spawner=screen.get_rect(),forces= [0.1,0
 frame_index = 0
 
 ###########################################   MAIN LOOP  ###########################################
+
 while True:
 
 
+
+
     if frame_index%1 ==0:
+
         update_map_near_player()
         
     frame_index += 1
