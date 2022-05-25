@@ -185,15 +185,8 @@ class Map:
             position=None,
             difficulty=1,
             speed=0.1,
-            flying=True,
-        ),
-        Creature(
-            ["dragon.png"],
-            position=None,
-            difficulty=2,
-            speed=0.2,
             flying=False,
-        ),
+        )
     ]
 
     def __init__(self, width, height, max_rooms=4):
