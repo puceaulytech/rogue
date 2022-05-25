@@ -509,16 +509,21 @@ class Creature(pygame.sprite.Sprite):
 
     def rotate_towards_player(self,playerx,playery):
         angle_towards_player = get_angle(playerx,self.origin_rect.x,playery,self.origin_rect.y)
-        delta = angle_towards_player-self.angle
-        if abs(delta)> 10 :
-            for i in range(len(self.images)):
-                self.images[i] = rotate_image(self.images[i],delta)
-            self.angle += delta
+        if abs(angle_towards_player)>10 : 
+            self.image = rotate_image(self.image,angle_towards_player)
             self.origin_rect = self.image.get_rect(center = self.origin_rect.center)
 
             
     def update(self):
-        
+        playerx = player.origin_rect.center[0]
+        playery = player.origin_rect.center[1]
+        angle_towards_player = get_angle(playerx,self.origin_rect.x,playery,self.origin_rect.y)
+
+        if abs(angle_towards_player)>10 : 
+
+            self.image = rotate_image(self.images[self.currimage],angle_towards_player)
+
+            self.origin_rect = self.image.get_rect(center = self.origin_rect.center)
         self.local_frame_index += 1
         if len(self.images) != 1:
             if self.local_frame_index % 20 == 0:
@@ -651,9 +656,21 @@ frame_index = 0
 ###########################################   MAIN LOOP  ###########################################
 while True:
 
+<<<<<<< HEAD
     creature_group.sprites()[0].rotate_towards_player(player.origin_rect.x,player.origin_rect.y)
     
     if frame_index%5 ==0:
+=======
+
+    #print(math.atan2(translated_rect(player.origin_rect).y - ez.y, translated_rect(player.origin_rect).x - ez.x) * 180 /math.pi)
+
+    #print(player.origin_rect.x)
+
+
+    if frame_index%1 ==0:
+        # player_grid_pos = get_player_pos_grid()
+        # print(propagate(mapgen.Coord(player_grid_pos[0],player_grid_pos[1]),game_logic.current_map.grid()))
+>>>>>>> c3b16a6 (ez)
         update_map_near_player()
         
     frame_index += 1
