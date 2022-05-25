@@ -185,7 +185,7 @@ class Map:
             position=None,
             difficulty=1,
             speed=0.1,
-            flying=True,
+            flying=False,
         )
     ]
 
