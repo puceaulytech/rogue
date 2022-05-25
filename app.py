@@ -169,7 +169,6 @@ def propagate(start,grid, max_recursive_depth = 5 ):
         to_iter.clear()
         to_iter = to_iter_next.copy()
         to_iter_next.clear()
-    print("visible :" + str(visible))
     return visible
 
 
@@ -185,13 +184,6 @@ def propagate(start,grid, max_recursive_depth = 5 ):
 
 
 
-
-class Mask(pygame.sprite.Sprite):
-    def __init__(self):
-        super().__init__(self.containers)
-        self.image = loadify("mask.png", keep_ratio=True, keep_size=True)
-        self.rect = self.image.get_rect()
-        (self.rect.x, self.rect.y) = (0, 0)
 
 class FPSCounter(pygame.sprite.Sprite):
     def __init__(self):
@@ -562,7 +554,6 @@ Cursor.containers = all_sprites, hud_group
 FPSCounter.containers = all_sprites, hud_group
 HealthIcon.containers = all_sprites, hud_group, healthbar_group
 Dialog.containers = all_sprites, hud_group
-Mask.containers = all_sprites, hud_group
 
 
 Player.image = loadify("terro.png", size=-10)
@@ -590,10 +581,8 @@ FPSCounter._layer = 3
 Dialog._layer = 3
 HealthIcon._layer = 3
 Creature._layer = 2
-Mask._layer = 2
 
 background_sprite = Background()
-Mask()
 
 player = Player(initial_position=(0, 0))
 
@@ -615,7 +604,6 @@ frame_index = 0
 while True:
     if frame_index%60 ==0: 
         player_grid_pos = get_player_pos_grid()
-        print(propagate(mapgen.Coord(player_grid_pos[0],player_grid_pos[1]),game_logic.current_map.grid()))
         
     frame_index += 1
     if frame_index % 5 == 0:
