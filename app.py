@@ -1,4 +1,5 @@
 import random
+from collections import defaultdict
 import math
 import sys
 import os
@@ -202,8 +203,40 @@ def propagate(start,grid, max_recursive_depth = 5 ):
     return visible
 
 
+def get_neighbours(position):
+    x, y = position
+    return [
+        (x+1, y),
+        (x-1, y),
+        (x, y+1),
+        (x, y-1)
+    ]
 
 
+def bfs(creature, grid):
+    start = get_creature_pos_grid(creature)
+    goal = get_player_pos_grid()
+
+    queue = [start]
+    visited = [start]
+    parents = defaultdict(lambda: None)
+
+    while len(queue) != 0:
+        current = queue.pop(0)
+
+        if current == goal:
+            path = []
+            while current:
+                path.insert(0, current)
+                current = parents[current]
+            return path
+
+        neighbours = get_neighbours(current)
+        for n in neighbours:
+            if is_case_goodenough(mapgen.Coord(n[0], n[1]), grid) and n not in visited:
+                visited.append(n)
+                parents[n] = current
+                queue.append(n)
 
 
 
@@ -653,6 +686,8 @@ for i in range(player.health):
 particle_system = ParticleEffect(10,200,spawner=screen.get_rect(),forces= [0.1,0.05])
 frame_index = 0
 
+print(bfs(creature_group.sprites()[0], map_grid))
+
 ###########################################   MAIN LOOP  ###########################################
 while True:
 
@@ -722,3 +757,5 @@ while True:
     pygame.display.update(dirty)
 
     fps = clock.get_fps()
+
+
