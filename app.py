@@ -29,6 +29,8 @@ pygame.display.set_caption("ChadRogue")
 pygame.mouse.set_visible(False)
 pygame.mixer.music.load("assets/music.ogg")
 pygame.mixer.music.play(-1)
+
+hit_sound = pygame.mixer.Sound("assets/hitted.ogg")
 clock = pygame.time.Clock()
 
 plane = pygame.Surface((size), pygame.SRCALPHA)
@@ -91,6 +93,9 @@ def check_adjacent(x, y, grid):
 def get_player_pos_grid():
     return (round(player.origin_rect.x / dpi), round(player.origin_rect.y / dpi))
 
+def get_creature_pos_grid(creature):
+    return (round(creature.origin_rect.x / dpi), round(creature.origin_rect.y / dpi))
+
 def move_player_to_spawn():
     global camera_x, camera_y, player
     spawn_point = game_logic.current_map.rooms[0].center
@@ -101,33 +106,37 @@ def move_player_to_spawn():
     (player.origin_rect.x, player.origin_rect.y) = (spawn_point.x * dpi, spawn_point.y * dpi)
 
 def update_map_near_player():
-    # for s in toredraw_group.sprites():
-    #     s.kill()
-    # toredraw_group.clear(screen, SCREENRECT)
-    # toredraw_group.empty()
     player_grid_pos = get_player_pos_grid()
-    coords = propagate(mapgen.Coord(player_grid_pos[0], player_grid_pos[1]), game_logic.current_map.grid())
+    coords = propagate(mapgen.Coord(player_grid_pos[0], player_grid_pos[1]), map_grid)
     for c in coords:
         x, y = c
         elem = game_logic.current_map.get_character_at(c)
         if elem in ("%", "#", "x", "S","o"):
             if (x, y) not in already_drawn:
                 Ground((x * dpi, y * dpi))
+                if elem == "S":
+                    Stairs((x * dpi, y * dpi))
                 already_drawn.append((x, y))
-            # fill_open(x, y, map_grid)
-            # if elem == "S":
-            #     Stairs((x * dpi, y * dpi))
-            # elif elem == "x":
-            #     creature_positions.append((x, y))
         elif elem == ".":
-            # if check_adjacent(x, y, map_grid):
             if (x, y) not in already_drawn:
                 Wall((x * dpi, y * dpi))
                 already_drawn.append((x, y))
 
+    for creature in creature_group.sprites():
+        if get_creature_pos_grid(creature) in already_drawn:
+            all_sprites.add(creature)
+        else:
+            all_sprites.remove(creature)
+
+    for item in inventoryobject_group.sprites():
+        if get_creature_pos_grid(item) in already_drawn:
+            all_sprites.add(item)
+        else:
+            all_sprites.remove(item)
+
 
 def draw_map():
-    global stairs_list
+    global map_grid
     for s in mapdependent_group.sprites():
         s.kill()
     mapdependent_group.clear(screen, SCREENRECT)
@@ -140,19 +149,10 @@ def draw_map():
 
     for y, row in enumerate(map_grid):
         for x, elem in enumerate(row):
-            if elem in ("%", "#", "x", "S","o"):
-                #Ground((x * dpi, y * dpi))
-                #fill_open(x, y, map_grid)
-                if elem == "S":
-                    Stairs((x * dpi, y * dpi))
-                    stairs_list.append([x,y])
-                elif elem == "x":
-                    creature_positions.append((x, y))
-                elif elem == "o":
-                    item_positions.append((x,y))
-            # elif elem == ".":
-            #     if check_adjacent(x, y, map_grid):
-            #         Wall((x * dpi, y * dpi))
+            if elem == "x":
+                creature_positions.append((x, y))
+            elif elem == "o":
+                item_positions.append((x, y))
 
     for x, y in creature_positions:
         abstract_creature = list(
@@ -167,9 +167,9 @@ def draw_map():
     for x,y in item_positions:
       abstract_item = list(filter(lambda c : c.position == mapgen.Coord(x,y), game_logic.current_map.items))[0]
       InventoryObject(
-        (x*dpi,y*dpi),
+        (x * dpi, y * dpi),
         abstract_item.id
-        )
+      )
 
 def get_adjacent_case(x,y,grid):
     if x > 0 and x < len(grid[0]) and y > 0 and y < len(grid):
@@ -381,7 +381,7 @@ class Player(pygame.sprite.Sprite):
 
     def __init__(self, initial_position=None):
         super().__init__(self.containers)
-        self.health = 5
+        self.health = 8
         self.origin_rect = self.image.get_rect(center=SCREENRECT.center)
         if initial_position is not None:
             (self.origin_rect.x, self.origin_rect.y) = initial_position
@@ -557,6 +557,7 @@ class Creature(pygame.sprite.Sprite):
                 and time.time() - self.last_attack > self.attack_cooldown
             ):
                 player.health -= 1
+                hit_sound.play()
                 if not player.health < 0:  # TODO: juste pour éviter le crash
                     healthbar_group.sprites()[-1].kill()
                 self.last_attack = time.time()
@@ -584,7 +585,9 @@ class Cursor(pygame.sprite.Sprite):
 
 
 game_logic = mapgen.Game(max_levels=3)
+map_grid = None
 game_logic.current_map.display()
+
 
 
 background = pygame.Surface(size)
@@ -627,7 +630,7 @@ Ground.images = [
 ]
 Stairs.image = loadify("portal.png", size=20)
 Background.image = loadify("background.png", keep_ratio=True, size=2000)
-Cursor.image = loadify("cursor.png", size=10)
+Cursor.image = loadify("cursor.png", size=60)
 HealthIcon.image = loadify("heart.png", size=-25)
 
 Player._layer = 2
@@ -662,14 +665,7 @@ frame_index = 0
 
 ###########################################   MAIN LOOP  ###########################################
 while True:
-
-    target = stairs_list[game_logic.active_level]
-    ez = translated_rect(pygame.Rect((target[0]*dpi,target[1]*dpi),(1,1)))
-
-
     if frame_index%5 ==0: 
-        # player_grid_pos = get_player_pos_grid()
-        # print(propagate(mapgen.Coord(player_grid_pos[0],player_grid_pos[1]),game_logic.current_map.grid()))
         update_map_near_player()
         
     frame_index += 1
