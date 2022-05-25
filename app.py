@@ -39,7 +39,6 @@ camera_x, camera_y = 0, 0
 
 dpi = width / camera_size
 
-stairs_list = []
 already_drawn = []
 
 def loadify(path, size=0, keep_ratio=False):
