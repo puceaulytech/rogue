@@ -97,7 +97,7 @@ class CircleRoom:
     def __init__(self, center, radius):
         self.center = center
         self.radius = radius
-
+        self.size = radius
     def __repr__(self):
         return f"<mapgen.CircleRoom center={self.center},radius={self.radius}>"
 
@@ -129,7 +129,7 @@ class Room:
         self.top_left = top_left
         self.width = width
         self.height = height
-
+        self.size = max(width,height)
     @property
     def bottom_right(self):
         return self.top_left + Coord(self.width - 1, self.height - 1)
@@ -253,7 +253,10 @@ class Map:
             nb_creatures = random.randint(0, 2)
             weights = list(map(lambda c: 1 / c.difficulty, Map.available_creatures))
             for _ in range(nb_creatures):
-                position = self.find_valid_random_coord(room)
+                a = self.find_valid_random_coord(room)
+                while a.distance(room.center) > room.size - 2:
+                    a = self.find_valid_random_coord(room)
+                position = a
                 creature = copy.copy(
                     random.choices(Map.available_creatures, weights, k=1)[0]
                 )
