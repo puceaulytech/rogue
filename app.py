@@ -53,7 +53,9 @@ def loadify(path, size=0, keep_ratio=False):
 def inverse_direction(direction):
     return (-direction[0], -direction[1])
 def get_angle(x1,x2,y1,y2):
-    return(math.atan2(y2 - y1, x2 - x1) * 180 /math.pi)
+    dx = x1-x2
+    dy = y1-y2
+    return((math.atan2( -dy,dx) * 180 /math.pi)-90)
 
 def rotate_image(image, angle):
     rotated_image = pygame.transform.rotate(image, angle)
@@ -515,15 +517,9 @@ class Creature(pygame.sprite.Sprite):
 
             
     def update(self):
-        playerx = player.origin_rect.center[0]
-        playery = player.origin_rect.center[1]
-        angle_towards_player = get_angle(playerx,self.origin_rect.x,playery,self.origin_rect.y)
 
-        if abs(angle_towards_player)>10 : 
 
-            self.image = rotate_image(self.images[self.currimage],angle_towards_player)
-
-            self.origin_rect = self.image.get_rect(center = self.origin_rect.center)
+        
         self.local_frame_index += 1
         if len(self.images) != 1:
             if self.local_frame_index % 20 == 0:
@@ -531,6 +527,7 @@ class Creature(pygame.sprite.Sprite):
                 if (self.currimage) >= len(self.images):
                     self.currimage = 0
                 self.image = self.images[self.currimage]
+        
 
         distance_to_player = math.sqrt(
             (self.origin_rect.x - player.origin_rect.x) ** 2
@@ -553,6 +550,15 @@ class Creature(pygame.sprite.Sprite):
                 if not player.health < 0:  # TODO: juste pour éviter le crash
                     healthbar_group.sprites()[-1].kill()
                 self.last_attack = time.time()
+        if distance_to_player <10*dpi:
+            playerx = player.origin_rect.center[0]
+            playery = player.origin_rect.center[1]
+            angle_towards_player = get_angle(playerx,self.origin_rect.center[0],playery,self.origin_rect.center[1])
+            if abs(angle_towards_player)>10 : 
+
+                self.image = rotate_image(self.images[self.currimage],angle_towards_player)
+
+                self.origin_rect = self.image.get_rect(center = self.origin_rect.center)
 
     def move(self, direction, delta_time):
         direction = tuple([round(self.speed * delta_time * c) for c in direction])
