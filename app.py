@@ -336,7 +336,7 @@ class InventoryObject(pygame.sprite.Sprite):
 
     @property
     def rect(self):
-        return translated_rect(self.origin_rect)
+        return self.origin_rect if self in player_inv_group.sprites() else translated_rect(self.origin_rect)
 
     def move(self, direction, delta_time):
         direction = tuple([round(delta_time * c) for c in direction])
@@ -344,9 +344,13 @@ class InventoryObject(pygame.sprite.Sprite):
 
     def update(self):
         if pygame.sprite.collide_rect(player, self):
-          player.take(self)
-          self.kill()
-          player_inv_group.add(self)
+          offset = player.inventory.first_empty_slot()
+          if player.take(self):
+            self.kill()
+            print(player_inv_group.sprites()[offset].rect)
+            self.origin_rect = pygame.Rect(player_inv_group.sprites()[offset].rect[0:2],self.rect[2:4])
+            self.image = pygame.transform.scale(self.image,(40,40))
+            player_inv_group.add(self)
 
 class Weapon(InventoryObject):
     def __init__(self, initial_position, asset, attack_cooldown, durability):
@@ -378,6 +382,7 @@ class Sword(Weapon):
 class Player(pygame.sprite.Sprite):
     speed = 0.35
     inventory_size = 5
+    show_inv = False
 
     def __init__(self, initial_position=None):
         super().__init__(self.containers)
@@ -385,7 +390,7 @@ class Player(pygame.sprite.Sprite):
         self.origin_rect = self.image.get_rect(center=SCREENRECT.center)
         if initial_position is not None:
             (self.origin_rect.x, self.origin_rect.y) = initial_position
-        self.inventory = [None for i in range(Player.inventory_size)]
+        self.inventory = Inventory([None for i in range(Player.inventory_size)],self.origin_rect[0:2])
 
     def move(self, direction, delta_time):
         global camera_x, camera_y
@@ -417,12 +422,57 @@ class Player(pygame.sprite.Sprite):
         screen.blit(self.image, translated_rect(self.origin_rect))
 
     def take(self,thing):
-      if isinstance(thing,InventoryObject):
-        if None in self.inventory:
-          empty_slot = min(list(i for i in range(len(self.inventory)) if self.inventory[i] is None))
-          self.inventory[empty_slot] = thing
+     if isinstance(thing,InventoryObject):
+       return self.inventory.add(thing)
+     raise TypeError("Not an object")
+
+class InvSlot(pygame.sprite.Sprite):
+    def __init__(self, offset):
+        super().__init__(self.containers)
+        self.rect = self.image.get_rect().move((width/2)+dpi * (1+offset * 0.7),- dpi + (height/2))
+
+class Inventory(pygame.sprite.Sprite):
+  inv_case = loadify("inv.png",size=20)
+  case_rect = inv_case.get_rect()
+  def __init__(self,items,position):
+    # super().__init__(self.containers)
+    self.items = items
+    self.size = len(self.items)
+    self.position = position
+    for i in range(len(self.items)):
+      InvSlot(i)
+
+  def __repr__(self):
+    return str(self.items)
+    
+  def has_empty_slot(self):
+    return None in self.items
+
+  def first_empty_slot(self):
+    return min(list(i for i in range(len(self.items)) if self.items[i] is None)) if self.has_empty_slot() else None
+
+  def add(self,thing):
+    if self.has_empty_slot():
+      self.items[self.first_empty_slot()] = thing
+      return True
+    return False
+
+  def update(self):
+    self.position = player.rect[0:2]
+    for i in player_inv_group.sprites():
+      if Player.show_inv:
+        all_sprites.add(i)
       else:
-        raise TypeError("Not an object")
+        all_sprites.remove(i)
+
+  def draw(self):
+    for i in range(len(self.items)):
+      InvSlot(i,self.position)
+      item = self.items[i]
+      if item is not None:
+        print(item.rect)
+        item.rect = player_inv_group.sprites()[i].rect
+      player_inv_group.draw(screen)
 
 class Particle:
     def __init__(self, coords, image=None, radius=None, lifetime=200):
@@ -607,6 +657,7 @@ player_inv_group = pygame.sprite.Group()
 
 Player.containers = all_sprites
 InventoryObject.containers = all_sprites, inventoryobject_group, mapdependent_group
+InvSlot.containers = all_sprites, player_inv_group
 Ground.containers = all_sprites, mapdependent_group, toredraw_group
 Stairs.containers = all_sprites, mapdependent_group, stairs_group
 Background.containers = all_sprites
@@ -616,7 +667,6 @@ Cursor.containers = all_sprites, hud_group
 FPSCounter.containers = all_sprites, hud_group
 HealthIcon.containers = all_sprites, hud_group, healthbar_group
 Dialog.containers = all_sprites, hud_group
-
 
 Player.image = loadify("terro.png", size=-10)
 Wall.image = loadify("stonebrick_cracked.png")
@@ -632,6 +682,7 @@ Stairs.image = loadify("portal.png", size=20)
 Background.image = loadify("background.png", keep_ratio=True, size=2000)
 Cursor.image = loadify("cursor.png", size=60)
 HealthIcon.image = loadify("heart.png", size=-25)
+InvSlot.image = loadify("inv.png", size=-20)
 
 Player._layer = 2
 Wall._layer = 1
@@ -644,6 +695,7 @@ Dialog._layer = 2
 HealthIcon._layer = 2
 Creature._layer = 2
 InventoryObject._layer = 2
+InvSlot._layer = 2
 
 background_sprite = Background()
 
@@ -676,6 +728,7 @@ while True:
     all_sprites.clear(screen, background)
 
     all_sprites.update()
+    player.inventory.update()
 
     if player.health <= 0:
         player.kill()
@@ -707,6 +760,8 @@ while True:
                     screen.blit(screen_backup, (0, 0))
                 pygame.display.flip()
                 fullscreen = not fullscreen
+            elif event.key == pygame.K_i:
+              Player.show_inv = not Player.show_inv
 
     keys = pygame.key.get_pressed()
     if keys[pygame.K_ESCAPE]:
