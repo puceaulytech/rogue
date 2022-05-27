@@ -347,7 +347,6 @@ class InventoryObject(pygame.sprite.Sprite):
           offset = player.inventory.first_empty_slot()
           if player.take(self):
             self.kill()
-            print(player_inv_group.sprites()[offset].rect)
             self.origin_rect = pygame.Rect(player_inv_group.sprites()[offset].rect[0:2],self.rect[2:4])
             self.image = pygame.transform.scale(self.image,(40,40))
             player_inv_group.add(self)
@@ -629,6 +628,8 @@ class Cursor(pygame.sprite.Sprite):
 
     def update_pos(self):
         (self.rect.x, self.rect.y) = pygame.mouse.get_pos()
+        self.rect.x -= self.rect[2]/2
+        self.rect.y -= self.rect[3]/2
 
     def update(self):
         self.update_pos()
@@ -762,6 +763,11 @@ while True:
                 fullscreen = not fullscreen
             elif event.key == pygame.K_i:
               Player.show_inv = not Player.show_inv
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+          pos = pygame.mouse.get_pos()
+          if Player.show_inv:
+            clicked_inv_sprites = [s for s in player.inventory.items if s is not None and s.rect.collidepoint(pos)]
+            print(clicked_inv_sprites)
 
     keys = pygame.key.get_pressed()
     if keys[pygame.K_ESCAPE]:
