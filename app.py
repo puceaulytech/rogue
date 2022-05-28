@@ -49,6 +49,14 @@ def loadify(path, size=0, keep_ratio=False):
     ratio = image.get_width() / image.get_height() if keep_ratio else 1
     return pygame.transform.scale(image, ((dpi + size) * ratio, dpi + size))
 
+def sign(x):
+    if x == 0:
+        return 0
+    elif x > 0:
+        return 1
+    elif x < 0:
+        return -1
+
 
 def inverse_direction(direction):
     return (-direction[0], -direction[1])
@@ -531,6 +539,7 @@ class Creature(pygame.sprite.Sprite):
         self.attack_cooldown = 1
         self.images = []
         self.currimage = 0
+        self.path_to_player = []
         for i in range(len(assets)):
             self.images.append(loadify(assets[i], 10, keep_ratio=True))
         self.image = self.images[self.currimage]
@@ -556,18 +565,24 @@ class Creature(pygame.sprite.Sprite):
                 self.image = self.images[self.currimage]
         
 
+        print("here")
+        self.path_to_player = bfs(self, map_grid)
         distance_to_player = math.sqrt(
             (self.origin_rect.x - player.origin_rect.x) ** 2
             + (self.origin_rect.y - player.origin_rect.y) ** 2
         )
         if distance_to_player < 5 * dpi:
-            dx = (player.origin_rect.x - self.origin_rect.x) / (
-                distance_to_player + 0.000001
-            )
-            dy = (player.origin_rect.y - self.origin_rect.y) / (
-                distance_to_player + 0.000001
-            )
+            # dx = (player.origin_rect.x - self.origin_rect.x) / (
+            #     distance_to_player + 0.000001
+            # )
+            # dy = (player.origin_rect.y - self.origin_rect.y) / (
+            #     distance_to_player + 0.000001
+            # )
+            # self.move((dx, dy), ticked)
+            dx = sign(self.origin_rect.x / dpi - self.path_to_player[0][0])
+            dy = sign(self.origin_rect.y / dpi - self.path_to_player[0][1])
             self.move((dx, dy), ticked)
+            print(dx, dy)
             if (
                 pygame.sprite.collide_rect(player, self)
                 and time.time() - self.last_attack > self.attack_cooldown
@@ -686,7 +701,6 @@ for i in range(player.health):
 particle_system = ParticleEffect(10,200,spawner=screen.get_rect(),forces= [0.1,0.05])
 frame_index = 0
 
-print(bfs(creature_group.sprites()[0], map_grid))
 
 ###########################################   MAIN LOOP  ###########################################
 while True:
