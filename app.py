@@ -399,10 +399,6 @@ class Player(pygame.sprite.Sprite):
         camera_y += direction[1]
         self.origin_rect.move_ip(direction)
         background_sprite.move(origin_direction, delta_time)
-        for inventory_object in pygame.sprite.spritecollide(
-            self, inventoryobject_group, False
-        ):
-            inventory_object.picked_up = True
         dialog.message = ""
         for stair_object in pygame.sprite.spritecollide(self, stairs_group, False):
             dialog.message = "Press E to go up"
@@ -469,7 +465,6 @@ class Inventory(pygame.sprite.Sprite):
       InvSlot(i,self.position)
       item = self.items[i]
       if item is not None:
-        print(item.rect)
         item.rect = player_inv_group.sprites()[i].rect
       player_inv_group.draw(screen)
 
@@ -766,9 +761,15 @@ while True:
         elif event.type == pygame.MOUSEBUTTONDOWN:
           pos = pygame.mouse.get_pos()
           if Player.show_inv:
-            clicked_inv_sprites = [s for s in player.inventory.items if s is not None and s.rect.collidepoint(pos)]
-            print(clicked_inv_sprites)
+            # quand un item est récup on scale son image or ça ne change pas son rect donc je test les collisions avec le rect de l'image avec les topleft superposés
+            clicked_inv_sprites = [s for s in player.inventory.items if s is not None and s.image.get_rect(topleft = s.rect.topleft).collidepoint(pos)]
+            if clicked_inv_sprites:
+              for s in player.inventory.items:
+                if s is not None:
+                  s.picked_up = False
+              clicked_inv_sprites[0].picked_up = True
 
+    print(",".join([str(i.picked_up) for i in player.inventory.items if i is not None]))
     keys = pygame.key.get_pressed()
     if keys[pygame.K_ESCAPE]:
         sys.exit(0)
