@@ -766,7 +766,7 @@ while True:
                     screen.blit(screen_backup, (0, 0))
                 pygame.display.flip()
                 fullscreen = not fullscreen
-            elif event.key == pygame.K_i:
+            elif event.key == pygame.K_i or event.key == pygame.K_TAB:
               Player.show_inv = not Player.show_inv
         elif event.type == pygame.MOUSEBUTTONDOWN:
           pos = pygame.mouse.get_pos()
