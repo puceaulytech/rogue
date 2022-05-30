@@ -105,7 +105,8 @@ def get_player_pos_grid():
     return (math.floor(center[0] / dpi), math.floor(center[1] / dpi))
 
 def get_creature_pos_grid(creature):
-    return (math.floor(creature.origin_rect.center[0] / dpi), math.floor(creature.origin_rect.center[1] / dpi))
+    center = creature.origin_rect.center
+    return (math.floor(center[0] / dpi), math.floor(center[1] / dpi))
 
 def move_player_to_spawn():
     global camera_x, camera_y, player
@@ -529,10 +530,8 @@ class Creature(pygame.sprite.Sprite):
         self.images = []
         self.currimage = 0
         self.path_to_player = []
-        self.old_dx = None
-        self.old_dy = None
-        self.target_x = None
-        self.target_y = None
+        self.collisions_rect = []
+        self.direction = (0, 0)
         for i in range(len(assets)):
             self.images.append(loadify(assets[i], size=-30, keep_ratio=True))
         self.image = self.images[self.currimage]
@@ -577,39 +576,25 @@ class Creature(pygame.sprite.Sprite):
                 trans = translated_rect(pygame.Rect((ezx,ezy),(1,1)))
 
                 points.append((trans.x,trans.y))
-            pygame.draw.lines(plane,(255,0,0,255),False,points)
+            try:
+                pygame.draw.lines(plane,(255,0,0,255),False,points)
+            except:
+                pass
+
             if len(self.path_to_player) > 1:
-                self.target_x = self.path_to_player[1][0]
-                self.target_y = self.path_to_player[1][1]
-                (pos_x, pos_y) = get_creature_pos_grid(self)
-                center_coords = (
-                    self.origin_rect.center[0],
-                    self.origin_rect.center[1],
-                )
-                th_coords = (
-                    int((self.target_x + 0.5) * dpi),
-                    int((self.target_y + 0.5) * dpi)
-                )
-                print("center:", center_coords)
-                print("thcoor:", th_coords)
-                is_goal_reached = self.target_x == pos_x and self.target_y == pos_y
-                if is_goal_reached or self.old_dx is None:
-                    if is_goal_reached:
-                        print("goal reached")
-                    dx = (self.target_x - pos_x)
-                    dy = (self.target_y - pos_y)
-                    self.old_dx = dx
-                    self.old_dy = dy
-                else:
-                    dx = self.old_dx
-                    dy = self.old_dy
-                    
-                # print("POS   :", pos_x, pos_y)
-                # print("TARGET:", self.target_x, self.target_y)
-                # print("DELTA :", dx, dy)
-                # print("PATH  :", self.path_to_player)
-                print("-------")
-                self.move((dx, dy), ticked)
+
+                self.collisions_rect.clear()
+                for point in self.path_to_player[1:]:
+                    x = (point[0] * dpi) + dpi / 2
+                    y = (point[1] * dpi) + dpi / 2
+                    rect = pygame.Rect((x - 2, y - 2), (4, 4))
+                    self.collisions_rect.append(rect)
+                start = pygame.math.Vector2(self.origin_rect.center)
+                end = pygame.math.Vector2(self.collisions_rect[0].center)
+                self.direction = (end - start).normalize()
+
+                self.move(self.direction, ticked)
+
             if (
                 pygame.sprite.collide_rect(player, self)
                 and time.time() - self.last_attack > self.attack_cooldown
