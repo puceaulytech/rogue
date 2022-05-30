@@ -572,8 +572,8 @@ class Creature(pygame.sprite.Sprite):
             # self.move((dx, dy), ticked)
             points = []
             for i in self.path_to_player : 
-                ezx = (i[0]*dpi)
-                ezy = (i[1]*dpi)
+                ezx = ((i[0]+0.5)*dpi)
+                ezy = ((i[1] + 0.5)*dpi)
                 trans = translated_rect(pygame.Rect((ezx,ezy),(1,1)))
 
                 points.append((trans.x,trans.y))
