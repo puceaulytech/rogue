@@ -385,6 +385,9 @@ class Player(pygame.sprite.Sprite):
 
     def __init__(self, initial_position=None):
         super().__init__(self.containers)
+        self.images = [loadify(i, size=-10) for i in self.assets]
+        self.currimage = 0
+        self.image = self.images[self.currimage]
         self.health = 8
         self.origin_rect = self.image.get_rect(center=SCREENRECT.center)
         if initial_position is not None:
@@ -418,7 +421,10 @@ class Player(pygame.sprite.Sprite):
 
     def update(self):
         if any(list(i.picked_up for i in self.inventory if i is not None)):
-            pass
+            self.currimage = 1
+        else:
+            self.currimage = 0
+        self.image = self.images[self.currimage]
 
     def take(self,thing):
      if isinstance(thing,InventoryObject):
@@ -674,7 +680,7 @@ FPSCounter.containers = all_sprites, hud_group
 HealthIcon.containers = all_sprites, hud_group, healthbar_group
 Dialog.containers = all_sprites, hud_group
 
-Player.image = loadify("terro.png", size=-10)
+Player.assets = ["terro.png","terro_but_mad.png"]
 Wall.image = loadify("stonebrick_cracked.png")
 Ground.images = [
     loadify("floor1.png"),
@@ -773,13 +779,13 @@ while True:
           if Player.show_inv:
             # quand un item est récup on scale son image or ça ne change pas son rect donc je test les collisions avec le rect de l'image avec les topleft superposés
             clicked_inv_sprites = [s for s in player.inventory.items if s is not None and s.image.get_rect(topleft = s.rect.topleft).collidepoint(pos)]
+            old_state = clicked_inv_sprites[0].picked_up
             if clicked_inv_sprites:
               for s in player.inventory.items:
                 if s is not None:
                   s.picked_up = False
-              clicked_inv_sprites[0].picked_up = True
+              clicked_inv_sprites[0].picked_up = not old_state
 
-    print(",".join([str(i.picked_up) for i in player.inventory if i is not None]))
     keys = pygame.key.get_pressed()
     if keys[pygame.K_ESCAPE]:
         sys.exit(0)
