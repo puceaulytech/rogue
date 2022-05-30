@@ -105,7 +105,7 @@ def get_player_pos_grid():
     return (math.floor(center[0] / dpi), math.floor(center[1] / dpi))
 
 def get_creature_pos_grid(creature):
-    return (math.floor(creature.origin_rect.x / dpi), math.floor(creature.origin_rect.y / dpi))
+    return (math.floor(creature.origin_rect.center[0] / dpi), math.floor(creature.origin_rect.center[1] / dpi))
 
 def move_player_to_spawn():
     global camera_x, camera_y, player
@@ -570,6 +570,14 @@ class Creature(pygame.sprite.Sprite):
             #     distance_to_player + 0.000001
             # )
             # self.move((dx, dy), ticked)
+            points = []
+            for i in self.path_to_player : 
+                ezx = (i[0]*dpi)
+                ezy = (i[1]*dpi)
+                trans = translated_rect(pygame.Rect((ezx,ezy),(1,1)))
+
+                points.append((trans.x,trans.y))
+            pygame.draw.lines(plane,(255,0,0,255),False,points)
             if len(self.path_to_player) > 1:
                 self.target_x = self.path_to_player[1][0]
                 self.target_y = self.path_to_player[1][1]
