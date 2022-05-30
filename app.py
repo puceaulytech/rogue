@@ -562,7 +562,7 @@ class Creature(pygame.sprite.Sprite):
             (self.origin_rect.x - player.origin_rect.x) ** 2
             + (self.origin_rect.y - player.origin_rect.y) ** 2
         )
-        if distance_to_player < 5 * dpi:
+        if distance_to_player < 1000 * dpi:
             # dx = (player.origin_rect.x - self.origin_rect.x) / (
             #     distance_to_player + 0.000001
             # )
@@ -571,12 +571,23 @@ class Creature(pygame.sprite.Sprite):
             # )
             # self.move((dx, dy), ticked)
             if len(self.path_to_player) > 1:
+                self.target_x = self.path_to_player[1][0]
+                self.target_y = self.path_to_player[1][1]
                 (pos_x, pos_y) = get_creature_pos_grid(self)
-                (dx, dy) = (None, None)
+                center_coords = (
+                    self.origin_rect.center[0],
+                    self.origin_rect.center[1],
+                )
+                th_coords = (
+                    int((self.target_x + 0.5) * dpi),
+                    int((self.target_y + 0.5) * dpi)
+                )
+                print("center:", center_coords)
+                print("thcoor:", th_coords)
                 is_goal_reached = self.target_x == pos_x and self.target_y == pos_y
-                if is_goal_reached or self.old_dx is None or self.target_x is None:
-                    self.target_x = self.path_to_player[1][0]
-                    self.target_y = self.path_to_player[1][1]
+                if is_goal_reached or self.old_dx is None:
+                    if is_goal_reached:
+                        print("goal reached")
                     dx = (self.target_x - pos_x)
                     dy = (self.target_y - pos_y)
                     self.old_dx = dx
@@ -586,9 +597,9 @@ class Creature(pygame.sprite.Sprite):
                     dy = self.old_dy
                     
                 # print("POS   :", pos_x, pos_y)
-                # print("TARGET:", target_x, target_y)
+                # print("TARGET:", self.target_x, self.target_y)
                 # print("DELTA :", dx, dy)
-                # print("PATH  : ", self.path_to_player)
+                # print("PATH  :", self.path_to_player)
                 print("-------")
                 self.move((dx, dy), ticked)
             if (
