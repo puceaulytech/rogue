@@ -8,7 +8,7 @@ import mapgen
 import itertools
 import time
 
-size = width, height = 1280, 720
+size = width, height = 1920, 1080
 black = 0, 0, 0
 white = 255, 255, 255
 fps = 0
@@ -318,7 +318,7 @@ class Background(pygame.sprite.Sprite):
 class Ground(pygame.sprite.Sprite):
     def __init__(self, initial_position=None):
         super().__init__(self.containers)
-        self.image = random.choice(random.choices(self.images, [1, 50, 1, 1, 1, 1]))
+        self.image = random.choice(random.choices(self.images, [5, 50, 1, 1, 1, 1]))
         self.origin_rect = self.image.get_rect()
         if initial_position is None:
             initial_position = (0, 0)
