@@ -416,6 +416,10 @@ class Player(pygame.sprite.Sprite):
     def draw(self, screen):
         screen.blit(self.image, translated_rect(self.origin_rect))
 
+    def update(self):
+        if any(list(i.picked_up for i in self.inventory if i is not None)):
+            pass
+
     def take(self,thing):
      if isinstance(thing,InventoryObject):
        return self.inventory.add(thing)
@@ -439,16 +443,22 @@ class Inventory(pygame.sprite.Sprite):
 
   def __repr__(self):
     return str(self.items)
+
+  def __getitem__(self,key):
+    return self.items[key]
+
+  def __setitem__(self,key,value):
+    self.items[key] = value
     
   def has_empty_slot(self):
     return None in self.items
 
   def first_empty_slot(self):
-    return min(list(i for i in range(len(self.items)) if self.items[i] is None)) if self.has_empty_slot() else None
+    return min(list(i for i in range(len(self.items)) if self[i] is None)) if self.has_empty_slot() else None
 
   def add(self,thing):
     if self.has_empty_slot():
-      self.items[self.first_empty_slot()] = thing
+      self[self.first_empty_slot()] = thing
       return True
     return False
 
@@ -463,7 +473,7 @@ class Inventory(pygame.sprite.Sprite):
   def draw(self):
     for i in range(len(self.items)):
       InvSlot(i,self.position)
-      item = self.items[i]
+      item = self[i]
       if item is not None:
         item.rect = player_inv_group.sprites()[i].rect
       player_inv_group.draw(screen)
@@ -685,7 +695,7 @@ Wall._layer = 1
 Ground._layer = 1
 Stairs._layer = 2
 Background._layer = 0
-Cursor._layer = 2
+Cursor._layer = 3 
 FPSCounter._layer = 2
 Dialog._layer = 2
 HealthIcon._layer = 2
@@ -769,7 +779,7 @@ while True:
                   s.picked_up = False
               clicked_inv_sprites[0].picked_up = True
 
-    print(",".join([str(i.picked_up) for i in player.inventory.items if i is not None]))
+    print(",".join([str(i.picked_up) for i in player.inventory if i is not None]))
     keys = pygame.key.get_pressed()
     if keys[pygame.K_ESCAPE]:
         sys.exit(0)
