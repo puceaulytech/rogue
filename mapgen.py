@@ -24,6 +24,12 @@ class Item(Element):
     def __init__(self, elem_id, position, difficulty):
         super().__init__(elem_id, position, difficulty)
 
+class Trap:
+    def __init__(self, position):
+        self.position = position
+
+    def __repr__(self):
+        return f"<mapgen.Trap position={self.position},damage={self.damage}>"
 
 class Coord:
     def __init__(self, x, y):
@@ -198,6 +204,7 @@ class Map:
         self.paths = []
         self.creatures = []
         self.items = []
+        self.traps = []
         self.next_level_stair = None
 
     def __repr__(self):
@@ -249,6 +256,11 @@ class Map:
         return position
 
     def fill_with_elements(self):
+        # Traps generation
+        selected_rooms = random.choices(self.rooms[1:], k=2)
+        for room in selected_rooms:
+            a = self.find_valid_random_coord(room)
+            self.traps.append(Trap(a))
         for room in self.rooms[1:]:
             nb_creatures = random.randint(0, 2)
             weights = list(map(lambda c: 1 / c.difficulty, Map.available_creatures))
@@ -331,6 +343,8 @@ class Map:
     def get_character_at(self, coord):
         if coord == self.next_level_stair.position:
             return "S"
+        elif any([coord == trap.position for trap in self.traps]):
+            return "T"
         elif any([coord == creature.position for creature in self.creatures]):
             return "x"
         elif any([coord == item.position for item in self.items]):

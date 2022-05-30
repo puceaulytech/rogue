@@ -113,11 +113,13 @@ def update_map_near_player():
     for c in coords:
         x, y = c
         elem = game_logic.current_map.get_character_at(c)
-        if elem in ("%", "#", "x", "S"):
+        if elem in ("%", "#", "x", "S", "T"):
             if (x, y) not in already_drawn:
-                Ground((x * dpi, y * dpi))
+                g = Ground((x * dpi, y * dpi), trapped=(elem == "T"))
                 if elem == "S":
                     Stairs((x * dpi, y * dpi))
+                elif elem == "T":
+                    traps_group.add(g)
                 already_drawn.append((x, y))
         elif elem == ".":
             if (x, y) not in already_drawn:
@@ -287,10 +289,11 @@ class Background(pygame.sprite.Sprite):
 
 
 class Ground(pygame.sprite.Sprite):
-    def __init__(self, initial_position=None):
+    def __init__(self, initial_position=None, trapped=False):
         super().__init__(self.containers)
         self.image = random.choice(random.choices(self.images, [1, 50, 1, 1, 1, 1]))
         self.origin_rect = self.image.get_rect()
+        self.trapped = trapped
         if initial_position is None:
             initial_position = (0, 0)
         (self.origin_rect.x, self.origin_rect.y) = initial_position
@@ -367,8 +370,16 @@ class Player(pygame.sprite.Sprite):
         super().__init__(self.containers)
         self.health = 8
         self.origin_rect = self.image.get_rect(center=SCREENRECT.center)
+        self.last_trapped = 0
         if initial_position is not None:
             (self.origin_rect.x, self.origin_rect.y) = initial_position
+
+    def take_damage(self, amount):
+        player.health -= amount
+        hit_sound.play()
+        for _ in range(amount):
+            if not player.health < 0:  # TODO: juste pour éviter le crash
+                healthbar_group.sprites()[-1].kill()
 
     def move(self, direction, delta_time):
         global camera_x, camera_y
@@ -386,6 +397,10 @@ class Player(pygame.sprite.Sprite):
         for stair_object in pygame.sprite.spritecollide(self, stairs_group, False):
             dialog.message = "Press E to go up"
             dialog.move((stair_object.origin_rect.x, stair_object.origin_rect.y - 0.5 * dpi))
+        if any(pygame.sprite.spritecollide(self, traps_group, False)):
+            if time.time() - self.last_trapped > 5:
+                self.take_damage(1)
+                self.last_trapped = time.time()
         if any(pygame.sprite.spritecollide(self, obstacle_group, False)):
             camera_x -= direction[0]
             camera_y -= direction[1]
@@ -540,10 +555,7 @@ class Creature(pygame.sprite.Sprite):
                 pygame.sprite.collide_rect(player, self)
                 and time.time() - self.last_attack > self.attack_cooldown
             ):
-                player.health -= 1
-                hit_sound.play()
-                if not player.health < 0:  # TODO: juste pour éviter le crash
-                    healthbar_group.sprites()[-1].kill()
+                player.take_damage(1)
                 self.last_attack = time.time()
         if distance_to_player <10*dpi:
             playerx = player.origin_rect.center[0]
@@ -590,6 +602,7 @@ all_sprites = pygame.sprite.LayeredUpdates()
 mapdependent_group = pygame.sprite.Group()
 toredraw_group = pygame.sprite.Group()
 stairs_group = pygame.sprite.Group()
+traps_group = pygame.sprite.Group()
 obstacle_group = pygame.sprite.Group()
 creature_group = pygame.sprite.Group()
 hud_group = pygame.sprite.Group()
