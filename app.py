@@ -101,10 +101,11 @@ def check_adjacent(x, y, grid):
     return False
 
 def get_player_pos_grid():
-    return (round(player.origin_rect.x / dpi), round(player.origin_rect.y / dpi))
+    center = player.origin_rect.center
+    return (math.floor(center[0] / dpi), math.floor(center[1] / dpi))
 
 def get_creature_pos_grid(creature):
-    return (round(creature.origin_rect.x / dpi), round(creature.origin_rect.y / dpi))
+    return (math.floor(creature.origin_rect.x / dpi), math.floor(creature.origin_rect.y / dpi))
 
 def move_player_to_spawn():
     global camera_x, camera_y, player
@@ -161,7 +162,7 @@ def draw_map():
             filter(lambda c: c.position == mapgen.Coord(x, y), game_logic.current_map.creatures)
         )[0]
         Creature(
-            (x * dpi, y * dpi),
+            (x * dpi + dpi / 2, y * dpi + dpi / 2),
             abstract_creature.id,
             abstract_creature.speed,
             abstract_creature.flying,
@@ -245,18 +246,6 @@ def bfs(creature, grid):
                 visited.append(n)
                 parents[n] = current
                 queue.append(n)
-
-
-
-
-
-
-
-
-
-
-
-
 
 class FPSCounter(pygame.sprite.Sprite):
     def __init__(self):
@@ -540,11 +529,14 @@ class Creature(pygame.sprite.Sprite):
         self.images = []
         self.currimage = 0
         self.path_to_player = []
+        self.old_dx = None
+        self.old_dy = None
+        self.target_x = None
+        self.target_y = None
         for i in range(len(assets)):
-            self.images.append(loadify(assets[i], 10, keep_ratio=True))
+            self.images.append(loadify(assets[i], size=-30, keep_ratio=True))
         self.image = self.images[self.currimage]
-        self.origin_rect = self.image.get_rect()
-        (self.origin_rect.x, self.origin_rect.y) = initial_position
+        self.origin_rect = self.image.get_rect(center=initial_position)
 
     @property
     def rect(self):
@@ -565,7 +557,6 @@ class Creature(pygame.sprite.Sprite):
                 self.image = self.images[self.currimage]
         
 
-        print("here")
         self.path_to_player = bfs(self, map_grid)
         distance_to_player = math.sqrt(
             (self.origin_rect.x - player.origin_rect.x) ** 2
@@ -579,10 +570,27 @@ class Creature(pygame.sprite.Sprite):
             #     distance_to_player + 0.000001
             # )
             # self.move((dx, dy), ticked)
-            dx = sign(self.origin_rect.x / dpi - self.path_to_player[0][0])
-            dy = sign(self.origin_rect.y / dpi - self.path_to_player[0][1])
-            self.move((dx, dy), ticked)
-            print(dx, dy)
+            if len(self.path_to_player) > 1:
+                (pos_x, pos_y) = get_creature_pos_grid(self)
+                (dx, dy) = (None, None)
+                is_goal_reached = self.target_x == pos_x and self.target_y == pos_y
+                if is_goal_reached or self.old_dx is None or self.target_x is None:
+                    self.target_x = self.path_to_player[1][0]
+                    self.target_y = self.path_to_player[1][1]
+                    dx = (self.target_x - pos_x)
+                    dy = (self.target_y - pos_y)
+                    self.old_dx = dx
+                    self.old_dy = dy
+                else:
+                    dx = self.old_dx
+                    dy = self.old_dy
+                    
+                # print("POS   :", pos_x, pos_y)
+                # print("TARGET:", target_x, target_y)
+                # print("DELTA :", dx, dy)
+                # print("PATH  : ", self.path_to_player)
+                print("-------")
+                self.move((dx, dy), ticked)
             if (
                 pygame.sprite.collide_rect(player, self)
                 and time.time() - self.last_attack > self.attack_cooldown
@@ -592,15 +600,15 @@ class Creature(pygame.sprite.Sprite):
                 if not player.health < 0:  # TODO: juste pour éviter le crash
                     healthbar_group.sprites()[-1].kill()
                 self.last_attack = time.time()
-        if distance_to_player <10*dpi:
-            playerx = player.origin_rect.center[0]
-            playery = player.origin_rect.center[1]
-            angle_towards_player = get_angle(playerx,self.origin_rect.center[0],playery,self.origin_rect.center[1])
-            if abs(angle_towards_player)>10 : 
+        # if distance_to_player <10*dpi:
+        #     playerx = player.origin_rect.center[0]
+        #     playery = player.origin_rect.center[1]
+        #     angle_towards_player = get_angle(playerx,self.origin_rect.center[0],playery,self.origin_rect.center[1])
+        #     if abs(angle_towards_player)>10 : 
 
-                self.image = rotate_image(self.images[self.currimage],angle_towards_player)
+        #         self.image = rotate_image(self.images[self.currimage],angle_towards_player)
 
-                self.origin_rect = self.image.get_rect(center = self.origin_rect.center)
+        #         self.origin_rect = self.image.get_rect(center = self.origin_rect.center)
 
     def move(self, direction, delta_time):
         direction = tuple([round(self.speed * delta_time * c) for c in direction])
