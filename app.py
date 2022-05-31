@@ -863,10 +863,10 @@ while True:
         direction = (1, 0)
         player.move(direction, ticked)
 
-    if pygame.mouse.get_pos()[0] > player.rect.center[0]:
-      print("right")
-    else:
-      print("left")
+    # if pygame.mouse.get_pos()[0] > player.rect.center[0]:
+    #   print("right")
+    # else:
+    #   print("left")
     dirty = all_sprites.draw(screen)
     particle_system.update(ticked)
     screen.blit(plane,(0,0))
