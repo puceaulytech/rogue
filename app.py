@@ -668,12 +668,6 @@ class MenuGithub:
         screen.blit(self.image, self.rect)
         screen.fill((0, 0, 0), self.underline_rect)
 
-    def is_clicked(self, mouse_pos):
-        return (
-            self.rect.x <= click_pos[0] <= self.rect.x + self.rect.width
-            and self.rect.y <= click_pos[1] <= self.rect.y + self.rect.height
-        )
-
 class MenuButton:
     def __init__(self, text, offset):
         self.font = pygame.font.Font("assets/Retro_Gaming.ttf", 30)
@@ -685,11 +679,25 @@ class MenuButton:
         screen.fill((0, 0, 0), self.bigger_rect)
         screen.blit(self.image, self.rect)
 
-    def is_clicked(self, mouse_pos):
-        return (
-            self.bigger_rect.x <= click_pos[0] <= self.bigger_rect.x + self.bigger_rect.width
-            and self.bigger_rect.y <= click_pos[1] <= self.bigger_rect.y + self.bigger_rect.height
-        )
+class MenuMusicLabel:
+    def __init__(self):
+        self.font = pygame.font.Font("assets/Retro_Gaming.ttf", 25)
+        self.image = self.font.render("Enable music", False, (0, 0, 0))
+        self.rect = self.image.get_rect(center=(width // 2 + 40, height // 2 + 200))
+
+    def draw(self):
+        screen.blit(self.image, self.rect)
+
+class MenuMusicCheckbox:
+    def __init__(self):
+        self.checked = True
+        self.rect = pygame.Rect(width // 2 - 130, height // 2 + 200 - 30, 60, 60)
+        self.smaller_rect = self.rect.inflate(-20, -20)
+
+    def draw(self):
+        screen.fill((0, 0, 0), self.rect)
+        if self.checked:
+            screen.fill((255, 255, 255), self.smaller_rect)
 # Menu
 screen.fill((132, 23, 10), SCREENRECT)
 
@@ -697,10 +705,17 @@ menu = True
 
 MenuTitle().draw()
 MenuCredit().draw()
+MenuMusicLabel().draw()
+
+music_checkbox = MenuMusicCheckbox()
+music_checkbox.draw()
+
 github_link = MenuGithub()
 github_link.draw()
+
 play_button = MenuButton(text="PLAY", offset=0)
 play_button.draw()
+
 exit_button = MenuButton(text="EXIT", offset=120)
 exit_button.draw()
 
@@ -710,19 +725,24 @@ pygame.display.flip()
 while menu:
     for event in pygame.event.get():
         if event.type == pygame.MOUSEBUTTONDOWN:
-            click_pos = pygame.mouse.get_pos()
-            if play_button.is_clicked(click_pos):
+            mouse_pos = pygame.mouse.get_pos()
+            if play_button.bigger_rect.collidepoint(mouse_pos):
                 menu = False
-            elif exit_button.is_clicked(click_pos):
+            elif exit_button.bigger_rect.collidepoint(mouse_pos):
                 sys.exit()
-            elif github_link.is_clicked(click_pos):
+            elif github_link.rect.collidepoint(mouse_pos):
                 webbrowser.open("https://github.com/puceaulytech/rogue", new=0, autoraise=True)
+            elif music_checkbox.rect.collidepoint(mouse_pos):
+                music_checkbox.checked = not music_checkbox.checked
+                music_checkbox.draw()
+                pygame.display.flip()
 
     time.sleep(0.1)
 
 pygame.mouse.set_visible(False)
-pygame.mixer.music.load("assets/music.ogg")
-pygame.mixer.music.play(-1)
+if music_checkbox.checked:
+    pygame.mixer.music.load("assets/music.ogg")
+    pygame.mixer.music.play(-1)
 
 game_logic = mapgen.Game(max_levels=3)
 map_grid = None
