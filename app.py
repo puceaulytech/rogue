@@ -7,6 +7,7 @@ import pygame
 import mapgen
 import itertools
 import time
+import abc
 
 size = width, height = 1280, 720
 black = 0, 0, 0
@@ -350,12 +351,15 @@ class Stairs(pygame.sprite.Sprite):
     def rect(self):
         return translated_rect(self.origin_rect)
 
-class InventoryObject(pygame.sprite.Sprite):
+class InventoryObject(pygame.sprite.Sprite,metaclass=abc.ABCMeta):
     def __init__(self, initial_position):
         super().__init__(self.containers)
         self.picked_up = False
         self.origin_rect = self.image.get_rect()
         (self.origin_rect.x, self.origin_rect.y) = initial_position
+
+    def __bool__(self):
+      return True
 
     @property
     def rect(self):
@@ -374,16 +378,30 @@ class InventoryObject(pygame.sprite.Sprite):
             self.image = pygame.transform.scale(self.image,(40,40))
             player_inv_group.add(self)
 
+    @abc.abstractmethod
+    def use(self):
+      pass
+
 class Weapon(InventoryObject):
     def __init__(self, initial_position, id):
         self.id = id
         if self.id == "sword":
           self.attack_cooldown = 5
           self.durability = 50
+          self.damage = 2
           self.image = loadify("sword.png", 10, True) 
         self.last_attack = 0
         super().__init__(initial_position)
 
+    def use(self):
+        p = player.rect.inflate(0,0.8*dpi)
+        if pygame.mouse.get_pos()[0] > player.rect.center[0]:
+          hitbox = p.move((p[2],0))
+        else:
+          hitbox = p.move((-p[2],0))
+        for index in hitbox.collidelistall([i.rect for i in creature_group.sprites()]):
+          creature_group.sprites()[index].health -= self.damage
+          print("dealt damage !")
 
 class Potion(InventoryObject):
     def __init__(self, initial_position, asset):
@@ -492,6 +510,7 @@ class Inventory(pygame.sprite.Sprite):
       else:
         all_sprites.remove(i)
 
+  @property
   def picked_item(self):
     picked_items = [x for x in self.items if x is not None and x.picked_up]
     return picked_items[0] if picked_items else None
@@ -592,11 +611,11 @@ class ParticleEffect:
 
 
 class Creature(pygame.sprite.Sprite):
-    def __init__(self, initial_position, assets, speed=0.1, flying=False):
+    def __init__(self, initial_position, assets, speed=0.1, flying=False, hp = None):
         self.local_frame_index = random.randint(0, 100000)
         super().__init__(self.containers)
         self.angle = 0
-        self.health = 3
+        self.health = hp or random.randint(3,10)
         self.flying = flying
         self.speed = speed
         self.last_attack = 0
@@ -618,6 +637,8 @@ class Creature(pygame.sprite.Sprite):
 
             
     def update(self):
+        if self.health <= 0:
+          self.kill()
 
 
         
@@ -846,6 +867,9 @@ while True:
                 if s is not None:
                   s.picked_up = False
               clicked_inv_sprites[0].picked_up = not old_state
+          picked_item = player.inventory.picked_item
+          if picked_item:
+            picked_item.use()
 
     keys = pygame.key.get_pressed()
     if keys[pygame.K_ESCAPE]:
