@@ -587,17 +587,6 @@ class Creature(pygame.sprite.Sprite):
         )
         if distance_to_player < 10 * dpi:
             self.path_to_player = bfs(self, map_grid)
-            points = []
-            for i in self.path_to_player : 
-                ezx = ((i[0]+0.5)*dpi)
-                ezy = ((i[1] + 0.5)*dpi)
-                trans = translated_rect(pygame.Rect((ezx,ezy),(1,1)))
-
-                points.append((trans.x,trans.y))
-            try:
-                pygame.draw.lines(plane,(255,0,0,255),False,points)
-            except:
-                pass
 
             if len(self.path_to_player) > 1:
                 if (self.direction[0] == 0 and self.direction[1] == 0) or any([rect.collidepoint(self.origin_rect.center) for rect in self.collisions_rect]):
