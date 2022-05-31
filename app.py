@@ -40,6 +40,7 @@ camera_x, camera_y = 0, 0
 
 dpi = width / camera_size
 
+
 already_drawn = []
 
 def loadify(path, size=0, keep_ratio=False):
@@ -708,10 +709,14 @@ frame_index = 0
 
 
 ###########################################   MAIN LOOP  ###########################################
+
 while True:
 
 
+
+
     if frame_index%1 ==0:
+
         update_map_near_player()
         
     frame_index += 1
