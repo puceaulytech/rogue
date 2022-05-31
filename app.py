@@ -144,32 +144,24 @@ def draw_map():
     map_grid = game_logic.current_map.grid()
     already_drawn.clear()
 
-    creature_positions = []  # TODO: use layers
-    item_positions = []
-
     for y, row in enumerate(map_grid):
         for x, elem in enumerate(row):
             if elem == "x":
-                creature_positions.append((x, y))
+                for abstract_creature in game_logic.current_map.creatures:
+                    if abstract_creature.position == mapgen.Coord(x, y):
+                        Creature(
+                            (x * dpi, y * dpi),
+                            abstract_creature.id,
+                            abstract_creature.speed,
+                            abstract_creature.flying,
+                        )
             elif elem == "o":
-                item_positions.append((x, y))
-
-    for x, y in creature_positions:
-        abstract_creature = list(
-            filter(lambda c: c.position == mapgen.Coord(x, y), game_logic.current_map.creatures)
-        )[0]
-        Creature(
-            (x * dpi, y * dpi),
-            abstract_creature.id,
-            abstract_creature.speed,
-            abstract_creature.flying,
-        )
-    for x,y in item_positions:
-      abstract_item = list(filter(lambda c : c.position == mapgen.Coord(x,y), game_logic.current_map.items))[0]
-      InventoryObject(
-        (x * dpi, y * dpi),
-        abstract_item.id
-      )
+                for abstract_item in game_logic.current_map.items:
+                    if abstract_item.position == mapgen.Coord(x, y):
+                        InventoryObject(
+                            (x * dpi, y * dpi),
+                            abstract_item.id
+                        )
 
 def get_adjacent_case(x,y,grid):
     if x > 0 and x < len(grid[0]) and y > 0 and y < len(grid):
@@ -798,4 +790,4 @@ while True:
     screen.blit(plane,(0,0))
     pygame.display.update(dirty)
 
-   fps = clock.get_fps()
+    fps = clock.get_fps()
