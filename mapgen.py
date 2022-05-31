@@ -108,7 +108,7 @@ class CircleRoom:
     def __init__(self, center, radius):
         self.center = center
         self.radius = radius
-
+        self.size = radius
     def __repr__(self):
         return f"<mapgen.CircleRoom center={self.center},radius={self.radius}>"
 
@@ -140,7 +140,7 @@ class Room:
         self.top_left = top_left
         self.width = width
         self.height = height
-
+        self.size = max(width,height)
     @property
     def bottom_right(self):
         return self.top_left + Coord(self.width - 1, self.height - 1)
@@ -195,16 +195,9 @@ class Map:
             ["sprite_0.png", "sprite_1.png"],
             position=None,
             difficulty=1,
-            speed=0.1,
-            flying=True,
-        ),
-        Creature(
-            ["dragon.png"],
-            position=None,
-            difficulty=2,
-            speed=0.2,
+            speed=0.15,
             flying=False,
-        ),
+        )
     ]
     available_weapon = [
       Weapon(
@@ -283,10 +276,13 @@ class Map:
 
     def fill_with_elements(self):
         for room in self.rooms[1:]:
-            nb_creatures = random.randint(0, 2)
+            nb_creatures = random.randint(0, 4)
             weights = list(map(lambda c: 1 / c.difficulty, Map.available_creatures))
             for _ in range(nb_creatures):
-                position = self.find_valid_random_coord(room)
+                a = self.find_valid_random_coord(room)
+                while a.distance(room.center) > room.size - 2:
+                    a = self.find_valid_random_coord(room)
+                position = a
                 creature = copy.copy(
                     random.choices(Map.available_creatures, weights, k=1)[0]
                 )
