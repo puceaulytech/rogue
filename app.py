@@ -1,3 +1,4 @@
+from dis import dis
 import random
 from collections import defaultdict
 import math
@@ -386,22 +387,26 @@ class Weapon(InventoryObject):
     def __init__(self, initial_position, id):
         self.id = id
         if self.id == "sword":
-          self.attack_cooldown = 5
+          self.attack_cooldown = 1
           self.durability = 50
           self.damage = 2
-          self.image = loadify("sword.png", 10, True) 
+          self.image = loadify("sword.png", 10, True)
         self.last_attack = 0
         super().__init__(initial_position)
 
     def use(self):
-        p = player.rect.inflate(0,0.8*dpi)
-        if pygame.mouse.get_pos()[0] > player.rect.center[0]:
-          hitbox = p.move((p[2],0))
-        else:
-          hitbox = p.move((-p[2],0))
+        p = pygame.mouse.get_pos()
+        
+        hitbox = pygame.Rect((p[0],p[1]),(1,1))
+
+
         for index in hitbox.collidelistall([i.rect for i in creature_group.sprites()]):
-          creature_group.sprites()[index].health -= self.damage
-          print("dealt damage !")
+            print(creature_group.sprites()[index])
+            distance = math.sqrt((creature_group.sprites()[index].origin_rect.center[0]-player.origin_rect.center[0])**2 + (creature_group.sprites()[index].origin_rect.center[1]-player.origin_rect.center[1])**2)
+            print(distance / dpi)
+            if distance < 2 * dpi:
+                creature_group.sprites()[index].health -= self.damage
+                print("dealt damage !")
 
 class Potion(InventoryObject):
     def __init__(self, initial_position, asset):
@@ -670,12 +675,13 @@ class Creature(pygame.sprite.Sprite):
                 pass
 
             if len(self.path_to_player) > 1:
-                if (self.direction[0] == 0 and self.direction[1] == 0) or any([rect.collidepoint(self.origin_rect.center) for rect in self.collisions_rect]):
+                
+                if (self.direction[0] == 0 and self.direction[1] == 0) or any([rect.collidepoint(self.origin_rect.center) for rect in self.collisions_rect] or self.local_frame_index %20 == 0):
                     self.collisions_rect.clear()
                     for point in self.path_to_player[1:]:
                         x = (point[0] * dpi) + dpi / 2
                         y = (point[1] * dpi) + dpi / 2
-                        rect = pygame.Rect((x - 5, y - 5), (10, 10))
+                        rect = pygame.Rect((x - 7, y - 7), (14, 14))
                         self.collisions_rect.append(rect)
                     start = pygame.math.Vector2(self.origin_rect.center)
                     end = pygame.math.Vector2(self.collisions_rect[0].center)
