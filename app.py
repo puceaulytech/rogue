@@ -762,8 +762,8 @@ while True:
           if Player.show_inv:
             # quand un item est récup on scale son image or ça ne change pas son rect donc je test les collisions avec le rect de l'image avec les topleft superposés
             clicked_inv_sprites = [s for s in player.inventory.items if s is not None and s.image.get_rect(topleft = s.rect.topleft).collidepoint(pos)]
-            old_state = clicked_inv_sprites[0].picked_up
             if clicked_inv_sprites:
+              old_state = clicked_inv_sprites[0].picked_up
               for s in player.inventory.items:
                 if s is not None:
                   s.picked_up = False
