@@ -30,6 +30,8 @@ screen = pygame.display.set_mode(
 pygame.display.set_caption("ChadRogue")
 
 hit_sound = pygame.mixer.Sound("assets/hitted.ogg")
+app_icon = pygame.image.load(os.path.join("assets", "icon.png"))
+pygame.display.set_icon(app_icon)
 clock = pygame.time.Clock()
 
 plane = pygame.Surface((size), pygame.SRCALPHA)
