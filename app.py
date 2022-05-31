@@ -43,10 +43,12 @@ dpi = width / camera_size
 
 already_drawn = []
 
-def loadify(path, size=0, keep_ratio=False):
+def loadify(path, size=0, keep_ratio=False, keep_size=False):
     global dpi
     good_path = os.path.join("assets", path)
     image = pygame.image.load(good_path).convert_alpha()
+    if keep_size:
+        return image
     ratio = image.get_width() / image.get_height() if keep_ratio else 1
     return pygame.transform.scale(image, ((dpi + size) * ratio, dpi + size))
 
@@ -248,6 +250,13 @@ def bfs(creature, grid):
                 visited.append(n)
                 parents[n] = current
                 queue.append(n)
+
+class Mask(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__(self.containers)
+        self.image = loadify("mask.png", keep_ratio=True, keep_size=True)
+        self.rect = self.image.get_rect()
+        (self.rect.x, self.rect.y) = (0, 0)
 
 class FPSCounter(pygame.sprite.Sprite):
     def __init__(self):
@@ -661,6 +670,7 @@ Cursor.containers = all_sprites, hud_group
 FPSCounter.containers = all_sprites, hud_group
 HealthIcon.containers = all_sprites, hud_group, healthbar_group
 Dialog.containers = all_sprites, hud_group
+Mask.containers = all_sprites, hud_group
 
 
 Player.image = loadify("terro.png", size=-10)
@@ -683,13 +693,15 @@ Wall._layer = 1
 Ground._layer = 1
 Stairs._layer = 2
 Background._layer = 0
-Cursor._layer = 2
-FPSCounter._layer = 2
-Dialog._layer = 2
-HealthIcon._layer = 2
+Cursor._layer = 3
+FPSCounter._layer = 3
+Dialog._layer = 3
+HealthIcon._layer = 3
 Creature._layer = 2
+Mask._layer = 2
 
 background_sprite = Background()
+Mask()
 
 player = Player(initial_position=(0, 0))
 
