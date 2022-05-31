@@ -195,7 +195,7 @@ class Map:
             ["sprite_0.png", "sprite_1.png"],
             position=None,
             difficulty=1,
-            speed=0.15,
+            speed=0.10,
             flying=False,
         )
     ]

@@ -1,3 +1,4 @@
+from dis import dis
 import random
 from collections import defaultdict
 import math
@@ -408,7 +409,6 @@ class Weapon(InventoryObject):
                 or (creature.rect.center[1] <= player.rect.center[1] and pos[1] <= player.rect.center[1])
             ) and distance <= self.reach:
                 creature.health -= self.damage 
-                print("dealth damage !")
 
 class Potion(InventoryObject):
     def __init__(self, initial_position, asset):
@@ -677,12 +677,13 @@ class Creature(pygame.sprite.Sprite):
                 pass
 
             if len(self.path_to_player) > 1:
+                
                 if (self.direction[0] == 0 and self.direction[1] == 0) or any([rect.collidepoint(self.origin_rect.center) for rect in self.collisions_rect]):
                     self.collisions_rect.clear()
                     for point in self.path_to_player[1:]:
                         x = (point[0] * dpi) + dpi / 2
                         y = (point[1] * dpi) + dpi / 2
-                        rect = pygame.Rect((x - 5, y - 5), (10, 10))
+                        rect = pygame.Rect((x - 2, y - 2), (4, 4))
                         self.collisions_rect.append(rect)
                     start = pygame.math.Vector2(self.origin_rect.center)
                     end = pygame.math.Vector2(self.collisions_rect[0].center)
