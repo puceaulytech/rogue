@@ -27,9 +27,6 @@ screen = pygame.display.set_mode(
     SCREENRECT.size, winstyle | pygame.DOUBLEBUF, bestdepth
 )
 pygame.display.set_caption("ChadRogue")
-pygame.mouse.set_visible(False)
-pygame.mixer.music.load("assets/music.ogg")
-pygame.mixer.music.play(-1)
 
 hit_sound = pygame.mixer.Sound("assets/hitted.ogg")
 clock = pygame.time.Clock()
@@ -639,6 +636,68 @@ class Cursor(pygame.sprite.Sprite):
     def update(self):
         self.update_pos()
 
+class MenuTitle:
+    def __init__(self):
+        self.font = pygame.font.Font("assets/Retro_Gaming.ttf", 50)
+        self.image = self.font.render("CHAD ROGUE", False, (0, 0, 0))
+        self.rect = self.image.get_rect(center=(width//2, height//2 - 220))
+
+    def draw(self):
+        screen.blit(self.image, self.rect)
+
+class MenuCredit:
+    def __init__(self):
+        self.font = pygame.font.Font("assets/Retro_Gaming.ttf", 20)
+        self.image = self.font.render("Credits : Romain Chardiny, Robin Perdreau, Logan Lucas", False, (0, 0, 0))
+        self.rect = self.image.get_rect(center=(width//2, height - 30))
+
+    def draw(self):
+        screen.blit(self.image, self.rect)
+
+class MenuButton:
+    def __init__(self, text, offset):
+        self.font = pygame.font.Font("assets/Retro_Gaming.ttf", 30)
+        self.image = self.font.render(text, False, (255, 255, 255))
+        self.rect = self.image.get_rect(center=(width//2, offset + 300))
+        self.bigger_rect = self.rect.inflate(200, 55)
+
+    def draw(self):
+        screen.fill((0, 0, 0), self.bigger_rect)
+        screen.blit(self.image, self.rect)
+
+    def is_clicked(self, mouse_pos):
+        return (
+            self.bigger_rect.x <= click_pos[0] <= self.bigger_rect.x + self.bigger_rect.width
+            and self.bigger_rect.y <= click_pos[1] <= self.bigger_rect.y + self.bigger_rect.height
+        )
+# Menu
+screen.fill((132, 23, 10), SCREENRECT)
+
+menu = True
+
+MenuTitle().draw()
+MenuCredit().draw()
+play_button = MenuButton(text="PLAY", offset=0)
+play_button.draw()
+exit_button = MenuButton(text="EXIT", offset=120)
+exit_button.draw()
+
+
+pygame.display.flip()
+
+while menu:
+    for event in pygame.event.get():
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            click_pos = pygame.mouse.get_pos()
+            if play_button.is_clicked(click_pos):
+                menu = False
+            elif exit_button.is_clicked(click_pos):
+                sys.exit()
+    time.sleep(0.1)
+
+pygame.mouse.set_visible(False)
+pygame.mixer.music.load("assets/music.ogg")
+pygame.mixer.music.play(-1)
 
 game_logic = mapgen.Game(max_levels=3)
 map_grid = None
@@ -723,8 +782,10 @@ frame_index = 0
 
 
 ###########################################   MAIN LOOP  ###########################################
+running = True
 
-while True:
+
+while running:
 
 
 
@@ -747,7 +808,7 @@ while True:
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            sys.exit()
+            running = False
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_e:
                 for _ in pygame.sprite.spritecollide(player, stairs_group, False):
