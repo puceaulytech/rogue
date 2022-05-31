@@ -7,6 +7,7 @@ import pygame
 import mapgen
 import itertools
 import time
+import webbrowser
 
 size = width, height = 1280, 720
 black = 0, 0, 0
@@ -649,10 +650,27 @@ class MenuCredit:
     def __init__(self):
         self.font = pygame.font.Font("assets/Retro_Gaming.ttf", 20)
         self.image = self.font.render("Credits : Romain Chardiny, Robin Perdreau, Logan Lucas", False, (0, 0, 0))
-        self.rect = self.image.get_rect(center=(width//2, height - 30))
+        self.rect = self.image.get_rect(midleft=(10, height - 30))
 
     def draw(self):
         screen.blit(self.image, self.rect)
+
+class MenuGithub:
+    def __init__(self):
+        self.font = pygame.font.Font("assets/Retro_Gaming.ttf", 20)
+        self.image = self.font.render("View on GitHub", False, (0, 0, 0))
+        self.rect = self.image.get_rect(midright=(width - 10, height - 30))
+        self.underline_rect = pygame.Rect(self.rect.x, self.rect.y + 22, self.rect.width, 2)
+
+    def draw(self):
+        screen.blit(self.image, self.rect)
+        screen.fill((0, 0, 0), self.underline_rect)
+
+    def is_clicked(self, mouse_pos):
+        return (
+            self.rect.x <= click_pos[0] <= self.rect.x + self.rect.width
+            and self.rect.y <= click_pos[1] <= self.rect.y + self.rect.height
+        )
 
 class MenuButton:
     def __init__(self, text, offset):
@@ -677,6 +695,8 @@ menu = True
 
 MenuTitle().draw()
 MenuCredit().draw()
+github_link = MenuGithub()
+github_link.draw()
 play_button = MenuButton(text="PLAY", offset=0)
 play_button.draw()
 exit_button = MenuButton(text="EXIT", offset=120)
@@ -693,6 +713,9 @@ while menu:
                 menu = False
             elif exit_button.is_clicked(click_pos):
                 sys.exit()
+            elif github_link.is_clicked(click_pos):
+                webbrowser.open("https://github.com/puceaulytech/rogue", new=0, autoraise=True)
+
     time.sleep(0.1)
 
 pygame.mouse.set_visible(False)
