@@ -798,4 +798,4 @@ while True:
     screen.blit(plane,(0,0))
     pygame.display.update(dirty)
 
-    fps = clock.get_fps()
+   fps = clock.get_fps()
