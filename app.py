@@ -1,4 +1,5 @@
 import random
+from collections import defaultdict
 import math
 import sys
 import os
@@ -49,6 +50,14 @@ def loadify(path, size=0, keep_ratio=False):
     ratio = image.get_width() / image.get_height() if keep_ratio else 1
     return pygame.transform.scale(image, ((dpi + size) * ratio, dpi + size))
 
+def sign(x):
+    if x == 0:
+        return 0
+    elif x > 0:
+        return 1
+    elif x < 0:
+        return -1
+
 
 def inverse_direction(direction):
     return (-direction[0], -direction[1])
@@ -93,10 +102,12 @@ def check_adjacent(x, y, grid):
     return False
 
 def get_player_pos_grid():
-    return (round(player.origin_rect.x / dpi), round(player.origin_rect.y / dpi))
+    center = player.origin_rect.center
+    return (math.floor(center[0] / dpi), math.floor(center[1] / dpi))
 
 def get_creature_pos_grid(creature):
-    return (round(creature.origin_rect.x / dpi), round(creature.origin_rect.y / dpi))
+    center = creature.origin_rect.center
+    return (math.floor(center[0] / dpi), math.floor(center[1] / dpi))
 
 def move_player_to_spawn():
     global camera_x, camera_y, player
@@ -153,7 +164,7 @@ def draw_map():
             filter(lambda c: c.position == mapgen.Coord(x, y), game_logic.current_map.creatures)
         )[0]
         Creature(
-            (x * dpi, y * dpi),
+            (x * dpi + dpi / 2, y * dpi + dpi / 2),
             abstract_creature.id,
             abstract_creature.speed,
             abstract_creature.flying,
@@ -203,20 +214,40 @@ def propagate(start,grid, max_recursive_depth = 5 ):
     return visible
 
 
+def get_neighbours(position):
+    x, y = position
+    return [
+        (x+1, y),
+        (x-1, y),
+        (x, y+1),
+        (x, y-1)
+    ]
 
 
+def bfs(creature, grid):
+    start = get_creature_pos_grid(creature)
+    goal = get_player_pos_grid()
 
+    queue = [start]
+    visited = [start]
+    parents = defaultdict(lambda: None)
 
+    while len(queue) != 0:
+        current = queue.pop(0)
 
+        if current == goal:
+            path = []
+            while current:
+                path.insert(0, current)
+                current = parents[current]
+            return path
 
-
-
-
-
-
-
-
-
+        neighbours = get_neighbours(current)
+        for n in neighbours:
+            if is_case_goodenough(mapgen.Coord(n[0], n[1]), grid) and n not in visited:
+                visited.append(n)
+                parents[n] = current
+                queue.append(n)
 
 class FPSCounter(pygame.sprite.Sprite):
     def __init__(self):
@@ -499,11 +530,13 @@ class Creature(pygame.sprite.Sprite):
         self.attack_cooldown = 1
         self.images = []
         self.currimage = 0
+        self.path_to_player = []
+        self.collisions_rect = []
+        self.direction = (0, 0)
         for i in range(len(assets)):
-            self.images.append(loadify(assets[i], 10, keep_ratio=True))
+            self.images.append(loadify(assets[i], size=-30, keep_ratio=True))
         self.image = self.images[self.currimage]
-        self.origin_rect = self.image.get_rect()
-        (self.origin_rect.x, self.origin_rect.y) = initial_position 
+        self.origin_rect = self.image.get_rect(center=initial_position)
 
     @property
     def rect(self):
@@ -528,14 +561,34 @@ class Creature(pygame.sprite.Sprite):
             (self.origin_rect.x - player.origin_rect.x) ** 2
             + (self.origin_rect.y - player.origin_rect.y) ** 2
         )
-        if distance_to_player < 5 * dpi:
-            dx = (player.origin_rect.x - self.origin_rect.x) / (
-                distance_to_player + 0.000001
-            )
-            dy = (player.origin_rect.y - self.origin_rect.y) / (
-                distance_to_player + 0.000001
-            )
-            self.move((dx, dy), ticked)
+        if distance_to_player < 10 * dpi:
+            self.path_to_player = bfs(self, map_grid)
+            points = []
+            for i in self.path_to_player : 
+                ezx = ((i[0]+0.5)*dpi)
+                ezy = ((i[1] + 0.5)*dpi)
+                trans = translated_rect(pygame.Rect((ezx,ezy),(1,1)))
+
+                points.append((trans.x,trans.y))
+            try:
+                pygame.draw.lines(plane,(255,0,0,255),False,points)
+            except:
+                pass
+
+            if len(self.path_to_player) > 1:
+                if (self.direction[0] == 0 and self.direction[1] == 0) or any([rect.collidepoint(self.origin_rect.center) for rect in self.collisions_rect]):
+                    self.collisions_rect.clear()
+                    for point in self.path_to_player[1:]:
+                        x = (point[0] * dpi) + dpi / 2
+                        y = (point[1] * dpi) + dpi / 2
+                        rect = pygame.Rect((x - 5, y - 5), (10, 10))
+                        self.collisions_rect.append(rect)
+                    start = pygame.math.Vector2(self.origin_rect.center)
+                    end = pygame.math.Vector2(self.collisions_rect[0].center)
+                    self.direction = (end - start).normalize()
+
+                self.move(self.direction, ticked)
+
             if (
                 pygame.sprite.collide_rect(player, self)
                 and time.time() - self.last_attack > self.attack_cooldown
@@ -546,14 +599,14 @@ class Creature(pygame.sprite.Sprite):
                     healthbar_group.sprites()[-1].kill()
                 self.last_attack = time.time()
         if distance_to_player <10*dpi:
-            playerx = player.origin_rect.center[0]
-            playery = player.origin_rect.center[1]
-            angle_towards_player = get_angle(playerx,self.origin_rect.center[0],playery,self.origin_rect.center[1])
-            if abs(angle_towards_player)>10 : 
+             playerx = player.origin_rect.center[0]
+             playery = player.origin_rect.center[1]
+             angle_towards_player = get_angle(playerx,self.origin_rect.center[0],playery,self.origin_rect.center[1])
+             if abs(angle_towards_player)>10 : 
 
-                self.image = rotate_image(self.images[self.currimage],angle_towards_player)
+                 self.image = rotate_image(self.images[self.currimage],angle_towards_player)
 
-                self.origin_rect = self.image.get_rect(center = self.origin_rect.center)
+        #         self.origin_rect = self.image.get_rect(center = self.origin_rect.center)
 
     def move(self, direction, delta_time):
         direction = tuple([round(self.speed * delta_time * c) for c in direction])
@@ -654,6 +707,7 @@ for i in range(player.health):
 particle_system = ParticleEffect(10,200,spawner=screen.get_rect(),forces= [0.1,0.05])
 frame_index = 0
 
+
 ###########################################   MAIN LOOP  ###########################################
 
 while True:
@@ -727,3 +781,5 @@ while True:
     pygame.display.update(dirty)
 
     fps = clock.get_fps()
+
+

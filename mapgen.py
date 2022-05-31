@@ -184,7 +184,7 @@ class Map:
             ["sprite_0.png", "sprite_1.png"],
             position=None,
             difficulty=1,
-            speed=0.1,
+            speed=0.15,
             flying=False,
         )
     ]
@@ -250,7 +250,7 @@ class Map:
 
     def fill_with_elements(self):
         for room in self.rooms[1:]:
-            nb_creatures = random.randint(0, 2)
+            nb_creatures = random.randint(0, 4)
             weights = list(map(lambda c: 1 / c.difficulty, Map.available_creatures))
             for _ in range(nb_creatures):
                 a = self.find_valid_random_coord(room)
