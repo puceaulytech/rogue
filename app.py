@@ -326,10 +326,8 @@ class Stairs(pygame.sprite.Sprite):
         return translated_rect(self.origin_rect)
 
 class InventoryObject(pygame.sprite.Sprite):
-    def __init__(self, initial_position, asset):
+    def __init__(self, initial_position):
         super().__init__(self.containers)
-        path = asset
-        self.image = loadify(path, 10, True)
         self.picked_up = False
         self.origin_rect = self.image.get_rect()
         (self.origin_rect.x, self.origin_rect.y) = initial_position
@@ -352,11 +350,14 @@ class InventoryObject(pygame.sprite.Sprite):
             player_inv_group.add(self)
 
 class Weapon(InventoryObject):
-    def __init__(self, initial_position, asset, attack_cooldown, durability):
-        super().__init__(initial_position, asset)
-        self.attack_cooldown = attack_cooldown
+    def __init__(self, initial_position, id):
+        self.id = id
+        if self.id == "sword":
+          self.attack_cooldown = 5
+          self.durability = 50
+          self.image 
         self.last_attack = 0
-        self.durability = durability
+        super().__init__(initial_position)
 
 
 class Potion(InventoryObject):
@@ -367,16 +368,6 @@ class Potion(InventoryObject):
 class Spell(InventoryObject):
     def __init__(self, initial_position, asset):
         super().__init__(initial_position, asset)
-
-
-class Sword(Weapon):
-    def __init__(self, initial_position):
-        super().__init__(
-            initial_position,
-            asset=("sword.png", 40),
-            attack_cooldown=2,
-            durability=math.inf,
-        )
 
 class Player(pygame.sprite.Sprite):
     speed = 0.35
