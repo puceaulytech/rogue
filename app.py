@@ -581,7 +581,7 @@ class Creature(pygame.sprite.Sprite):
                     for point in self.path_to_player[1:]:
                         x = (point[0] * dpi) + dpi / 2
                         y = (point[1] * dpi) + dpi / 2
-                        rect = pygame.Rect((x - 2, y - 2), (4, 4))
+                        rect = pygame.Rect((x - 5, y - 5), (10, 10))
                         self.collisions_rect.append(rect)
                     start = pygame.math.Vector2(self.origin_rect.center)
                     end = pygame.math.Vector2(self.collisions_rect[0].center)
