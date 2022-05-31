@@ -371,37 +371,44 @@ class InventoryObject(pygame.sprite.Sprite,metaclass=abc.ABCMeta):
 
     def update(self):
         if pygame.sprite.collide_rect(player, self):
-          offset = player.inventory.first_empty_slot()
-          if player.take(self):
-            self.kill()
-            self.origin_rect = pygame.Rect(player_inv_group.sprites()[offset].rect[0:2],self.rect[2:4])
-            self.image = pygame.transform.scale(self.image,(40,40))
-            player_inv_group.add(self)
+            offset = player.inventory.first_empty_slot()
+            if player.take(self):
+                self.kill()
+                self.origin_rect = pygame.Rect(player_inv_group.sprites()[offset].rect[0:2],self.rect[2:4])
+                self.image = pygame.transform.scale(self.image,(40,40))
+                player_inv_group.add(self)
 
     @abc.abstractmethod
     def use(self):
-      pass
+        pass
 
 class Weapon(InventoryObject):
     def __init__(self, initial_position, id):
         self.id = id
         if self.id == "sword":
-          self.attack_cooldown = 5
-          self.durability = 50
-          self.damage = 2
-          self.image = loadify("sword.png", 10, True) 
+            self.attack_cooldown = 5
+            self.durability = 50
+            self.damage = 2
+            self.reach = 2 * dpi
+            self.image = loadify("sword.png", 10, True) 
         self.last_attack = 0
         super().__init__(initial_position)
 
     def use(self):
-        p = player.rect.inflate(0,0.8*dpi)
-        if pygame.mouse.get_pos()[0] > player.rect.center[0]:
-          hitbox = p.move((p[2],0))
-        else:
-          hitbox = p.move((-p[2],0))
-        for index in hitbox.collidelistall([i.rect for i in creature_group.sprites()]):
-          creature_group.sprites()[index].health -= self.damage
-          print("dealt damage !")
+        pos = pygame.mouse.get_pos()
+        cos45 = 1 / math.sqrt(2)
+        mouse_cos = (pos[0] - player.rect.center[0]) / math.sqrt((pos[0] - player.rect.center[0])**2 + (pos[1] - player.rect.center[1])**2)
+        for creature in creature_group.sprites():
+            distance = math.sqrt((creature.rect.center[0] - player.rect.center[0])**2 + (creature.rect.center[1] - player.rect.center[1])**2)
+            cos = (creature.rect.center[0] - player.rect.center[0]) / distance
+            if (
+                (cos > cos45 and mouse_cos > cos45)
+                or (cos < -cos45 and mouse_cos < -cos45)
+                or (creature.rect.center[1] > player.rect.center[1] and pos[1] > player.rect.center[1])
+                or (creature.rect.center[1] <= player.rect.center[1] and pos[1] <= player.rect.center[1])
+            ) and distance <= self.reach:
+                creature.health -= self.damage 
+                print("dealth damage !")
 
 class Potion(InventoryObject):
     def __init__(self, initial_position, asset):
