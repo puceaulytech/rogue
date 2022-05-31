@@ -292,7 +292,7 @@ class Map:
                 )
                 creature.position = position
                 self.creatures.append(creature)
-            nb_weapon = random.randint(0, 1)
+            nb_weapon = random.randint(0, 2)
             weights = list(map(lambda c: 1 / c.difficulty, Map.available_weapon))
             for _ in range(nb_weapon):
                 position = self.find_valid_random_coord(room)
@@ -300,7 +300,7 @@ class Map:
                 item.position = position
                 self.weapon.append(item)
             if Map.available_spell:
-              nb_spell = random.randint(0, 1)
+              nb_spell = random.randint(0, 2)
               weights = list(map(lambda c: 1 / c.difficulty, Map.available_spell))
               for _ in range(nb_spell):
                   position = self.find_valid_random_coord(room)
@@ -308,7 +308,7 @@ class Map:
                   item.position = position
                   self.spell.append(item)
             if Map.available_potion:
-              nb_potion = random.randint(0, 1)
+              nb_potion = random.randint(0, 2)
               weights = list(map(lambda c: 1 / c.difficulty, Map.available_potion))
               for _ in range(nb_potion):
                   position = self.find_valid_random_coord(room)

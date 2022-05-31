@@ -111,7 +111,7 @@ def update_map_near_player():
     for c in coords:
         x, y = c
         elem = game_logic.current_map.get_character_at(c)
-        if elem in ("%", "#", "x", "S","o"):
+        if elem in ("%", "#", "x", "S","w","L","P"):
             if (x, y) not in already_drawn:
                 Ground((x * dpi, y * dpi))
                 if elem == "S":
@@ -155,12 +155,12 @@ def draw_map():
                             abstract_creature.speed,
                             abstract_creature.flying,
                         )
-            elif elem == "o":
-                for abstract_item in game_logic.current_map.items:
-                    if abstract_item.position == mapgen.Coord(x, y):
-                        InventoryObject(
+            elif elem == "w":
+                for abstract_weapon in game_logic.current_map.weapon:
+                    if abstract_weapon.position == mapgen.Coord(x, y):
+                        Weapon(
                             (x * dpi, y * dpi),
-                            abstract_item.id
+                            abstract_weapon.id
                         )
 
 def get_adjacent_case(x,y,grid):
@@ -176,7 +176,7 @@ def get_adjacent_case(x,y,grid):
 
 def is_case_goodenough(coo,grid): 
     case = grid[coo.y][coo.x]
-    if case in ["#", "%", "X","S","x","o"]:
+    if case in ["#", "%","S","x","w","L","P"]:
         return True
     return False
 
@@ -347,7 +347,7 @@ class Weapon(InventoryObject):
         if self.id == "sword":
           self.attack_cooldown = 5
           self.durability = 50
-          self.image 
+          self.image = loadify("sword.png", 10, True) 
         self.last_attack = 0
         super().__init__(initial_position)
 
