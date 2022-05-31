@@ -459,6 +459,10 @@ class Inventory(pygame.sprite.Sprite):
       else:
         all_sprites.remove(i)
 
+  def picked_item(self):
+    picked_items = [x for x in self.items if x is not None and x.picked_up]
+    return picked_items[0] if picked_items else None
+
   def draw(self):
     for i in range(len(self.items)):
       InvSlot(i,self.position)
@@ -785,6 +789,10 @@ while True:
         direction = (1, 0)
         player.move(direction, ticked)
 
+    if pygame.mouse.get_pos()[0] > player.rect.center[0]:
+      print("right")
+    else:
+      print("left")
     dirty = all_sprites.draw(screen)
     particle_system.update(ticked)
     screen.blit(plane,(0,0))
