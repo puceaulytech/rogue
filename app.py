@@ -256,6 +256,21 @@ def bfs(creature, grid):
                 parents[n] = current
                 queue.append(n)
 
+class Animation:
+    def __init__(self, spritelist, rate): 
+        self.spritelist = spritelist
+        self.rate = rate
+        self.frame_index = 0 
+        self.curr_sprite = 0
+    def update_animation(self,frame):
+        if frame % self.rate == 0:
+            self.curr_sprite += 1 
+        if self.curr_sprite >= len(self.spritelist):
+            self.curr_sprite = 0
+        return self.spritelist[self.curr_sprite]
+    
+
+
 class FPSCounter(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__(self.containers)
@@ -632,11 +647,12 @@ class Creature(pygame.sprite.Sprite):
         self.path_to_player = []
         self.collisions_rect = []
         self.direction = (0, 0)
+        
         for i in range(len(assets)):
             self.images.append(loadify(assets[i], size=-30, keep_ratio=True))
-        self.image = self.images[self.currimage]
+        self.anim = Animation(self.images,20)
+        self.image = self.anim.update_animation(1)
         self.origin_rect = self.image.get_rect(center=initial_position)
-
     @property
     def rect(self):
         return translated_rect(self.origin_rect)
@@ -650,12 +666,7 @@ class Creature(pygame.sprite.Sprite):
 
         
         self.local_frame_index += 1
-        if len(self.images) != 1:
-            if self.local_frame_index % 20 == 0:
-                self.currimage += 1
-                if (self.currimage) >= len(self.images):
-                    self.currimage = 0
-                self.image = self.images[self.currimage]
+        self.image = self.anim.update_animation(self.local_frame_index)
         
 
         distance_to_player = math.sqrt(
@@ -706,7 +717,7 @@ class Creature(pygame.sprite.Sprite):
              angle_towards_player = get_angle(playerx,self.origin_rect.center[0],playery,self.origin_rect.center[1])
              if abs(angle_towards_player)>10 : 
 
-                 self.image = rotate_image(self.images[self.currimage],angle_towards_player)
+                 self.image = rotate_image(self.anim.spritelist[self.anim.curr_sprite],angle_towards_player)
 
         #         self.origin_rect = self.image.get_rect(center = self.origin_rect.center)
 
