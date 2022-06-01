@@ -288,7 +288,7 @@ class Map:
             weights = list(map(lambda c: 1 / c.difficulty, Map.available_creatures))
             for _ in range(nb_creatures):
                 a = self.find_valid_random_coord(room)
-                while a.distance(room.center) >= room.size - 2:
+                while a.distance(room.center) > room.size - 2:
                     a = self.find_valid_random_coord(room)
                 position = a
                 creature = copy.copy(
