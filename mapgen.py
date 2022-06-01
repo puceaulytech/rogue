@@ -196,7 +196,7 @@ class Map:
             ["sprite_0.png", "sprite_1.png"],
             position=None,
             difficulty=1,
-            speed=1.0,
+            speed=0.2,
             flying=False,
         ),
         Creature(
