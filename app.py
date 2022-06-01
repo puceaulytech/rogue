@@ -644,7 +644,7 @@ class Creature(pygame.sprite.Sprite):
         self.angle = 0
         self.health = hp or random.randint(3,10)
         self.flying = flying
-        self.speed = speed
+        self.speed = speed + random.randint(-100,100)/1000
         self.last_attack = 0
         self.attack_cooldown = 1
         self.images = []
@@ -693,10 +693,7 @@ class Creature(pygame.sprite.Sprite):
                 pass
 
             if len(self.path_to_player) > 1:
-                if self.local_frame_index %50 == 0 : 
-                    start = pygame.math.Vector2(self.origin_rect.center)
-                    end = pygame.math.Vector2(self.collisions_rect[0].center)
-                    self.direction = (end - start).normalize()
+                
                 if (self.direction[0] == 0 and self.direction[1] == 0) or any([rect.collidepoint(self.origin_rect.center) for rect in self.collisions_rect]):
                     self.collisions_rect.clear()
                     for point in self.path_to_player[1:]:
@@ -707,7 +704,10 @@ class Creature(pygame.sprite.Sprite):
                     start = pygame.math.Vector2(self.origin_rect.center)
                     end = pygame.math.Vector2(self.collisions_rect[0].center)
                     self.direction = (end - start).normalize()
-
+                if self.local_frame_index %50 == 0 : 
+                    start = pygame.math.Vector2(self.origin_rect.center)
+                    end = pygame.math.Vector2(self.collisions_rect[0].center)
+                    self.direction = (end - start).normalize()
                 self.move(self.direction, ticked)
 
             if (
