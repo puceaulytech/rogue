@@ -268,7 +268,6 @@ class Animation:
         if self.curr_sprite >= len(self.spritelist):
             self.curr_sprite = 0
         return self.spritelist[self.curr_sprite]
-    
 
 
 class FPSCounter(pygame.sprite.Sprite):
@@ -411,28 +410,34 @@ class Weapon(InventoryObject):
         super().__init__(initial_position)
 
     def use(self):
-        pos = pygame.mouse.get_pos()
-        cos45 = 1 / math.sqrt(2)
-        mouse_cos = (pos[0] - player.rect.center[0]) / math.sqrt((pos[0] - player.rect.center[0])**2 + (pos[1] - player.rect.center[1])**2)
-        for creature in creature_group.sprites():
-            distance = math.sqrt((creature.rect.center[0] - player.rect.center[0])**2 + (creature.rect.center[1] - player.rect.center[1])**2)
-            cos = (creature.rect.center[0] - player.rect.center[0]) / distance
-            if (
-                (cos > cos45 and mouse_cos > cos45)
-                or (cos < -cos45 and mouse_cos < -cos45)
-                or (creature.rect.center[1] > player.rect.center[1] and pos[1] > player.rect.center[1])
-                or (creature.rect.center[1] <= player.rect.center[1] and pos[1] <= player.rect.center[1])
-            ) and distance <= self.reach:
-                creature.health -= self.damage 
+        if self.id == "sword":
+        
+            pos = pygame.mouse.get_pos()
+            cos45 = 1 / math.sqrt(2)
+            mouse_cos = (pos[0] - player.rect.center[0]) / math.sqrt((pos[0] - player.rect.center[0])**2 + (pos[1] - player.rect.center[1])**2)
+            for creature in creature_group.sprites():
+                distance = math.sqrt((creature.rect.center[0] - player.rect.center[0])**2 + (creature.rect.center[1] - player.rect.center[1])**2)
+                cos = (creature.rect.center[0] - player.rect.center[0]) / distance
+                if (
+                    (cos > cos45 and mouse_cos > cos45)
+                    or (cos < -cos45 and mouse_cos < -cos45)
+                    or (creature.rect.center[1] > player.rect.center[1] and pos[1] > player.rect.center[1])
+                    or (creature.rect.center[1] <= player.rect.center[1] and pos[1] <= player.rect.center[1])
+                ) and distance <= self.reach:
+                    creature.health -= self.damage 
 
 class Potion(InventoryObject):
-    def __init__(self, initial_position, asset):
-        super().__init__(initial_position, asset)
+    def __init__(self, initial_position):
+        super().__init__(initial_position)
 
 
 class Spell(InventoryObject):
-    def __init__(self, initial_position, asset):
-        super().__init__(initial_position, asset)
+    def __init__(self, initial_position,id):
+        super().__init__(initial_position)
+        self.id = id 
+        if self.id == "fireball" : 
+            self.damage = 10
+
 
 class Player(pygame.sprite.Sprite):
     speed = 0.35
@@ -694,7 +699,7 @@ class Creature(pygame.sprite.Sprite):
                     for point in self.path_to_player[1:]:
                         x = (point[0] * dpi) + dpi / 2
                         y = (point[1] * dpi) + dpi / 2
-                        rect = pygame.Rect((x - 2, y - 2), (4, 4))
+                        rect = pygame.Rect((x - 7, y - 7), (14, 14))
                         self.collisions_rect.append(rect)
                     start = pygame.math.Vector2(self.origin_rect.center)
                     end = pygame.math.Vector2(self.collisions_rect[0].center)

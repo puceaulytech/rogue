@@ -140,7 +140,7 @@ class Room:
         self.top_left = top_left
         self.width = width
         self.height = height
-        self.size = max(width,height)
+        self.size = min(width,height)
     @property
     def bottom_right(self):
         return self.top_left + Coord(self.width - 1, self.height - 1)
