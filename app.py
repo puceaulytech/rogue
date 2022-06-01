@@ -799,12 +799,12 @@ Wall._layer = 1
 Ground._layer = 1
 Stairs._layer = 2
 Background._layer = 0
-Cursor._layer = 3
-FPSCounter._layer = 3
-Dialog._layer = 3
-HealthIcon._layer = 3
+Cursor._layer = 4
+FPSCounter._layer = 4
+Dialog._layer = 4
+HealthIcon._layer = 4
 Creature._layer = 2
-Mask._layer = 2
+Mask._layer = 3
 
 background_sprite = Background()
 Mask()
