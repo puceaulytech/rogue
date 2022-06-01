@@ -3,6 +3,7 @@ import copy
 import math
 
 
+
 class Element:
     def __init__(self, elem_id, position, difficulty):
         self.id = elem_id
@@ -195,8 +196,15 @@ class Map:
             ["sprite_0.png", "sprite_1.png"],
             position=None,
             difficulty=1,
-            speed=0.10,
+            speed=1.0,
             flying=False,
+        ),
+        Creature(
+            ["pac1.png","pac2.png","pac3.png"],
+            None,
+            1,
+            0.15,
+            flying = False
         )
     ]
     available_weapon = [
@@ -280,7 +288,7 @@ class Map:
             weights = list(map(lambda c: 1 / c.difficulty, Map.available_creatures))
             for _ in range(nb_creatures):
                 a = self.find_valid_random_coord(room)
-                while a.distance(room.center) > room.size - 2:
+                while a.distance(room.center) >= room.size - 2:
                     a = self.find_valid_random_coord(room)
                 position = a
                 creature = copy.copy(
