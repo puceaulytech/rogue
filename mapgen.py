@@ -237,14 +237,11 @@ class Map:
         self.rooms = []
         self.paths = []
         self.creatures = []
-<<<<<<< HEAD
         self.items = []
         self.traps = []
-=======
         self.weapon = []
         self.spell = []
         self.potion = []
->>>>>>> inventory
         self.next_level_stair = None
 
     def __repr__(self):
