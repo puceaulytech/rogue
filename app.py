@@ -400,14 +400,23 @@ class InventoryObject(pygame.sprite.Sprite,metaclass=abc.ABCMeta):
 class Projectile(pygame.sprite.Sprite):
     def __init__(self,position,sprites,speed,direction,dmg):
         super().__init__(self.containers)
-        self.sprites = sprites
+        
         self.speed = speed
         self.direction = direction
         self.dmg = dmg
-        self.anim = Animation(sprites,10)
+
+        angle = math.atan2(self.direction[0],self.direction[1])
+        angle = angle * (180/math.pi)
+        rot_sprites = []
+        for i in sprites : 
+            rot_sprites.append(rotate_image(i,angle+180+45))
+        self.sprites = rot_sprites
+        self.anim = Animation(self.sprites,10)
         self.image = self.anim.update_animation(0)
         self.origin_rect = self.image.get_rect()
-        (self.origin_rect.x, self.origin_rect.y) = position
+        self.origin_rect.center = position
+        
+
         self.frame_index = 0
     @property
     def rect(self):
@@ -451,7 +460,7 @@ class Weapon(InventoryObject):
             self.attack_cooldown = 10
             self.durability = 20
             self.damage = 10
-            self.image = loadify("rpg.png", 10, True) 
+            self.image = loadify("bow.png", 10, True) 
         self.last_attack = 0
         super().__init__(initial_position)
 
@@ -476,7 +485,7 @@ class Weapon(InventoryObject):
             player_pos = pygame.math.Vector2(player.rect.center)
             direction = (mouse_pos - player_pos).normalize()
             print(direction)
-            Projectile(player.origin_rect.center,[self.image],1,direction, 10)
+            Projectile(player.origin_rect.center,[loadify("arrow.png",-35,True)],1,direction, 10)
 class Potion(InventoryObject):
     def __init__(self, initial_position):
         super().__init__(initial_position)
