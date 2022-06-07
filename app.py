@@ -725,7 +725,8 @@ class Creature(pygame.sprite.Sprite):
         self.local_frame_index = random.randint(0, 100000)
         super().__init__(self.containers)
         self.angle = 0
-        self.health = hp or random.randint(3, 10)
+        self.max_health = hp or random.randint(3, 10)
+        self.health = self.max_health
         self.flying = flying
         self.speed = speed + random.randint(-100,100)/1000
         self.last_attack = 0
@@ -821,9 +822,10 @@ class CreatureHealthBar(pygame.sprite.Sprite):
     @property
     def image(self):
         if hasattr(self, 'creature'):
+            pv_size = 70 / self.creature.max_health
             if self.creature.health <= 0:
                 return pygame.Surface((0, 0))
-            im = pygame.Surface((8 * self.creature.health, 5))
+            im = pygame.Surface((pv_size * self.creature.health, 5))
             im.fill((0, 255, 0))
             return im
         return self.origin_image
