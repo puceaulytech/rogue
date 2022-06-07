@@ -212,7 +212,8 @@ class Map:
         "sword",
         position = None,
         difficulty = 1
-        )
+        ),
+      Weapon("bow",None,1)
     ]
     available_spell = [
 

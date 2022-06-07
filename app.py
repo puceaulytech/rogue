@@ -4,6 +4,7 @@ from collections import defaultdict
 import math
 import sys
 import os
+
 import pygame
 import mapgen
 import itertools
@@ -396,6 +397,46 @@ class InventoryObject(pygame.sprite.Sprite,metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def use(self):
         pass
+class Projectile(pygame.sprite.Sprite):
+    def __init__(self,position,sprites,speed,direction,dmg):
+        super().__init__(self.containers)
+        self.sprites = sprites
+        self.speed = speed
+        self.direction = direction
+        self.dmg = dmg
+        self.anim = Animation(sprites,10)
+        self.image = self.anim.update_animation(0)
+        self.origin_rect = self.image.get_rect()
+        (self.origin_rect.x, self.origin_rect.y) = position
+        self.frame_index = 0
+    @property
+    def rect(self):
+        return translated_rect(self.origin_rect)
+    def update(self):
+        self.frame_index+=1
+        self.image = self.anim.update_animation(self.frame_index)
+
+        self.move(self.direction,ticked)
+        print(self.direction)
+        colliding_creatures = pygame.sprite.spritecollide(self,creature_group,False)
+        if len(colliding_creatures) != 0  : 
+            colliding_creatures[0].health -= self.dmg
+            self.kill()
+            
+
+        colliding_walls = pygame.sprite.spritecollide(self,obstacle_group,False)
+        if len(colliding_walls) != 0 : 
+            self.kill()
+        if mapgen.Coord(player.origin_rect.center[0],player.origin_rect.center[1]).distance(mapgen.Coord(self.origin_rect.center[0],self.origin_rect.center[1])) > 20*dpi : 
+            self.kill()
+    def move(self,direction,delta_time):
+        direction = tuple([round(self.speed * delta_time * c) for c in direction])
+        self.origin_rect.move_ip(direction[0],direction[1])
+
+
+
+
+
 
 class Weapon(InventoryObject):
     def __init__(self, initial_position, id):
@@ -406,6 +447,11 @@ class Weapon(InventoryObject):
             self.damage = 2
             self.reach = 2 * dpi
             self.image = loadify("sword.png", 10, True) 
+        if self.id == "bow":
+            self.attack_cooldown = 10
+            self.durability = 20
+            self.damage = 10
+            self.image = loadify("rpg.png", 10, True) 
         self.last_attack = 0
         super().__init__(initial_position)
 
@@ -425,7 +471,12 @@ class Weapon(InventoryObject):
                     or (creature.rect.center[1] <= player.rect.center[1] and pos[1] <= player.rect.center[1])
                 ) and distance <= self.reach:
                     creature.health -= self.damage 
-
+        if self.id == "bow":
+            mouse_pos = pygame.math.Vector2(pygame.mouse.get_pos())
+            player_pos = pygame.math.Vector2(player.rect.center)
+            direction = (mouse_pos - player_pos).normalize()
+            print(direction)
+            Projectile(player.origin_rect.center,[self.image],1,direction, 10)
 class Potion(InventoryObject):
     def __init__(self, initial_position):
         super().__init__(initial_position)
@@ -773,7 +824,8 @@ healthbar_group = pygame.sprite.Group()
 particle_group = pygame.sprite.Group()
 inventoryobject_group = pygame.sprite.Group()
 player_inv_group = pygame.sprite.Group()
-
+projectile_group = pygame.sprite.Group()
+Projectile.containers = projectile_group, all_sprites
 Player.containers = all_sprites
 InventoryObject.containers = all_sprites, inventoryobject_group, mapdependent_group
 InvSlot.containers = all_sprites, player_inv_group
@@ -815,7 +867,7 @@ HealthIcon._layer = 2
 Creature._layer = 2
 InventoryObject._layer = 2
 InvSlot._layer = 2
-
+Projectile._layer = 3
 background_sprite = Background()
 
 player = Player(initial_position=(0, 0))
