@@ -1,4 +1,4 @@
-
+import copy
 import random
 from collections import defaultdict
 import math
@@ -114,6 +114,11 @@ def get_creature_pos_grid(creature):
     center = creature.origin_rect.center
     return (math.floor(center[0] / dpi), math.floor(center[1] / dpi))
 
+def find_wall_ground_at_pos(c):
+    for e in toredraw_group.sprites():
+        if e.origin_rect.x // dpi == c[0] and e.origin_rect.y // dpi == c[1]:
+            return e
+
 def move_player_to_spawn():
     global camera_x, camera_y, player
     spawn_point = game_logic.current_map.rooms[0].center
@@ -139,8 +144,14 @@ def update_map_near_player():
                 already_drawn.append((x, y))
         elif elem == ".":
             if (x, y) not in already_drawn:
-                Wall((x * dpi, y * dpi))
+                w = Wall((x * dpi, y * dpi))
                 already_drawn.append((x, y))
+
+    for c in already_drawn:
+        in_direct_vision = c in map(lambda c: (c[0], c[1]), coords)
+        wg = find_wall_ground_at_pos(c)
+        if wg:
+            wg.set_vision(in_direct_vision)
 
     for creature in creature_group.sprites():
         if get_creature_pos_grid(creature) in already_drawn:
@@ -329,10 +340,14 @@ class Wall(pygame.sprite.Sprite):
         if initial_position is None:
             initial_position = (0, 0)
         (self.origin_rect.x, self.origin_rect.y) = initial_position
+        self.far_away = False
 
     @property
     def rect(self):
         return translated_rect(self.origin_rect)
+
+    def set_vision(self, is_visible):
+        self.image.set_alpha(255 if is_visible else 100)
 
     def draw(self, screen):
         screen.blit(self.image, translated_rect(self.origin_rect))
@@ -354,7 +369,7 @@ class Background(pygame.sprite.Sprite):
 class Ground(pygame.sprite.Sprite):
     def __init__(self, initial_position=None, trapped=False):
         super().__init__(self.containers)
-        self.image = random.choice(random.choices(self.images, [1, 50, 1, 1, 1, 1]))
+        self.image = copy.copy(random.choices(self.images, [1, 50, 1, 1, 1, 1], k=1)[0])
         self.origin_rect = self.image.get_rect()
         self.trapped = trapped
         if initial_position is None:
@@ -364,6 +379,9 @@ class Ground(pygame.sprite.Sprite):
     @property
     def rect(self):
         return translated_rect(self.origin_rect)
+
+    def set_vision(self, is_visible):
+        self.image.set_alpha(255 if is_visible else 100)
 
     def draw(self, screen):
         screen.blit(self.image, translated_rect(self.origin_rect))
@@ -868,6 +886,7 @@ particle_group = pygame.sprite.Group()
 inventoryobject_group = pygame.sprite.Group()
 player_inv_group = pygame.sprite.Group()
 projectile_group = pygame.sprite.Group()
+
 Projectile.containers = projectile_group, all_sprites
 Player.containers = all_sprites
 InventoryObject.containers = all_sprites, inventoryobject_group, mapdependent_group
