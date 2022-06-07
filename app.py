@@ -439,7 +439,6 @@ class Projectile(pygame.sprite.Sprite):
         self.image = self.anim.update_animation(self.frame_index)
 
         self.move(self.direction,ticked)
-        print(self.direction)
         colliding_creatures = pygame.sprite.spritecollide(self,creature_group,False)
         if len(colliding_creatures) != 0  : 
             colliding_creatures[0].health -= self.dmg
@@ -497,7 +496,6 @@ class Weapon(InventoryObject):
             mouse_pos = pygame.math.Vector2(pygame.mouse.get_pos())
             player_pos = pygame.math.Vector2(player.rect.center)
             direction = (mouse_pos - player_pos).normalize()
-            print(direction)
             Projectile(player.origin_rect.center,[loadify("arrow.png",-35,True)],1,direction, 10)
 class Potion(InventoryObject):
     def __init__(self, initial_position):
