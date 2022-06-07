@@ -132,7 +132,7 @@ def update_map_near_player():
                 if elem == "S":
                     Stairs((x * dpi, y * dpi))
                 elif elem == "€":
-                    Treasure((x * dpi, y * dpi))
+                    Treasure(game_logic.current_map.treasure.item, (x * dpi, y * dpi))
                 already_drawn.append((x, y))
         elif elem == ".":
             if (x, y) not in already_drawn:
@@ -369,12 +369,13 @@ class Stairs(pygame.sprite.Sprite):
         return translated_rect(self.origin_rect)
 
 class Treasure(pygame.sprite.Sprite):
-    def __init__(self, initial_position=None):
+    def __init__(self, item, initial_position=None):
         super().__init__(self.containers)
         self.origin_rect = self.image.get_rect()
         if initial_position is None:
             initial_position = (0, 0)
         (self.origin_rect.x, self.origin_rect.y) = initial_position
+        self.item = item
 
     @property
     def rect(self):
@@ -481,6 +482,7 @@ class Player(pygame.sprite.Sprite):
             dialog.message = "Press E to go up"
             dialog.move((stair_object.origin_rect.x, stair_object.origin_rect.y - 0.5 * dpi))
         for treasure_object in pygame.sprite.spritecollide(self, treasures_group, False):
+            Weapon(treasure_object.origin_rect[:2],treasure_object.item.id)
             all_sprites.remove(treasure_object)
             treasures_group.remove(treasure_object)
         if any(pygame.sprite.spritecollide(self, obstacle_group, False)):
@@ -772,7 +774,6 @@ class Cursor(pygame.sprite.Sprite):
 game_logic = mapgen.Game(max_levels=3)
 map_grid = None
 game_logic.current_map.display()
-print(game_logic.current_map.treasure)
 
 
 
@@ -935,10 +936,7 @@ while True:
         direction = (1, 0)
         player.move(direction, ticked)
 
-    # if pygame.mouse.get_pos()[0] > player.rect.center[0]:
-    #   print("right")
-    # else:
-    #   print("left")
+    print(player.inventory.items)
     dirty = all_sprites.draw(screen)
     particle_system.update(ticked)
     screen.blit(plane,(0,0))
