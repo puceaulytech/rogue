@@ -460,7 +460,7 @@ class Projectile(pygame.sprite.Sprite):
 
 
 class Weapon(InventoryObject):
-    def __init__(self, initial_position, id):
+    def __init__(self, initial_position, id, subid = None):
         self.id = id
         if self.id == "sword":
             self.attack_cooldown = 5
@@ -471,7 +471,7 @@ class Weapon(InventoryObject):
         if self.id == "bow":
             self.attack_cooldown = 10
             self.durability = 20
-            self.damage = 10
+            self.damage = 3
             self.image = loadify("bow.png", 10, True) 
         self.last_attack = 0
         super().__init__(initial_position)
@@ -496,7 +496,7 @@ class Weapon(InventoryObject):
             mouse_pos = pygame.math.Vector2(pygame.mouse.get_pos())
             player_pos = pygame.math.Vector2(player.rect.center)
             direction = (mouse_pos - player_pos).normalize()
-            Projectile(player.origin_rect.center,[loadify("arrow.png",-35,True)],1,direction, 10)
+            Projectile(player.origin_rect.center,[loadify("arrow.png",-35,True)],1,direction, self.damage)
 class Potion(InventoryObject):
     def __init__(self, initial_position):
         super().__init__(initial_position)
