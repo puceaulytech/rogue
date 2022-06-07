@@ -12,6 +12,9 @@ class Element:
 
     def __repr__(self):
         return f"<mapgen.Element id={self.id},position={self.position},difficulty={self.difficulty}>"
+    
+    def __str__(self):
+        return self.id
 
 
 class Creature(Element):
@@ -71,6 +74,14 @@ class Coord:
         if not isinstance(other, Coord):
             raise TypeError("Not a coord")
         return math.sqrt((self.x - other.x) ** 2 + (self.y - other.y) ** 2)
+
+class Treasure:
+    def __init__(self, position):
+        self.position = position
+        self.item = None
+
+    def __repr__(self):
+        return f"<mapgen.Treasure position={self.position},item={self.item}>"
 
 class Stairs:
     def __init__(self, position):
@@ -201,10 +212,10 @@ class Map:
         ),
         Creature(
             ["pac1.png","pac2.png","pac3.png"],
-            None,
-            1,
-            0.15,
-            flying = False
+            position=None,
+            difficulty=1,
+            speed=0.15,
+            flying=False
         )
     ]
     available_weapon = [
@@ -212,7 +223,7 @@ class Map:
         "sword",
         position = None,
         difficulty = 1
-        )
+      )
     ]
     available_spell = [
 
@@ -233,6 +244,7 @@ class Map:
         self.spell = []
         self.potion = []
         self.next_level_stair = None
+        self.treasure = None
 
     def __repr__(self):
         return f"<mapgen.Map width={self.width},height={self.height},nb_rooms={len(self.rooms)}>"
@@ -324,6 +336,14 @@ class Map:
         last_room = self.rooms[-1]
         self.next_level_stair = Stairs(last_room.center)
 
+    def generate_treasure(self):
+        room = random.choice(self.rooms[1:])
+        position = self.find_valid_random_coord(room)
+        self.treasure = Treasure(position)
+        self.treasure.item = copy.copy(random.choice(self.weapon + self.spell + self.potion))
+        self.treasure.item.position = None
+
+
     def generate_random_circle(self):
         for i in range(self.max_exot_rooms):
             room = self.random_circle_room()
@@ -382,6 +402,8 @@ class Map:
     def get_character_at(self, coord):
         if coord == self.next_level_stair.position:
             return "S"
+        elif coord == self.treasure.position:
+            return "€"
         elif any([coord == creature.position for creature in self.creatures]):
             return "x"
         elif any([coord == item.position for item in self.weapon]):
@@ -424,6 +446,7 @@ class Game:
         new_map.make_paths()
         new_map.generate_stairs()
         new_map.fill_with_elements()
+        new_map.generate_treasure()
         self.levels.append(new_map)
 
     def move_up(self):

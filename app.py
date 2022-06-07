@@ -126,11 +126,13 @@ def update_map_near_player():
     for c in coords:
         x, y = c
         elem = game_logic.current_map.get_character_at(c)
-        if elem in ("%", "#", "x", "S","w","L","P"):
+        if elem in ("%", "#", "x", "S","w","L","P", "€"):
             if (x, y) not in already_drawn:
                 Ground((x * dpi, y * dpi))
                 if elem == "S":
                     Stairs((x * dpi, y * dpi))
+                elif elem == "€":
+                    Treasure((x * dpi, y * dpi))
                 already_drawn.append((x, y))
         elif elem == ".":
             if (x, y) not in already_drawn:
@@ -191,7 +193,7 @@ def get_adjacent_case(x,y,grid):
 
 def is_case_goodenough(coo,grid): 
     case = grid[coo.y][coo.x]
-    if case in ["#", "%","S","x","w","L","P"]:
+    if case in ["#", "%","S","x","w","L","P", "€"]:
         return True
     return False
 
@@ -366,6 +368,17 @@ class Stairs(pygame.sprite.Sprite):
     def rect(self):
         return translated_rect(self.origin_rect)
 
+class Treasure(pygame.sprite.Sprite):
+    def __init__(self, initial_position=None):
+        super().__init__(self.containers)
+        self.origin_rect = self.image.get_rect()
+        if initial_position is None:
+            initial_position = (0, 0)
+        (self.origin_rect.x, self.origin_rect.y) = initial_position
+
+    @property
+    def rect(self):
+        return translated_rect(self.origin_rect)
 class InventoryObject(pygame.sprite.Sprite,metaclass=abc.ABCMeta):
     def __init__(self, initial_position):
         super().__init__(self.containers)
@@ -467,6 +480,9 @@ class Player(pygame.sprite.Sprite):
         for stair_object in pygame.sprite.spritecollide(self, stairs_group, False):
             dialog.message = "Press E to go up"
             dialog.move((stair_object.origin_rect.x, stair_object.origin_rect.y - 0.5 * dpi))
+        for treasure_object in pygame.sprite.spritecollide(self, treasures_group, False):
+            all_sprites.remove(treasure_object)
+            treasures_group.remove(treasure_object)
         if any(pygame.sprite.spritecollide(self, obstacle_group, False)):
             camera_x -= direction[0]
             camera_y -= direction[1]
@@ -756,6 +772,7 @@ class Cursor(pygame.sprite.Sprite):
 game_logic = mapgen.Game(max_levels=3)
 map_grid = None
 game_logic.current_map.display()
+print(game_logic.current_map.treasure)
 
 
 
@@ -766,6 +783,7 @@ all_sprites = pygame.sprite.LayeredUpdates()
 mapdependent_group = pygame.sprite.Group()
 toredraw_group = pygame.sprite.Group()
 stairs_group = pygame.sprite.Group()
+treasures_group = pygame.sprite.Group()
 obstacle_group = pygame.sprite.Group()
 creature_group = pygame.sprite.Group()
 hud_group = pygame.sprite.Group()
@@ -779,6 +797,7 @@ InventoryObject.containers = all_sprites, inventoryobject_group, mapdependent_gr
 InvSlot.containers = all_sprites, player_inv_group
 Ground.containers = all_sprites, mapdependent_group, toredraw_group
 Stairs.containers = all_sprites, mapdependent_group, stairs_group
+Treasure.containers = all_sprites, mapdependent_group, treasures_group
 Background.containers = all_sprites
 Wall.containers = all_sprites, obstacle_group, mapdependent_group, toredraw_group
 Creature.containers = all_sprites, creature_group, mapdependent_group
@@ -798,6 +817,7 @@ Ground.images = [
     loadify("floor6.png"),
 ]
 Stairs.image = loadify("portal.png", size=20)
+Treasure.image = loadify("chest.png", size=3)
 Background.image = loadify("background.png", keep_ratio=True, size=2000)
 Cursor.image = loadify("cursor.png", size=60)
 HealthIcon.image = loadify("heart.png", size=-25)
@@ -807,6 +827,7 @@ Player._layer = 2
 Wall._layer = 1
 Ground._layer = 1
 Stairs._layer = 2
+Treasure._layer = 2
 Background._layer = 0
 Cursor._layer = 3 
 FPSCounter._layer = 2
