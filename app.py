@@ -165,12 +165,14 @@ def draw_map():
             if elem == "x":
                 for abstract_creature in game_logic.current_map.creatures:
                     if abstract_creature.position == mapgen.Coord(x, y):
-                        Creature(
+                        c = Creature(
                             (x * dpi, y * dpi),
                             abstract_creature.id,
                             abstract_creature.speed,
                             abstract_creature.flying,
                         )
+                        c.health_bar = CreatureHealthBar()
+                        c.health_bar.creature = c
             elif elem == "w":
                 for abstract_weapon in game_logic.current_map.weapon:
                     if abstract_weapon.position == mapgen.Coord(x, y):
@@ -693,7 +695,7 @@ class Creature(pygame.sprite.Sprite):
         self.local_frame_index = random.randint(0, 100000)
         super().__init__(self.containers)
         self.angle = 0
-        self.health = hp or random.randint(3,10)
+        self.health = hp or random.randint(3, 10)
         self.flying = flying
         self.speed = speed + random.randint(-100,100)/1000
         self.last_attack = 0
@@ -714,10 +716,10 @@ class Creature(pygame.sprite.Sprite):
         return translated_rect(self.origin_rect)
 
 
-            
     def update(self):
         if self.health <= 0:
-          self.kill()
+            self.health_bar.kill()
+            self.kill()
 
 
         
@@ -787,7 +789,29 @@ class Creature(pygame.sprite.Sprite):
             pygame.sprite.spritecollide(self, obstacle_group, False)
         ):
             self.origin_rect.move_ip(inverse_direction(direction))
+        (self.health_bar.origin_rect.x, self.health_bar.origin_rect.y) = (self.origin_rect.x, self.origin_rect.y - 20)
 
+class CreatureHealthBar(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__(self.containers)
+        self.origin_image = pygame.Surface((70, 5))
+        self.origin_image.fill((0, 255, 0))
+        self.origin_rect = self.image.get_rect()
+
+    @property
+    def rect(self):
+        return translated_rect(self.origin_rect)
+
+    @property
+    def image(self):
+        if hasattr(self, 'creature'):
+            if self.creature.health <= 0:
+                return pygame.Surface((0, 0))
+            im = pygame.Surface((8 * self.creature.health, 5))
+            im.fill((0, 255, 0))
+            return im
+        return self.origin_image
+        
 
 class Cursor(pygame.sprite.Sprite):
     def __init__(self):
@@ -834,12 +858,13 @@ Stairs.containers = all_sprites, mapdependent_group, stairs_group
 Background.containers = all_sprites
 Wall.containers = all_sprites, obstacle_group, mapdependent_group, toredraw_group
 Creature.containers = all_sprites, creature_group, mapdependent_group
+CreatureHealthBar.containers = all_sprites, hud_group
 Cursor.containers = all_sprites, hud_group
 FPSCounter.containers = all_sprites, hud_group
 HealthIcon.containers = all_sprites, hud_group, healthbar_group
 Dialog.containers = all_sprites, hud_group
 
-Player.assets = ["terro.png","terro_but_mad.png"]
+Player.assets = ["terro.png", "terro_but_mad.png"]
 Wall.image = loadify("stonebrick_cracked.png")
 Ground.images = [
     loadify("floor1.png"),
@@ -865,6 +890,7 @@ FPSCounter._layer = 2
 Dialog._layer = 2
 HealthIcon._layer = 2
 Creature._layer = 2
+CreatureHealthBar._layer = 3
 InventoryObject._layer = 2
 InvSlot._layer = 2
 Projectile._layer = 3
