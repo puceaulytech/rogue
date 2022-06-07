@@ -18,7 +18,7 @@ winstyle = 0
 fullscreen = False
 player = None
 dialog = None
-debug_mode = sys.argv[1] == "--debug"
+debug_mode = len(sys.argv) > 1 and sys.argv[1] == "--debug"
 
 if debug_mode:
     print("/!\ Debug mode enabled")
