@@ -171,6 +171,7 @@ def draw_map():
                             abstract_creature.id,
                             abstract_creature.speed,
                             abstract_creature.flying,
+                            key = abstract_creature.has_key
                         )
             elif elem == "w":
                 for abstract_weapon in game_logic.current_map.weapon:
@@ -440,10 +441,17 @@ class Weapon(InventoryObject):
                 ) and distance <= self.reach:
                     creature.health -= self.damage 
 
+class Key(InventoryObject):
+    def __init__(self, initial_position):
+        self.image = loadify("key.png", 5, True)
+        super().__init__(initial_position)
+
+    def use(self):
+        pass
+
 class Potion(InventoryObject):
     def __init__(self, initial_position):
         super().__init__(initial_position)
-
 
 class Spell(InventoryObject):
     def __init__(self, initial_position,id):
@@ -451,7 +459,6 @@ class Spell(InventoryObject):
         self.id = id 
         if self.id == "fireball" : 
             self.damage = 10
-
 
 class Player(pygame.sprite.Sprite):
     speed = 0.35
@@ -482,9 +489,11 @@ class Player(pygame.sprite.Sprite):
             dialog.message = "Press E to go up"
             dialog.move((stair_object.origin_rect.x, stair_object.origin_rect.y - 0.5 * dpi))
         for treasure_object in pygame.sprite.spritecollide(self, treasures_group, False):
-            Weapon(treasure_object.origin_rect[:2],treasure_object.item.id)
-            all_sprites.remove(treasure_object)
-            treasures_group.remove(treasure_object)
+            if isinstance(self.inventory.picked_item,Key):
+                Weapon(treasure_object.origin_rect[:2],treasure_object.item.id)
+                all_sprites.remove(treasure_object)
+                treasures_group.remove(treasure_object)
+                self.inventory.picked_item.kill()
         if any(pygame.sprite.spritecollide(self, obstacle_group, False)):
             camera_x -= direction[0]
             camera_y -= direction[1]
@@ -656,7 +665,7 @@ class ParticleEffect:
 
 
 class Creature(pygame.sprite.Sprite):
-    def __init__(self, initial_position, assets, speed=0.1, flying=False, hp = None):
+    def __init__(self, initial_position, assets, speed=0.1, flying=False, hp = None, key = False):
         self.local_frame_index = random.randint(0, 100000)
         super().__init__(self.containers)
         self.angle = 0
@@ -670,6 +679,7 @@ class Creature(pygame.sprite.Sprite):
         self.path_to_player = []
         self.collisions_rect = []
         self.direction = (0, 0)
+        self.has_key = key
         
         for i in range(len(assets)):
             self.images.append(loadify(assets[i], size=-30, keep_ratio=True))
@@ -684,9 +694,9 @@ class Creature(pygame.sprite.Sprite):
             
     def update(self):
         if self.health <= 0:
-          self.kill()
-
-
+            self.kill()
+            if self.has_key:
+                Key(self.origin_rect[:2])
         
         self.local_frame_index += 1
         self.image = self.anim.update_animation(self.local_frame_index)
@@ -856,7 +866,6 @@ for i in range(player.health):
 particle_system = ParticleEffect(10,200,spawner=screen.get_rect(),forces= [0.1,0.05])
 frame_index = 0
 
-
 ###########################################   MAIN LOOP  ###########################################
 
 while True:
@@ -936,7 +945,6 @@ while True:
         direction = (1, 0)
         player.move(direction, ticked)
 
-    print(player.inventory.items)
     dirty = all_sprites.draw(screen)
     particle_system.update(ticked)
     screen.blit(plane,(0,0))

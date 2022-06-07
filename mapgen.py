@@ -22,6 +22,7 @@ class Creature(Element):
         super().__init__(elem_id, position, difficulty)
         self.speed = speed
         self.flying = flying
+        self.has_key = False
 
 
 class Item(Element):
@@ -331,6 +332,7 @@ class Map:
                   item = copy.copy(random.choices(Map.available_potion, weights,k=1)[0])
                   item.position = position
                   self.potion.append(item)
+        random.choice(self.creatures).has_key = True
 
     def generate_stairs(self):
         last_room = self.rooms[-1]
