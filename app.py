@@ -149,8 +149,10 @@ def update_map_near_player():
     for creature in creature_group.sprites():
         if get_creature_pos_grid(creature) in already_drawn:
             all_sprites.add(creature)
+            all_sprites.add(creature.health_bar)
         else:
             all_sprites.remove(creature)
+            all_sprites.remove(creature.health_bar)
 
     for item in inventoryobject_group.sprites():
         if get_creature_pos_grid(item) in already_drawn:
