@@ -236,7 +236,7 @@ class Map:
       
     ]
     available_spell = [
-
+        Spell("fireball",None,1)
     ]
     available_potion = [
 
@@ -332,10 +332,11 @@ class Map:
                 item = copy.copy(random.choices(Map.available_weapon, weights,k=1)[0])
                 item.position = position
                 self.weapon.append(item)
-            if Map.available_spell:
-              nb_spell = random.randint(0, 2)
+            if True:
+              nb_spell = 10 #random.randint(0, 2)
               weights = list(map(lambda c: 1 / c.difficulty, Map.available_spell))
               for _ in range(nb_spell):
+                  print("spell added")
                   position = self.find_valid_random_coord(room)
                   item = copy.copy(random.choices(Map.available_spell, weights,k=1)[0])
                   item.position = position
@@ -420,6 +421,8 @@ class Map:
     def get_character_at(self, coord):
         if coord == self.next_level_stair.position:
             return "S"
+        elif any([coord == item.position for item in self.spell]):
+            return "L"
         elif coord == self.treasure.position:
             return "€"
         elif any([coord == trap.position for trap in self.traps]):
@@ -432,8 +435,7 @@ class Map:
             return "#"
         elif any([coord in path for path in self.paths]):
             return "%"
-        elif any([coord == item.position for item in self.spell]):
-            return "L"
+
         elif any([coord == item.position for item in self.potion]):
             return "P"
         return "."

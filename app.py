@@ -188,7 +188,10 @@ def draw_map():
                             (x * dpi, y * dpi),
                             abstract_weapon.id
                         )
-
+            elif elem == "L":
+                for abstract_spell in game_logic.current_map.spell:
+                    if abstract_spell.position == mapgen.Coord(x,y):
+                        Spell((x*dpi,y*dpi),abstract_spell.id)
 def get_adjacent_case(x,y,grid):
     if x > 0 and x < len(grid[0]) and y > 0 and y < len(grid):
         res = []
@@ -528,14 +531,16 @@ class Potion(InventoryObject):
         super().__init__(initial_position)
 
 class Spell(InventoryObject):
-    def __init__(self, initial_position,id):
-        super().__init__(initial_position)
+    def __init__(self, initial_position, id):
+        
         self.id = id 
         if self.id == "fireball" : 
             self.damage = 5
             self.radius = 1
             self.speed = 0.3
-            self.image = loadify("fireball_spell.png")
+            self.image = loadify("fireball_spell.png",10,True)
+            #self.origin_rect = self.image.get_rect()
+        super().__init__(initial_position)
     def use(self):
         pass
 
@@ -800,25 +805,25 @@ class Creature(pygame.sprite.Sprite):
         )
         if distance_to_player < 10 * dpi:
             self.path_to_player = bfs(self, map_grid)
-
-            if len(self.path_to_player) > 1:
+            try:
+                if len(self.path_to_player) > 1:
+                    if (self.direction[0] == 0 and self.direction[1] == 0) or any([rect.collidepoint(self.origin_rect.center) for rect in self.collisions_rect]):
+                        self.collisions_rect.clear()
+                        for point in self.path_to_player[1:]:
+                            x = (point[0] * dpi) + dpi / 2
+                            y = (point[1] * dpi) + dpi / 2
+                            rect = pygame.Rect((x - 7, y - 7), (14, 14))
+                            self.collisions_rect.append(rect)
+                        start = pygame.math.Vector2(self.origin_rect.center)
+                        end = pygame.math.Vector2(self.collisions_rect[0].center)
+                        self.direction = (end - start).normalize()
+                    if self.local_frame_index %50 == 0 : 
+                        start = pygame.math.Vector2(self.origin_rect.center)
+                        end = pygame.math.Vector2(self.collisions_rect[0].center)
+                        self.direction = (end - start).normalize()
+                    self.move(self.direction, ticked)
                 
-                if (self.direction[0] == 0 and self.direction[1] == 0) or any([rect.collidepoint(self.origin_rect.center) for rect in self.collisions_rect]):
-                    self.collisions_rect.clear()
-                    for point in self.path_to_player[1:]:
-                        x = (point[0] * dpi) + dpi / 2
-                        y = (point[1] * dpi) + dpi / 2
-                        rect = pygame.Rect((x - 7, y - 7), (14, 14))
-                        self.collisions_rect.append(rect)
-                    start = pygame.math.Vector2(self.origin_rect.center)
-                    end = pygame.math.Vector2(self.collisions_rect[0].center)
-                    self.direction = (end - start).normalize()
-                if self.local_frame_index %50 == 0 : 
-                    start = pygame.math.Vector2(self.origin_rect.center)
-                    end = pygame.math.Vector2(self.collisions_rect[0].center)
-                    self.direction = (end - start).normalize()
-                self.move(self.direction, ticked)
-
+            except:pass
             if (
                 pygame.sprite.collide_rect(player, self)
                 and time.time() - self.last_attack > self.attack_cooldown
