@@ -617,8 +617,6 @@ class InvSlot(pygame.sprite.Sprite):
         self.rect = self.image.get_rect().move((width/2)+dpi * (1+offset * 0.7),- dpi + (height/2))
 
 class Inventory(pygame.sprite.Sprite):
-  inv_case = loadify("inv.png",size=20)
-  case_rect = inv_case.get_rect()
   def __init__(self,items,position):
     # super().__init__(self.containers)
     self.items = items
