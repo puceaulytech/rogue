@@ -227,8 +227,23 @@ class Map:
         )
     ]
     available_weapon = [
-      Weapon(
+                Weapon(
         "sword",
+        position = None,
+        difficulty = 1
+        ),
+              Weapon(
+        "amber_sword",
+        position = None,
+        difficulty = 1
+        ),
+              Weapon(
+        "emerald_sword",
+        position = None,
+        difficulty = 1
+        ),
+              Weapon(
+        "diamond_sword",
         position = None,
         difficulty = 1
         ),
