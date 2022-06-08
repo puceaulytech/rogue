@@ -669,11 +669,16 @@ class Stats_gui:
 class InvSlot(pygame.sprite.Sprite):
     def __init__(self, offset, total_nb):
         super().__init__(self.containers)
+        self.has_picked_item = False
+        self.image = loadify("slot.png", size=-20)
         center_p = (width/2,height-2)
         self.rect = self.image.get_rect(center = center_p)
         self.rect.move_ip(self.rect[2]*(offset - total_nb//2),-self.rect[3]/2)
         if total_nb%2 == 0:
             self.rect.move_ip(self.rect[2]/2,0)
+
+    def update(self):
+        self.image = loadify("selected_slot.png", size=-20) if self.has_picked_item else loadify("slot.png", size=-20)
 
 class Inventory:
     def __init__(self,items):
@@ -712,11 +717,16 @@ class Inventory:
         self.gui.update(self.picked_item)
         for i in player_inv_group.sprites():
             all_sprites.add(i)
+        [x.update() for x in player_inv_group.sprites() if isinstance(x, InvSlot)]
 
     @property
     def picked_item(self):
         picked_items = [x for x in self.items if x is not None and x.picked_up]
         return picked_items[0] if picked_items else None
+
+    @property
+    def picked_item_index(self):
+        return self.items.index(self.picked_item) if self.picked_item else None
 
 class Particle:
     def __init__(self, coords, image=None, radius=None, lifetime=200,color = (255,255,255)):
@@ -952,12 +962,13 @@ healthbar_group = pygame.sprite.Group()
 particle_group = pygame.sprite.Group()
 inventoryobject_group = pygame.sprite.Group()
 player_inv_group = pygame.sprite.Group()
+inv_slot_group = pygame.sprite.Group()
 projectile_group = pygame.sprite.Group()
 
 Projectile.containers = projectile_group, all_sprites
 Player.containers = all_sprites
 InventoryObject.containers = all_sprites, inventoryobject_group, mapdependent_group
-InvSlot.containers = all_sprites, player_inv_group
+InvSlot.containers = all_sprites, player_inv_group, inv_slot_group
 Ground.containers = all_sprites, mapdependent_group, toredraw_group
 Stairs.containers = all_sprites, mapdependent_group, stairs_group
 Treasure.containers = all_sprites, mapdependent_group, treasures_group
@@ -987,7 +998,6 @@ Treasure.image = loadify("chest.png", size=3)
 Background.image = loadify("background.png", keep_ratio=True, size=2000)
 Cursor.image = loadify("cursor.png", size=60)
 HealthIcon.image = loadify("heart.png", size=-25)
-InvSlot.image = loadify("slot.png", size=-20)
 
 Player._layer = 2
 Wall._layer = 1
@@ -1080,8 +1090,12 @@ while True:
                 for s in player.inventory.items:
                     if s is not None:
                         s.picked_up = False
+                for s in inv_slot_group.sprites():
+                    s.has_picked_item = False
                 if clicked_slot_item is not None:
                     clicked_slot_item.picked_up = not old_state
+                if player.inventory.picked_item:
+                    inv_slot_group.sprites()[player.inventory.picked_item_index].has_picked_item = True
 
         elif event.type == pygame.MOUSEBUTTONDOWN:
             pos = pygame.mouse.get_pos()
@@ -1092,7 +1106,10 @@ while True:
                 for s in player.inventory.items:
                     if s is not None:
                         s.picked_up = False
+                for s in inv_slot_group.sprites():
+                    s.has_picked_item = False
                 clicked_inv_sprites[0].picked_up = not old_state
+                inv_slot_group.sprites()[player.inventory.picked_item_index].has_picked_item = True
             picked_item = player.inventory.picked_item
             if picked_item and not isinstance(picked_item,Key):
                 picked_item.use()
