@@ -627,10 +627,11 @@ class Player(pygame.sprite.Sprite):
             dialog.move((stair_object.origin_rect.x, stair_object.origin_rect.y - 0.5 * dpi))
         for treasure_object in pygame.sprite.spritecollide(self, treasures_group, False):
             if isinstance(self.inventory.picked_item,Key):
+                item = treasure_object.item
                 if isinstance(treasure_object.item,mapgen.Weapon):
-                    Weapon(treasure_object.origin_rect[:2],treasure_object.item.id)
+                    Weapon(treasure_object.origin_rect[:2],item.id, subid=item.sub_id, durability=item.durability, damage=item.damage, reach=item.reach, attack_cooldown=item.attack_cooldown)
                 elif isinstance(treasure_object.item,mapgen.Spell):
-                    Spell(treasure_object.origin_rect[:2],treasure_object.item.id)
+                    Spell(treasure_object.origin_rect[:2],treasure_object.item.id, subid=item.sub_id, damage=item.damage, radius=item.radius, speed=item.speed, attack_cooldown=item.attack_cooldown)
                 all_sprites.remove(treasure_object)
                 treasures_group.remove(treasure_object)
                 self.inventory.picked_item.use()
