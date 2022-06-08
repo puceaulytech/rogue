@@ -238,7 +238,37 @@ class Map:
     available_weapon = [
       Weapon(
         "sword",
-        sub_id="truc_sword",
+        sub_id="diamond_sword",
+        position=None,
+        difficulty=1,
+        durability=50,
+        damage=2,
+        reach=2,
+        attack_cooldown=0.5
+        ),
+        Weapon(
+        "sword",
+        sub_id="amber_sword",
+        position=None,
+        difficulty=1,
+        durability=50,
+        damage=2,
+        reach=2,
+        attack_cooldown=0.5
+        ),
+      Weapon(
+        "sword",
+        sub_id="emerald_sword",
+        position=None,
+        difficulty=1,
+        durability=50,
+        damage=2,
+        reach=2,
+        attack_cooldown=0.5
+        ),
+      Weapon(
+        "sword",
+        sub_id="normal_sword",
         position=None,
         difficulty=1,
         durability=50,
