@@ -497,13 +497,13 @@ class Weapon(InventoryObject):
     def __init__(self, initial_position, id, subid = None):
         self.id = id
         if self.id == "sword":
-            self.attack_cooldown = 5
+            self.attack_cooldown = 0.5
             self.durability = 50
             self.damage = 2
             self.reach = 2 * dpi
             self.image = loadify("sword.png", 10, True) 
         if self.id == "bow":
-            self.attack_cooldown = 10
+            self.attack_cooldown = 2
             self.durability = 20
             self.damage = 3
             self.image = loadify("bow.png", 10, True) 
@@ -511,8 +511,9 @@ class Weapon(InventoryObject):
         super().__init__(initial_position)
 
     def use(self):
+        if not (time.time() - self.last_attack > self.attack_cooldown):
+            return
         if self.id == "sword":
-        
             pos = pygame.mouse.get_pos()
             cos45 = 1 / math.sqrt(2)
             mouse_cos = (pos[0] - player.rect.center[0]) / math.sqrt((pos[0] - player.rect.center[0])**2 + (pos[1] - player.rect.center[1])**2)
@@ -525,13 +526,15 @@ class Weapon(InventoryObject):
                     or (creature.rect.center[1] > player.rect.center[1] and pos[1] > player.rect.center[1])
                     or (creature.rect.center[1] <= player.rect.center[1] and pos[1] <= player.rect.center[1])
                 ) and distance <= self.reach:
-                    creature.health -= self.damage 
+                    reature.health -= self.damage
                     
         if self.id == "bow":
             mouse_pos = pygame.math.Vector2(pygame.mouse.get_pos())
             player_pos = pygame.math.Vector2(player.rect.center)
             direction = (mouse_pos - player_pos).normalize()
             Projectile(player.origin_rect.center,[loadify("arrow.png",-35,True)],1,direction, self.damage)
+
+        self.last_attack = time.time()
 
 class Key(InventoryObject):
     def __init__(self, initial_position):
@@ -553,15 +556,20 @@ class Spell(InventoryObject):
             self.damage = 5
             self.radius = 1
             self.speed = 0.3
+            self.attack_cooldown = 1
             self.image = loadify("fireball_spell.png",10,True)
             #self.origin_rect = self.image.get_rect()
+        self.last_attack = 0
         super().__init__(initial_position)
     def use(self):
+        if not (time.time() - self.last_attack > self.attack_cooldown):
+            return
         if self.id == "fireball":
             mouse_pos = pygame.math.Vector2(pygame.mouse.get_pos())
             player_pos = pygame.math.Vector2(player.rect.center)
             direction = (mouse_pos - player_pos).normalize()
             Projectile(player.origin_rect.center,[loadify("fireball.png",-25,True)],1,direction, self.damage,particle=1)
+        self.last_attack = time.time()
 
 
 class Player(pygame.sprite.Sprite):
