@@ -566,7 +566,7 @@ class Spell(InventoryObject):
 
 class Player(pygame.sprite.Sprite):
     speed = 0.35
-    inventory_size = 5
+    inventory_size = 8
     show_inv = False
 
     def __init__(self, initial_position=None):
@@ -639,9 +639,14 @@ class Player(pygame.sprite.Sprite):
      raise TypeError("Not an object")
 
 class InvSlot(pygame.sprite.Sprite):
-    def __init__(self, offset):
+    def __init__(self, offset, total_nb):
         super().__init__(self.containers)
-        self.rect = self.image.get_rect().move((width/2)+dpi * (1+offset * 0.7),- dpi + (height/2))
+        # self.rect = self.image.get_rect().move((width/2)+dpi * (1+offset * 0.7),- dpi + (height/2))
+        center_p = (width/2,height-2)
+        self.rect = self.image.get_rect(center = center_p)
+        self.rect.move_ip(self.rect[2]*(offset - total_nb//2),-self.rect[3]/2)
+        if total_nb%2 == 0:
+            self.rect.move_ip(self.rect[2]/2,0)
 
 class Inventory(pygame.sprite.Sprite):
   def __init__(self,items,position):
@@ -650,7 +655,7 @@ class Inventory(pygame.sprite.Sprite):
     self.size = len(self.items)
     self.position = position
     for i in range(len(self.items)):
-      InvSlot(i)
+      InvSlot(i, len(self.items))
 
   def __repr__(self):
     return str(self.items)
@@ -965,7 +970,7 @@ Treasure.image = loadify("chest.png", size=3)
 Background.image = loadify("background.png", keep_ratio=True, size=2000)
 Cursor.image = loadify("cursor.png", size=60)
 HealthIcon.image = loadify("heart.png", size=-25)
-InvSlot.image = loadify("inv.png", size=-20)
+InvSlot.image = loadify("slot.png", size=-20)
 
 Player._layer = 2
 Wall._layer = 1
