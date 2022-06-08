@@ -522,6 +522,8 @@ class Weapon(InventoryObject):
                 self.image = loadify("emerald_sword.png", 10, True) 
             if subid == "amber_sword" : 
                 self.image = loadify("amber_sword.png", 10, True) 
+            if subid == "axe" : 
+                self.image = loadify("axe.png", 10, True) 
         if self.id == "bow":
             self.image = loadify("bow.png", 10, True) 
         self.last_attack = 0
@@ -671,12 +673,19 @@ class Text(pygame.sprite.Sprite):
         self.font = pygame.font.Font("assets/Retro_Gaming.ttf",30)
         self.image = self.font.render(self.text, False, self.color)
         self.rect = self.image.get_rect(topleft = position)
+class StatsBg(pygame.sprite.Sprite):
+     def __init__(self, position):
+        super().__init__(self.containers)
 
+
+
+        self.image = loadify("parchemin.png",200,True)
+        self.rect = self.image.get_rect(topleft = position)   
 class Stats_gui:
     def __init__(self,item):
         self.attributes = []
         self.update(item)
-
+        self.bg = StatsBg((width - 4*dpi,height - 4*dpi))
     def update(self, item):
         self.kill()
         if item:
@@ -997,7 +1006,7 @@ HealthIcon.containers = all_sprites, hud_group, healthbar_group
 Dialog.containers = all_sprites, hud_group
 Mask.containers = all_sprites, hud_group
 Text.containers = all_sprites, hud_group
-
+StatsBg.containers = all_sprites,hud_group
 Player.assets = ["terro.png", "terro_but_mad.png"]
 Wall.image = loadify("stonebrick_cracked.png")
 Ground.images = [
@@ -1032,6 +1041,7 @@ InventoryObject._layer = 2
 InvSlot._layer = 2
 Projectile._layer = 3
 Text._layer = 2
+StatsBg._layer = 2
 background_sprite = Background()
 Mask()
 
