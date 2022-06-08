@@ -4,6 +4,7 @@ from collections import defaultdict
 import math
 import sys
 import os
+
 import pygame
 import mapgen
 import itertools
@@ -45,10 +46,12 @@ dpi = width / camera_size
 
 already_drawn = []
 
-def loadify(path, size=0, keep_ratio=False):
+def loadify(path, size=0, keep_ratio=False, keep_size=False):
     global dpi
     good_path = os.path.join("assets", path)
     image = pygame.image.load(good_path).convert_alpha()
+    if keep_size:
+        return image
     ratio = image.get_width() / image.get_height() if keep_ratio else 1
     return pygame.transform.scale(image, ((dpi + size) * ratio, dpi + size))
 
@@ -126,13 +129,16 @@ def update_map_near_player():
     for c in coords:
         x, y = c
         elem = game_logic.current_map.get_character_at(c)
-        if elem in ("%", "#", "x", "S","w","L","P", "€"):
+
+        if elem in ("%", "#", "x", "S","w","L","P", "T", "€"):
             if (x, y) not in already_drawn:
-                Ground((x * dpi, y * dpi))
+                g = Ground((x * dpi, y * dpi), trapped=(elem == "T"))
                 if elem == "S":
                     Stairs((x * dpi, y * dpi))
                 elif elem == "€":
                     Treasure(game_logic.current_map.treasure.item, (x * dpi, y * dpi))
+                elif elem == "T":
+                    traps_group.add(g)
                 already_drawn.append((x, y))
         elif elem == ".":
             if (x, y) not in already_drawn:
@@ -166,13 +172,15 @@ def draw_map():
             if elem == "x":
                 for abstract_creature in game_logic.current_map.creatures:
                     if abstract_creature.position == mapgen.Coord(x, y):
-                        Creature(
+                        c = Creature(
                             (x * dpi, y * dpi),
                             abstract_creature.id,
                             abstract_creature.speed,
                             abstract_creature.flying,
                             key = abstract_creature.has_key
                         )
+                        c.health_bar = CreatureHealthBar()
+                        c.health_bar.creature = c
             elif elem == "w":
                 for abstract_weapon in game_logic.current_map.weapon:
                     if abstract_weapon.position == mapgen.Coord(x, y):
@@ -259,6 +267,13 @@ def bfs(creature, grid):
                 parents[n] = current
                 queue.append(n)
 
+class Mask(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__(self.containers)
+        self.image = loadify("mask.png", keep_ratio=True, keep_size=True)
+        self.rect = self.image.get_rect()
+        (self.rect.x, self.rect.y) = (0, 0)
+
 class Animation:
     def __init__(self, spritelist, rate): 
         self.spritelist = spritelist
@@ -271,7 +286,6 @@ class Animation:
         if self.curr_sprite >= len(self.spritelist):
             self.curr_sprite = 0
         return self.spritelist[self.curr_sprite]
-
 
 class FPSCounter(pygame.sprite.Sprite):
     def __init__(self):
@@ -342,10 +356,11 @@ class Background(pygame.sprite.Sprite):
 
 
 class Ground(pygame.sprite.Sprite):
-    def __init__(self, initial_position=None):
+    def __init__(self, initial_position=None, trapped=False):
         super().__init__(self.containers)
         self.image = random.choice(random.choices(self.images, [1, 50, 1, 1, 1, 1]))
         self.origin_rect = self.image.get_rect()
+        self.trapped = trapped
         if initial_position is None:
             initial_position = (0, 0)
         (self.origin_rect.x, self.origin_rect.y) = initial_position
@@ -411,9 +426,57 @@ class InventoryObject(pygame.sprite.Sprite,metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def use(self):
         pass
+class Projectile(pygame.sprite.Sprite):
+    def __init__(self,position,sprites,speed,direction,dmg):
+        super().__init__(self.containers)
+        
+        self.speed = speed
+        self.direction = direction
+        self.dmg = dmg
+
+        angle = math.atan2(self.direction[0],self.direction[1])
+        angle = angle * (180/math.pi)
+        rot_sprites = []
+        for i in sprites : 
+            rot_sprites.append(rotate_image(i,angle+180+45))
+        self.sprites = rot_sprites
+        self.anim = Animation(self.sprites,10)
+        self.image = self.anim.update_animation(0)
+        self.origin_rect = self.image.get_rect()
+        self.origin_rect.center = position
+        
+
+        self.frame_index = 0
+    @property
+    def rect(self):
+        return translated_rect(self.origin_rect)
+    def update(self):
+        self.frame_index+=1
+        self.image = self.anim.update_animation(self.frame_index)
+
+        self.move(self.direction,ticked)
+        colliding_creatures = pygame.sprite.spritecollide(self,creature_group,False)
+        if len(colliding_creatures) != 0  : 
+            colliding_creatures[0].health -= self.dmg
+            self.kill()
+            
+
+        colliding_walls = pygame.sprite.spritecollide(self,obstacle_group,False)
+        if len(colliding_walls) != 0 : 
+            self.kill()
+        if mapgen.Coord(player.origin_rect.center[0],player.origin_rect.center[1]).distance(mapgen.Coord(self.origin_rect.center[0],self.origin_rect.center[1])) > 20*dpi : 
+            self.kill()
+    def move(self,direction,delta_time):
+        direction = tuple([round(self.speed * delta_time * c) for c in direction])
+        self.origin_rect.move_ip(direction[0],direction[1])
+
+
+
+
+
 
 class Weapon(InventoryObject):
-    def __init__(self, initial_position, id):
+    def __init__(self, initial_position, id, subid = None):
         self.id = id
         if self.id == "sword":
             self.attack_cooldown = 5
@@ -421,6 +484,11 @@ class Weapon(InventoryObject):
             self.damage = 2
             self.reach = 2 * dpi
             self.image = loadify("sword.png", 10, True) 
+        if self.id == "bow":
+            self.attack_cooldown = 10
+            self.durability = 20
+            self.damage = 3
+            self.image = loadify("bow.png", 10, True) 
         self.last_attack = 0
         super().__init__(initial_position)
 
@@ -440,6 +508,12 @@ class Weapon(InventoryObject):
                     or (creature.rect.center[1] <= player.rect.center[1] and pos[1] <= player.rect.center[1])
                 ) and distance <= self.reach:
                     creature.health -= self.damage 
+                    
+        if self.id == "bow":
+            mouse_pos = pygame.math.Vector2(pygame.mouse.get_pos())
+            player_pos = pygame.math.Vector2(player.rect.center)
+            direction = (mouse_pos - player_pos).normalize()
+            Projectile(player.origin_rect.center,[loadify("arrow.png",-35,True)],1,direction, self.damage)
 
 class Key(InventoryObject):
     def __init__(self, initial_position):
@@ -472,9 +546,17 @@ class Player(pygame.sprite.Sprite):
         self.image = self.images[self.currimage]
         self.health = 8
         self.origin_rect = self.image.get_rect(center=SCREENRECT.center)
+        self.last_trapped = 0
         if initial_position is not None:
             (self.origin_rect.x, self.origin_rect.y) = initial_position
         self.inventory = Inventory([None for i in range(Player.inventory_size)],self.origin_rect[0:2])
+
+    def take_damage(self, amount):
+        player.health -= amount
+        hit_sound.play()
+        for _ in range(amount):
+            if not player.health < 0:  # TODO: juste pour éviter le crash
+                healthbar_group.sprites()[-1].kill()
 
     def move(self, direction, delta_time):
         global camera_x, camera_y
@@ -494,6 +576,10 @@ class Player(pygame.sprite.Sprite):
                 all_sprites.remove(treasure_object)
                 treasures_group.remove(treasure_object)
                 self.inventory.picked_item.kill()
+        if any(pygame.sprite.spritecollide(self, traps_group, False)):
+            if time.time() - self.last_trapped > 5:
+                self.take_damage(1)
+                self.last_trapped = time.time()
         if any(pygame.sprite.spritecollide(self, obstacle_group, False)):
             camera_x -= direction[0]
             camera_y -= direction[1]
@@ -669,7 +755,8 @@ class Creature(pygame.sprite.Sprite):
         self.local_frame_index = random.randint(0, 100000)
         super().__init__(self.containers)
         self.angle = 0
-        self.health = hp or random.randint(3,10)
+        self.max_health = hp or random.randint(3, 10)
+        self.health = self.max_health
         self.flying = flying
         self.speed = speed + random.randint(-100,100)/1000
         self.last_attack = 0
@@ -691,10 +778,10 @@ class Creature(pygame.sprite.Sprite):
         return translated_rect(self.origin_rect)
 
 
-            
     def update(self):
         if self.health <= 0:
             self.kill()
+            self.health_bar.kill()
             if self.has_key:
                 Key(self.origin_rect[:2])
         
@@ -708,17 +795,6 @@ class Creature(pygame.sprite.Sprite):
         )
         if distance_to_player < 10 * dpi:
             self.path_to_player = bfs(self, map_grid)
-            points = []
-            for i in self.path_to_player : 
-                ezx = ((i[0]+0.5)*dpi)
-                ezy = ((i[1] + 0.5)*dpi)
-                trans = translated_rect(pygame.Rect((ezx,ezy),(1,1)))
-
-                points.append((trans.x,trans.y))
-            try:
-                pygame.draw.lines(plane,(255,0,0,255),False,points)
-            except:
-                pass
 
             if len(self.path_to_player) > 1:
                 
@@ -742,10 +818,7 @@ class Creature(pygame.sprite.Sprite):
                 pygame.sprite.collide_rect(player, self)
                 and time.time() - self.last_attack > self.attack_cooldown
             ):
-                player.health -= 1
-                hit_sound.play()
-                if not player.health < 0:  # TODO: juste pour éviter le crash
-                    healthbar_group.sprites()[-1].kill()
+                player.take_damage(1)
                 self.last_attack = time.time()
         if distance_to_player <10*dpi:
              playerx = player.origin_rect.center[0]
@@ -764,7 +837,30 @@ class Creature(pygame.sprite.Sprite):
             pygame.sprite.spritecollide(self, obstacle_group, False)
         ):
             self.origin_rect.move_ip(inverse_direction(direction))
+        (self.health_bar.origin_rect.x, self.health_bar.origin_rect.y) = (self.origin_rect.x, self.origin_rect.y - 20)
 
+class CreatureHealthBar(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__(self.containers)
+        self.origin_image = pygame.Surface((70, 5))
+        self.origin_image.fill((0, 255, 0))
+        self.origin_rect = self.image.get_rect()
+
+    @property
+    def rect(self):
+        return translated_rect(self.origin_rect)
+
+    @property
+    def image(self):
+        if hasattr(self, 'creature'):
+            pv_size = 70 / self.creature.max_health
+            if self.creature.health <= 0:
+                return pygame.Surface((0, 0))
+            im = pygame.Surface((pv_size * self.creature.health, 5))
+            im.fill((0, 255, 0))
+            return im
+        return self.origin_image
+        
 
 class Cursor(pygame.sprite.Sprite):
     def __init__(self):
@@ -795,6 +891,7 @@ mapdependent_group = pygame.sprite.Group()
 toredraw_group = pygame.sprite.Group()
 stairs_group = pygame.sprite.Group()
 treasures_group = pygame.sprite.Group()
+traps_group = pygame.sprite.Group()
 obstacle_group = pygame.sprite.Group()
 creature_group = pygame.sprite.Group()
 hud_group = pygame.sprite.Group()
@@ -802,7 +899,8 @@ healthbar_group = pygame.sprite.Group()
 particle_group = pygame.sprite.Group()
 inventoryobject_group = pygame.sprite.Group()
 player_inv_group = pygame.sprite.Group()
-
+projectile_group = pygame.sprite.Group()
+Projectile.containers = projectile_group, all_sprites
 Player.containers = all_sprites
 InventoryObject.containers = all_sprites, inventoryobject_group, mapdependent_group
 InvSlot.containers = all_sprites, player_inv_group
@@ -812,12 +910,14 @@ Treasure.containers = all_sprites, mapdependent_group, treasures_group
 Background.containers = all_sprites
 Wall.containers = all_sprites, obstacle_group, mapdependent_group, toredraw_group
 Creature.containers = all_sprites, creature_group, mapdependent_group
+CreatureHealthBar.containers = all_sprites, hud_group
 Cursor.containers = all_sprites, hud_group
 FPSCounter.containers = all_sprites, hud_group
 HealthIcon.containers = all_sprites, hud_group, healthbar_group
 Dialog.containers = all_sprites, hud_group
+Mask.containers = all_sprites, hud_group
 
-Player.assets = ["terro.png","terro_but_mad.png"]
+Player.assets = ["terro.png", "terro_but_mad.png"]
 Wall.image = loadify("stonebrick_cracked.png")
 Ground.images = [
     loadify("floor1.png"),
@@ -840,15 +940,18 @@ Ground._layer = 1
 Stairs._layer = 2
 Treasure._layer = 2
 Background._layer = 0
+Mask._layer = 2
 Cursor._layer = 3 
 FPSCounter._layer = 2
 Dialog._layer = 2
 HealthIcon._layer = 2
 Creature._layer = 2
+CreatureHealthBar._layer = 3
 InventoryObject._layer = 2
 InvSlot._layer = 2
-
+Projectile._layer = 3
 background_sprite = Background()
+Mask()
 
 player = Player(initial_position=(0, 0))
 
