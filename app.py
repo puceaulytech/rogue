@@ -521,7 +521,8 @@ class Key(InventoryObject):
         super().__init__(initial_position)
 
     def use(self):
-        pass
+        self.kill()
+        player.inventory.remove(self)
 
 class Potion(InventoryObject):
     def __init__(self, initial_position):
@@ -575,7 +576,7 @@ class Player(pygame.sprite.Sprite):
                 Weapon(treasure_object.origin_rect[:2],treasure_object.item.id)
                 all_sprites.remove(treasure_object)
                 treasures_group.remove(treasure_object)
-                self.inventory.picked_item.kill()
+                picked_item.use()
         if any(pygame.sprite.spritecollide(self, traps_group, False)):
             if time.time() - self.last_trapped > 5:
                 self.take_damage(1)
@@ -641,6 +642,10 @@ class Inventory(pygame.sprite.Sprite):
       self[self.first_empty_slot()] = thing
       return True
     return False
+
+  def remove(self,thing):
+      i = self.items.index(thing)
+      self.items[i] = None
 
   def update(self):
     self.position = player.rect[0:2]
@@ -1029,7 +1034,7 @@ while True:
                   s.picked_up = False
               clicked_inv_sprites[0].picked_up = not old_state
           picked_item = player.inventory.picked_item
-          if picked_item:
+          if picked_item and not isinstance(picked_item,Key):
             picked_item.use()
 
     keys = pygame.key.get_pressed()
