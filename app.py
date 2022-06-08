@@ -507,8 +507,12 @@ class Spell(InventoryObject):
         super().__init__(initial_position)
         self.id = id 
         if self.id == "fireball" : 
-            self.damage = 10
-
+            self.damage = 5
+            self.radius = 1
+            self.speed = 0.3
+            self.image = loadify("fireball_spell.png")
+    def use(self):
+        pass
 
 class Player(pygame.sprite.Sprite):
     speed = 0.35
