@@ -401,7 +401,6 @@ class Treasure(pygame.sprite.Sprite):
             initial_position = (0, 0)
         (self.origin_rect.x, self.origin_rect.y) = initial_position
         self.item = item
-        print(self.item)
 
     @property
     def rect(self):
