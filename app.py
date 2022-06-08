@@ -5,6 +5,7 @@ import math
 import sys
 import os
 
+
 import pygame
 import mapgen
 import itertools
@@ -289,7 +290,12 @@ class Animation:
         if self.curr_sprite >= len(self.spritelist):
             self.curr_sprite = 0
         return self.spritelist[self.curr_sprite]
-
+    def rotate_animation(self,frame):
+        if frame % self.rate == 0:
+            print('roted')
+            img = rotate_image(self.spritelist[self.curr_sprite],45)
+            return img
+        else : return self.spritelist[self.curr_sprite]
 class FPSCounter(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__(self.containers)
@@ -430,20 +436,20 @@ class InventoryObject(pygame.sprite.Sprite,metaclass=abc.ABCMeta):
     def use(self):
         pass
 class Projectile(pygame.sprite.Sprite):
-    def __init__(self,position,sprites,speed,direction,dmg):
+    def __init__(self,position,sprites,speed,direction,dmg,animation = None):
         super().__init__(self.containers)
         
         self.speed = speed
         self.direction = direction
         self.dmg = dmg
-
+        self.animation = animation
         angle = math.atan2(self.direction[0],self.direction[1])
         angle = angle * (180/math.pi)
         rot_sprites = []
         for i in sprites : 
             rot_sprites.append(rotate_image(i,angle+180+45))
         self.sprites = rot_sprites
-        self.anim = Animation(self.sprites,10)
+        self.anim = Animation(self.sprites,2)
         self.image = self.anim.update_animation(0)
         self.origin_rect = self.image.get_rect()
         self.origin_rect.center = position
@@ -455,16 +461,20 @@ class Projectile(pygame.sprite.Sprite):
         return translated_rect(self.origin_rect)
     def update(self):
         self.frame_index+=1
-        self.image = self.anim.update_animation(self.frame_index)
-
+        if self.animation == None : 
+            self.image = self.anim.update_animation(self.frame_index)
+        else : 
+            self.image = self.anim.rotate_animation(self.frame_index)
         self.move(self.direction,ticked)
         colliding_creatures = pygame.sprite.spritecollide(self,creature_group,False)
         if len(colliding_creatures) != 0  : 
             colliding_creatures[0].health -= self.dmg
             self.kill()
-            
+        colliding_walls = []
+        for i in obstacle_group.sprites():
+            if i.origin_rect.collidepoint(self.origin_rect.center):
+                colliding_walls.append(i)
 
-        colliding_walls = pygame.sprite.spritecollide(self,obstacle_group,False)
         if len(colliding_walls) != 0 : 
             self.kill()
         if mapgen.Coord(player.origin_rect.center[0],player.origin_rect.center[1]).distance(mapgen.Coord(self.origin_rect.center[0],self.origin_rect.center[1])) > 20*dpi : 
@@ -533,7 +543,6 @@ class Potion(InventoryObject):
 
 class Spell(InventoryObject):
     def __init__(self, initial_position, id):
-        
         self.id = id 
         if self.id == "fireball" : 
             self.damage = 5
@@ -543,7 +552,12 @@ class Spell(InventoryObject):
             #self.origin_rect = self.image.get_rect()
         super().__init__(initial_position)
     def use(self):
-        pass
+        if self.id == "fireball":
+            mouse_pos = pygame.math.Vector2(pygame.mouse.get_pos())
+            player_pos = pygame.math.Vector2(player.rect.center)
+            direction = (mouse_pos - player_pos).normalize()
+            Projectile(player.origin_rect.center,[loadify("fireball.png",-25,True)],1,direction, self.damage)
+
 
 class Player(pygame.sprite.Sprite):
     speed = 0.35

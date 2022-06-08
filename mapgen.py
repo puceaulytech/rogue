@@ -336,7 +336,7 @@ class Map:
               nb_spell = random.randint(0, 2)
               weights = list(map(lambda c: 1 / c.difficulty, Map.available_spell))
               for _ in range(nb_spell):
-                  print("spell added")
+
                   position = self.find_valid_random_coord(room)
                   item = copy.copy(random.choices(Map.available_spell, weights,k=1)[0])
                   item.position = position
