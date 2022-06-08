@@ -567,7 +567,6 @@ class Spell(InventoryObject):
 class Player(pygame.sprite.Sprite):
     speed = 0.35
     inventory_size = 8
-    show_inv = False
 
     def __init__(self, initial_position=None):
         super().__init__(self.containers)
@@ -683,12 +682,9 @@ class Inventory(pygame.sprite.Sprite):
       self.items[i] = None
 
   def update(self):
-    self.position = player.rect[0:2]
-    for i in player_inv_group.sprites():
-      if Player.show_inv:
-        all_sprites.add(i)
-      else:
-        all_sprites.remove(i)
+      self.position = player.rect[0:2]
+      for i in player_inv_group.sprites():
+          all_sprites.add(i)
 
   @property
   def picked_item(self):
@@ -1054,22 +1050,19 @@ while True:
                     screen.blit(screen_backup, (0, 0))
                 pygame.display.flip()
                 fullscreen = not fullscreen
-            elif event.key == pygame.K_i or event.key == pygame.K_TAB:
-              Player.show_inv = not Player.show_inv
         elif event.type == pygame.MOUSEBUTTONDOWN:
-          pos = pygame.mouse.get_pos()
-          if Player.show_inv:
+            pos = pygame.mouse.get_pos()
             # quand un item est récup on scale son image or ça ne change pas son rect donc je test les collisions avec le rect de l'image avec les topleft superposés
             clicked_inv_sprites = [s for s in player.inventory.items if s is not None and s.image.get_rect(topleft = s.rect.topleft).collidepoint(pos)]
             if clicked_inv_sprites:
-              old_state = clicked_inv_sprites[0].picked_up
-              for s in player.inventory.items:
-                if s is not None:
-                  s.picked_up = False
-              clicked_inv_sprites[0].picked_up = not old_state
-          picked_item = player.inventory.picked_item
-          if picked_item and not isinstance(picked_item,Key):
-            picked_item.use()
+                old_state = clicked_inv_sprites[0].picked_up
+                for s in player.inventory.items:
+                    if s is not None:
+                        s.picked_up = False
+                clicked_inv_sprites[0].picked_up = not old_state
+            picked_item = player.inventory.picked_item
+            if picked_item and not isinstance(picked_item,Key):
+                picked_item.use()
 
     keys = pygame.key.get_pressed()
     if keys[pygame.K_ESCAPE]:
