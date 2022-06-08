@@ -333,7 +333,7 @@ class Map:
                 item.position = position
                 self.weapon.append(item)
             if True:
-              nb_spell = 10 #random.randint(0, 2)
+              nb_spell = random.randint(0, 2)
               weights = list(map(lambda c: 1 / c.difficulty, Map.available_spell))
               for _ in range(nb_spell):
                   print("spell added")
@@ -435,7 +435,6 @@ class Map:
             return "#"
         elif any([coord in path for path in self.paths]):
             return "%"
-
         elif any([coord == item.position for item in self.potion]):
             return "P"
         return "."
