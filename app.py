@@ -578,7 +578,7 @@ class Player(pygame.sprite.Sprite):
         self.last_trapped = 0
         if initial_position is not None:
             (self.origin_rect.x, self.origin_rect.y) = initial_position
-        self.inventory = Inventory([None for i in range(Player.inventory_size)],self.origin_rect[0:2])
+        self.inventory = Inventory([None for i in range(Player.inventory_size)])
 
     def take_damage(self, amount):
         player.health -= amount
@@ -607,7 +607,7 @@ class Player(pygame.sprite.Sprite):
                     Spell(treasure_object.origin_rect[:2],treasure_object.item.id)
                 all_sprites.remove(treasure_object)
                 treasures_group.remove(treasure_object)
-                picked_item.use()
+                self.inventory.picked_item.use()
         if any(pygame.sprite.spritecollide(self, traps_group, False)):
             if time.time() - self.last_trapped > 5:
                 self.take_damage(1)
@@ -635,69 +635,88 @@ class Player(pygame.sprite.Sprite):
     def take(self,thing):
      if isinstance(thing,InventoryObject):
        return self.inventory.add(thing)
-     raise TypeError("Not an object")
+     raise TypeError("Not an item")
+
+class Text(pygame.sprite.Sprite):
+    def __init__(self, text, color, position):
+        super().__init__(self.containers)
+        self.text = str(text)
+        self.color = color
+        self.font = pygame.font.Font("assets/Retro_Gaming.ttf",30)
+        self.image = self.font.render(self.text, False, self.color)
+        self.rect = self.image.get_rect(topleft = position)
+
+class Stats_gui:
+    def __init__(self,item):
+        self.attributes = []
+        self.update(item)
+
+    def update(self, item):
+        self.kill()
+        if item:
+            if isinstance(item,Weapon) or isinstance(item,Spell):
+                self.name = Text(item.id, (0,0,0), (width - 4*dpi,height - 3*dpi))
+                self.damage = Text(item.damage, (0,0,0), (width - 4*dpi,height - 2*dpi))
+                self.other = Text(item.durability, (0,0,0), (width - 4*dpi,height - dpi)) if isinstance(item,Weapon) else Text(item.radius, (0,0,0), (width - 4*dpi,height - dpi))
+                self.attributes = [self.name, self.damage, self.other]
+                 
+    def kill(self):
+        for i in self.attributes:
+            i.kill()
+            del i
+        self.attributes = []
 
 class InvSlot(pygame.sprite.Sprite):
     def __init__(self, offset, total_nb):
         super().__init__(self.containers)
-        # self.rect = self.image.get_rect().move((width/2)+dpi * (1+offset * 0.7),- dpi + (height/2))
         center_p = (width/2,height-2)
         self.rect = self.image.get_rect(center = center_p)
         self.rect.move_ip(self.rect[2]*(offset - total_nb//2),-self.rect[3]/2)
         if total_nb%2 == 0:
             self.rect.move_ip(self.rect[2]/2,0)
 
-class Inventory(pygame.sprite.Sprite):
-  def __init__(self,items,position):
-    # super().__init__(self.containers)
-    self.items = items
-    self.size = len(self.items)
-    self.position = position
-    for i in range(len(self.items)):
-      InvSlot(i, len(self.items))
+class Inventory:
+    def __init__(self,items):
+        self.items = items
+        self.size = len(self.items)
+        for i in range(self.size):
+            InvSlot(i, self.size)
+        self.gui = Stats_gui(self.picked_item)
 
-  def __repr__(self):
-    return str(self.items)
+    def __repr__(self):
+        return str(self.items)
 
-  def __getitem__(self,key):
-    return self.items[key]
+    def __getitem__(self,key):
+        return self.items[key]
 
-  def __setitem__(self,key,value):
-    self.items[key] = value
+    def __setitem__(self,key,value):
+        self.items[key] = value
     
-  def has_empty_slot(self):
-    return None in self.items
+    def has_empty_slot(self):
+        return None in self.items
 
-  def first_empty_slot(self):
-    return min(list(i for i in range(len(self.items)) if self[i] is None)) if self.has_empty_slot() else None
+    def first_empty_slot(self):
+        return min(list(i for i in range(len(self.items)) if self[i] is None)) if self.has_empty_slot() else None
 
-  def add(self,thing):
-    if self.has_empty_slot():
-      self[self.first_empty_slot()] = thing
-      return True
-    return False
+    def add(self,thing):
+        if self.has_empty_slot():
+            self[self.first_empty_slot()] = thing
+            return True
+        return False
 
-  def remove(self,thing):
-      i = self.items.index(thing)
-      self.items[i] = None
+    def remove(self,thing):
+        i = self.items.index(thing)
+        self.items[i] = None
 
-  def update(self):
-      self.position = player.rect[0:2]
-      for i in player_inv_group.sprites():
-          all_sprites.add(i)
+    def update(self):
+        self.gui.update(self.picked_item)
+        for i in player_inv_group.sprites():
+            all_sprites.add(i)
 
-  @property
-  def picked_item(self):
-    picked_items = [x for x in self.items if x is not None and x.picked_up]
-    return picked_items[0] if picked_items else None
-
-  def draw(self):
-    for i in range(len(self.items)):
-      InvSlot(i,self.position)
-      item = self[i]
-      if item is not None:
-        item.rect = player_inv_group.sprites()[i].rect
-      player_inv_group.draw(screen)
+    @property
+    def picked_item(self):
+        picked_items = [x for x in self.items if x is not None and x.picked_up]
+        return picked_items[0] if picked_items else None
 
 class Particle:
     def __init__(self, coords, image=None, radius=None, lifetime=200,color = (255,255,255)):
@@ -934,6 +953,7 @@ particle_group = pygame.sprite.Group()
 inventoryobject_group = pygame.sprite.Group()
 player_inv_group = pygame.sprite.Group()
 projectile_group = pygame.sprite.Group()
+
 Projectile.containers = projectile_group, all_sprites
 Player.containers = all_sprites
 InventoryObject.containers = all_sprites, inventoryobject_group, mapdependent_group
@@ -950,6 +970,7 @@ FPSCounter.containers = all_sprites, hud_group
 HealthIcon.containers = all_sprites, hud_group, healthbar_group
 Dialog.containers = all_sprites, hud_group
 Mask.containers = all_sprites, hud_group
+Text.containers = all_sprites, hud_group
 
 Player.assets = ["terro.png", "terro_but_mad.png"]
 Wall.image = loadify("stonebrick_cracked.png")
@@ -984,6 +1005,7 @@ CreatureHealthBar._layer = 3
 InventoryObject._layer = 2
 InvSlot._layer = 2
 Projectile._layer = 3
+Text._layer = 2
 background_sprite = Background()
 Mask()
 
@@ -1027,6 +1049,7 @@ while True:
         if event.type == pygame.QUIT:
             sys.exit()
         elif event.type == pygame.KEYDOWN:
+            nums = (pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4, pygame.K_5, pygame.K_6, pygame.K_7, pygame.K_8, pygame.K_9, pygame.K_0)
             if event.key == pygame.K_e:
                 for _ in pygame.sprite.spritecollide(player, stairs_group, False):
                     game_logic.move_up()
@@ -1050,6 +1073,16 @@ while True:
                     screen.blit(screen_backup, (0, 0))
                 pygame.display.flip()
                 fullscreen = not fullscreen
+            elif event.key in nums[:Player.inventory_size]:
+                clicked_slot_item = player.inventory.items[nums.index(event.key)]
+                if clicked_slot_item is not None:
+                    old_state = clicked_slot_item.picked_up
+                for s in player.inventory.items:
+                    if s is not None:
+                        s.picked_up = False
+                if clicked_slot_item is not None:
+                    clicked_slot_item.picked_up = not old_state
+
         elif event.type == pygame.MOUSEBUTTONDOWN:
             pos = pygame.mouse.get_pos()
             # quand un item est récup on scale son image or ça ne change pas son rect donc je test les collisions avec le rect de l'image avec les topleft superposés
