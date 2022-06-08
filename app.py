@@ -401,10 +401,12 @@ class Treasure(pygame.sprite.Sprite):
             initial_position = (0, 0)
         (self.origin_rect.x, self.origin_rect.y) = initial_position
         self.item = item
+        print(self.item)
 
     @property
     def rect(self):
         return translated_rect(self.origin_rect)
+
 class InventoryObject(pygame.sprite.Sprite,metaclass=abc.ABCMeta):
     def __init__(self, initial_position):
         super().__init__(self.containers)
@@ -597,7 +599,10 @@ class Player(pygame.sprite.Sprite):
             dialog.move((stair_object.origin_rect.x, stair_object.origin_rect.y - 0.5 * dpi))
         for treasure_object in pygame.sprite.spritecollide(self, treasures_group, False):
             if isinstance(self.inventory.picked_item,Key):
-                Weapon(treasure_object.origin_rect[:2],treasure_object.item.id)
+                if isinstance(treasure_object.item,mapgen.Weapon):
+                    Weapon(treasure_object.origin_rect[:2],treasure_object.item.id)
+                elif isinstance(treasure_object.item,mapgen.Spell):
+                    Spell(treasure_object.origin_rect[:2],treasure_object.item.id)
                 all_sprites.remove(treasure_object)
                 treasures_group.remove(treasure_object)
                 picked_item.use()
@@ -822,25 +827,23 @@ class Creature(pygame.sprite.Sprite):
         )
         if distance_to_player < 10 * dpi:
             self.path_to_player = bfs(self, map_grid)
-            try:
-                if len(self.path_to_player) > 1:
-                    if (self.direction[0] == 0 and self.direction[1] == 0) or any([rect.collidepoint(self.origin_rect.center) for rect in self.collisions_rect]):
-                        self.collisions_rect.clear()
-                        for point in self.path_to_player[1:]:
-                            x = (point[0] * dpi) + dpi / 2
-                            y = (point[1] * dpi) + dpi / 2
-                            rect = pygame.Rect((x - 7, y - 7), (14, 14))
-                            self.collisions_rect.append(rect)
-                        start = pygame.math.Vector2(self.origin_rect.center)
-                        end = pygame.math.Vector2(self.collisions_rect[0].center)
-                        self.direction = (end - start).normalize()
-                    if self.local_frame_index %50 == 0 : 
-                        start = pygame.math.Vector2(self.origin_rect.center)
-                        end = pygame.math.Vector2(self.collisions_rect[0].center)
-                        self.direction = (end - start).normalize()
-                    self.move(self.direction, ticked)
-                
-            except:pass
+            if self.path_to_player is not None and len(self.path_to_player) > 1:
+                if (self.direction[0] == 0 and self.direction[1] == 0) or any([rect.collidepoint(self.origin_rect.center) for rect in self.collisions_rect]):
+                    self.collisions_rect.clear()
+                    for point in self.path_to_player[1:]:
+                        x = (point[0] * dpi) + dpi / 2
+                        y = (point[1] * dpi) + dpi / 2
+                        rect = pygame.Rect((x - 7, y - 7), (14, 14))
+                        self.collisions_rect.append(rect)
+                    start = pygame.math.Vector2(self.origin_rect.center)
+                    end = pygame.math.Vector2(self.collisions_rect[0].center)
+                    self.direction = (end - start).normalize()
+                if self.local_frame_index %50 == 0 : 
+                    start = pygame.math.Vector2(self.origin_rect.center)
+                    end = pygame.math.Vector2(self.collisions_rect[0].center)
+                    self.direction = (end - start).normalize()
+                self.move(self.direction, ticked)
+            
             if (
                 pygame.sprite.collide_rect(player, self)
                 and time.time() - self.last_attack > self.attack_cooldown
@@ -996,6 +999,7 @@ for i in range(player.health):
 particle_system = ParticleEffect(10,200,spawner=screen.get_rect(),forces= [0.1,0.05])
 frame_index = 0
 
+Key(player.origin_rect[:2])
 ###########################################   MAIN LOOP  ###########################################
 
 while True:
