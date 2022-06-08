@@ -11,6 +11,7 @@ import mapgen
 import itertools
 import time
 import abc
+import webbrowser
 
 size = width, height = 1280, 720
 black = 0, 0, 0
@@ -21,6 +22,10 @@ winstyle = 0
 fullscreen = False
 player = None
 dialog = None
+debug_mode = len(sys.argv) > 1 and sys.argv[1] == "--debug"
+
+if debug_mode:
+    print("/!\ Debug mode enabled")
 
 pygame.init()
 
@@ -31,11 +36,10 @@ screen = pygame.display.set_mode(
     SCREENRECT.size, winstyle | pygame.DOUBLEBUF, bestdepth
 )
 pygame.display.set_caption("ChadRogue")
-pygame.mouse.set_visible(False)
-pygame.mixer.music.load("assets/music.ogg")
-pygame.mixer.music.play(-1)
 
 hit_sound = pygame.mixer.Sound("assets/hitted.ogg")
+app_icon = pygame.image.load(os.path.join("assets", "icon.png"))
+pygame.display.set_icon(app_icon)
 clock = pygame.time.Clock()
 
 plane = pygame.Surface((size), pygame.SRCALPHA)
@@ -911,6 +915,110 @@ class Cursor(pygame.sprite.Sprite):
     def update(self):
         self.update_pos()
 
+class MenuTitle:
+    def __init__(self):
+        self.font = pygame.font.Font("assets/Retro_Gaming.ttf", 50)
+        self.image = self.font.render("CHAD ROGUE", False, (0, 0, 0))
+        self.rect = self.image.get_rect(center=(width//2, height//2 - 220))
+
+    def draw(self):
+        screen.blit(self.image, self.rect)
+
+class MenuCredit:
+    def __init__(self):
+        self.font = pygame.font.Font("assets/Retro_Gaming.ttf", 20)
+        self.image = self.font.render("Credits : Romain Chardiny, Robin Perdreau, Logan Lucas", False, (0, 0, 0))
+        self.rect = self.image.get_rect(midleft=(10, height - 30))
+
+    def draw(self):
+        screen.blit(self.image, self.rect)
+
+class MenuGithub:
+    def __init__(self):
+        self.font = pygame.font.Font("assets/Retro_Gaming.ttf", 20)
+        self.image = self.font.render("View on GitHub", False, (0, 0, 0))
+        self.rect = self.image.get_rect(midright=(width - 10, height - 30))
+        self.underline_rect = pygame.Rect(self.rect.x, self.rect.y + 22, self.rect.width, 2)
+
+    def draw(self):
+        screen.blit(self.image, self.rect)
+        screen.fill((0, 0, 0), self.underline_rect)
+
+class MenuButton:
+    def __init__(self, text, offset):
+        self.font = pygame.font.Font("assets/Retro_Gaming.ttf", 30)
+        self.image = self.font.render(text, False, (255, 255, 255))
+        self.rect = self.image.get_rect(center=(width//2, offset + 300))
+        self.bigger_rect = self.rect.inflate(200, 55)
+
+    def draw(self):
+        screen.fill((0, 0, 0), self.bigger_rect)
+        screen.blit(self.image, self.rect)
+
+class MenuMusicLabel:
+    def __init__(self):
+        self.font = pygame.font.Font("assets/Retro_Gaming.ttf", 25)
+        self.image = self.font.render("Enable music", False, (0, 0, 0))
+        self.rect = self.image.get_rect(center=(width // 2 + 40, height // 2 + 200))
+
+    def draw(self):
+        screen.blit(self.image, self.rect)
+
+class MenuMusicCheckbox:
+    def __init__(self):
+        self.checked = True
+        self.rect = pygame.Rect(width // 2 - 130, height // 2 + 200 - 30, 60, 60)
+        self.smaller_rect = self.rect.inflate(-20, -20)
+
+    def draw(self):
+        screen.fill((0, 0, 0), self.rect)
+        if self.checked:
+            screen.fill((255, 255, 255), self.smaller_rect)
+# Menu
+screen.fill((132, 23, 10), SCREENRECT)
+
+menu = True
+
+MenuTitle().draw()
+MenuCredit().draw()
+MenuMusicLabel().draw()
+
+music_checkbox = MenuMusicCheckbox()
+music_checkbox.draw()
+
+github_link = MenuGithub()
+github_link.draw()
+
+play_button = MenuButton(text="PLAY", offset=0)
+play_button.draw()
+
+exit_button = MenuButton(text="EXIT", offset=120)
+exit_button.draw()
+
+
+pygame.display.flip()
+
+while menu:
+    for event in pygame.event.get():
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            mouse_pos = pygame.mouse.get_pos()
+            if play_button.bigger_rect.collidepoint(mouse_pos):
+                menu = False
+            elif exit_button.bigger_rect.collidepoint(mouse_pos):
+                sys.exit()
+            elif github_link.rect.collidepoint(mouse_pos):
+                webbrowser.open("https://github.com/puceaulytech/rogue", new=0, autoraise=True)
+            elif music_checkbox.rect.collidepoint(mouse_pos):
+                music_checkbox.checked = not music_checkbox.checked
+                music_checkbox.draw()
+                pygame.display.flip()
+
+    time.sleep(0.1)
+
+pygame.mouse.set_visible(False)
+if music_checkbox.checked:
+    pygame.mixer.music.load("assets/music.ogg")
+    pygame.mixer.music.play(-1)
 
 game_logic = mapgen.Game(max_levels=3)
 map_grid = None
@@ -985,6 +1093,7 @@ CreatureHealthBar._layer = 3
 InventoryObject._layer = 2
 InvSlot._layer = 2
 Projectile._layer = 3
+
 background_sprite = Background()
 Mask()
 
@@ -1006,9 +1115,10 @@ frame_index = 0
 
 Key(player.origin_rect[:2])
 ###########################################   MAIN LOOP  ###########################################
+running = True
 
-while True:
-    if frame_index%5 ==0: 
+while running:
+    if frame_index%1 ==0:
         update_map_near_player()
         
     frame_index += 1
@@ -1026,7 +1136,7 @@ while True:
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            sys.exit()
+            running = False
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_e:
                 for _ in pygame.sprite.spritecollide(player, stairs_group, False):
