@@ -735,9 +735,10 @@ class Particle:
 
 class ParticleEffect:
     def __init__(
-        self, number=100, lifetime=200, images=None, forces=None, spawner=None , color = (255,255,255)
+        self, number=100, lifetime=200, images=None, forces=None, spawner=None , color = (255,255,255),rate = 1
     ):
         self.number = number
+        self.rate = rate
         self.images = images or None
         self.forces = forces
         self.spawner = spawner
@@ -756,8 +757,8 @@ class ParticleEffect:
 """
 
     def update(self, delta):
-        if len(self.particle_list) < self.number - 5:
-            for j in range(random.randint(0, 1)):
+        if len(self.particle_list) < self.number - 2*self.rate:
+            for j in range(random.randint(0, self.rate)):
                 x = random.randint(self.spawner.x, self.spawner.width + self.spawner.x)
                 y = random.randint(self.spawner.y, self.spawner.height + self.spawner.y)
                 self.particle_list.append(
