@@ -26,8 +26,9 @@ class Creature(Element):
 
 
 class Item(Element):
-    def __init__(self, elem_id, position, difficulty):
+    def __init__(self, elem_id, sub_id, position, difficulty):
         super().__init__(elem_id, position, difficulty)
+        self.sub_id = sub_id
 
 class Trap:
     def __init__(self, position):
@@ -37,16 +38,24 @@ class Trap:
         return f"<mapgen.Trap position={self.position},damage={self.damage}>"
 
 class Weapon(Item):
-  def __init__(self, weapon_id, position, difficulty):
-    super().__init__(weapon_id,position,difficulty)
+  def __init__(self, weapon_id, sub_id, position, difficulty, attack_cooldown, durability, damage, reach):
+    super().__init__(weapon_id, sub_id, position,difficulty)
+    self.attack_cooldown = attack_cooldown
+    self.durability = durability
+    self.damage = damage
+    self.reach = reach
 
 class Potion(Item):
-  def __init__(self, potion_id, position, difficulty):
-    super().__init__(potion_id,position,difficulty)
+  def __init__(self, potion_id, sub_id, position, difficulty):
+    super().__init__(potion_id, sub_id, position,difficulty)
 
 class Spell(Item):
-  def __init__(self, spell_id, position, difficulty):
-    super().__init__(spell_id,position,difficulty)
+  def __init__(self, spell_id, sub_id, position, difficulty, damage, radius, speed, attack_cooldown):
+    super().__init__(spell_id, sub_id, position,difficulty)
+    self.damage = damage
+    self.radius = radius
+    self.speed = speed
+    self.attack_cooldown = attack_cooldown
 
 class Coord:
     def __init__(self, x, y):
@@ -229,14 +238,37 @@ class Map:
     available_weapon = [
       Weapon(
         "sword",
-        position = None,
-        difficulty = 1
+        sub_id="truc_sword",
+        position=None,
+        difficulty=1,
+        durability=50,
+        damage=2,
+        reach=2,
+        attack_cooldown=0.5
         ),
-      Weapon("bow",None,1)
+      Weapon(
+        "bow",
+        sub_id=None,
+        position=None,
+        difficulty=1,
+        durability=20,
+        damage=3,
+        reach=0,
+        attack_cooldown=2
+      )
       
     ]
     available_spell = [
-        Spell("fireball",None,1)
+        Spell(
+          "fireball",
+          sub_id="fireball",
+          position=None,
+          difficulty=1,
+          damage=5,
+          radius=1,
+          speed=0.3,
+          attack_cooldown=1
+        )
     ]
     available_potion = [
 

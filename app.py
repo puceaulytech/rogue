@@ -187,12 +187,25 @@ def draw_map():
                     if abstract_weapon.position == mapgen.Coord(x, y):
                         Weapon(
                             (x * dpi, y * dpi),
-                            abstract_weapon.id
+                            id=abstract_weapon.id,
+                            subid=abstract_weapon.sub_id,
+                            durability=abstract_weapon.durability,
+                            damage=abstract_weapon.damage,
+                            reach=abstract_weapon.reach,
+                            attack_cooldown=abstract_weapon.attack_cooldown
                         )
             elif elem == "L":
                 for abstract_spell in game_logic.current_map.spell:
                     if abstract_spell.position == mapgen.Coord(x,y):
-                        Spell((x*dpi,y*dpi),abstract_spell.id)
+                        Spell(
+                            (x*dpi,y*dpi),
+                            id=abstract_spell.id,
+                            subid=abstract_spell.sub_id,
+                            damage=abstract_spell.damage,
+                            radius=abstract_spell.radius,
+                            speed=abstract_spell.speed,
+                            attack_cooldown=abstract_spell.attack_cooldown
+                        )
 def get_adjacent_case(x,y,grid):
     if x > 0 and x < len(grid[0]) and y > 0 and y < len(grid):
         res = []
@@ -494,18 +507,16 @@ class Projectile(pygame.sprite.Sprite):
 
 
 class Weapon(InventoryObject):
-    def __init__(self, initial_position, id, subid = None):
+    def __init__(self, initial_position, id, subid, durability, damage, reach, attack_cooldown):
         self.id = id
+        self.durability = durability
+        self.attack_cooldown = attack_cooldown
+        self.subid = subid
+        self.damage = damage
+        self.reach = reach * dpi
         if self.id == "sword":
-            self.attack_cooldown = 0.5
-            self.durability = 50
-            self.damage = 2
-            self.reach = 2 * dpi
             self.image = loadify("sword.png", 10, True) 
         if self.id == "bow":
-            self.attack_cooldown = 2
-            self.durability = 20
-            self.damage = 3
             self.image = loadify("bow.png", 10, True) 
         self.last_attack = 0
         super().__init__(initial_position)
@@ -526,7 +537,7 @@ class Weapon(InventoryObject):
                     or (creature.rect.center[1] > player.rect.center[1] and pos[1] > player.rect.center[1])
                     or (creature.rect.center[1] <= player.rect.center[1] and pos[1] <= player.rect.center[1])
                 ) and distance <= self.reach:
-                    reature.health -= self.damage
+                    creature.health -= self.damage
                     
         if self.id == "bow":
             mouse_pos = pygame.math.Vector2(pygame.mouse.get_pos())
@@ -550,13 +561,14 @@ class Potion(InventoryObject):
         super().__init__(initial_position)
 
 class Spell(InventoryObject):
-    def __init__(self, initial_position, id):
+    def __init__(self, initial_position, id, subid, damage, radius, speed, attack_cooldown):
         self.id = id 
+        self.subid = subid
+        self.damage = damage
+        self.radius = radius
+        self.speed = speed
+        self.attack_cooldown = attack_cooldown
         if self.id == "fireball" : 
-            self.damage = 5
-            self.radius = 1
-            self.speed = 0.3
-            self.attack_cooldown = 1
             self.image = loadify("fireball_spell.png",10,True)
             #self.origin_rect = self.image.get_rect()
         self.last_attack = 0
