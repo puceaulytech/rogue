@@ -434,6 +434,7 @@ class InventoryObject(pygame.sprite.Sprite,metaclass=abc.ABCMeta):
         if pygame.sprite.collide_rect(player, self):
             offset = player.inventory.first_empty_slot()
             if player.take(self):
+                all_sprites.change_layer(self, hud_layer)
                 self.kill()
                 self.origin_rect = pygame.Rect(player_inv_group.sprites()[offset].rect[0:2],self.rect[2:4])
                 self.image = pygame.transform.scale(self.image,(40,40))
@@ -1077,22 +1078,32 @@ Cursor.image = loadify("cursor.png", size=60)
 HealthIcon.image = loadify("heart.png", size=-25)
 InvSlot.image = loadify("inv.png", size=-20)
 
-Player._layer = 2
-Wall._layer = 1
-Ground._layer = 1
-Stairs._layer = 2
-Treasure._layer = 2
-Background._layer = 0
-Mask._layer = 2
-Cursor._layer = 3 
-FPSCounter._layer = 2
-Dialog._layer = 2
-HealthIcon._layer = 2
-Creature._layer = 2
-CreatureHealthBar._layer = 3
-InventoryObject._layer = 2
-InvSlot._layer = 2
-Projectile._layer = 3
+background_layer = 0
+tiles_layer = 1
+gameplay_tiles_layer = 2
+gameplay_characters_layer = 3
+dialog_layer = 4
+
+mask_layer = 8
+hud_layer = 9
+cursor_layer = 10
+
+Player._layer = gameplay_characters_layer
+Wall._layer = tiles_layer
+Ground._layer = tiles_layer
+Stairs._layer = gameplay_tiles_layer 
+Treasure._layer = gameplay_tiles_layer
+Background._layer = background_layer
+Mask._layer = mask_layer
+Cursor._layer = cursor_layer
+FPSCounter._layer = hud_layer
+Dialog._layer = dialog_layer 
+HealthIcon._layer = hud_layer
+Creature._layer = gameplay_characters_layer 
+CreatureHealthBar._layer = gameplay_characters_layer
+InventoryObject._layer = gameplay_characters_layer
+InvSlot._layer = hud_layer
+Projectile._layer = gameplay_characters_layer 
 
 background_sprite = Background()
 Mask()
