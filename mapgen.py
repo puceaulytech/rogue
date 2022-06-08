@@ -242,9 +242,9 @@ class Map:
         position=None,
         difficulty=1,
         durability=50,
-        damage=2,
+        damage=4,
         reach=2,
-        attack_cooldown=0.5
+        attack_cooldown=0.2
         ),
         Weapon(
         "sword",
@@ -252,7 +252,7 @@ class Map:
         position=None,
         difficulty=1,
         durability=50,
-        damage=2,
+        damage=7,
         reach=2,
         attack_cooldown=0.5
         ),
@@ -262,9 +262,9 @@ class Map:
         position=None,
         difficulty=1,
         durability=50,
-        damage=2,
+        damage=1,
         reach=2,
-        attack_cooldown=0.5
+        attack_cooldown=0.1
         ),
       Weapon(
         "sword",
@@ -284,7 +284,7 @@ class Map:
         durability=20,
         damage=3,
         reach=0,
-        attack_cooldown=2
+        attack_cooldown=1
       )
       
     ]

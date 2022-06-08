@@ -516,6 +516,12 @@ class Weapon(InventoryObject):
         self.reach = reach * dpi
         if self.id == "sword":
             self.image = loadify("sword.png", 10, True) 
+            if subid == "diamond_sword" : 
+                self.image = loadify("diamond_sword.png", 10, True) 
+            if subid == "emerald_sword" : 
+                self.image = loadify("emerald_sword.png", 10, True) 
+            if subid == "amber_sword" : 
+                self.image = loadify("amber_sword.png", 10, True) 
         if self.id == "bow":
             self.image = loadify("bow.png", 10, True) 
         self.last_attack = 0
