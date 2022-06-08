@@ -438,13 +438,13 @@ class InventoryObject(pygame.sprite.Sprite,metaclass=abc.ABCMeta):
     def use(self):
         pass
 class Projectile(pygame.sprite.Sprite):
-    def __init__(self,position,sprites,speed,direction,dmg,animation = None):
+    def __init__(self,position,sprites,speed,direction,dmg,particle = None):
         super().__init__(self.containers)
         
         self.speed = speed
         self.direction = direction
         self.dmg = dmg
-        self.animation = animation
+
         angle = math.atan2(self.direction[0],self.direction[1])
         angle = angle * (180/math.pi)
         rot_sprites = []
@@ -455,18 +455,22 @@ class Projectile(pygame.sprite.Sprite):
         self.image = self.anim.update_animation(0)
         self.origin_rect = self.image.get_rect()
         self.origin_rect.center = position
-        
-
+        if particle != None : 
+            self.has_particles = True
+            self.particle_sys = ParticleEffect(100,200,None,[0,0.1],translated_rect(self.origin_rect),color = (255,200,0))
+        else : 
+            self.has_particles = False
         self.frame_index = 0
     @property
     def rect(self):
         return translated_rect(self.origin_rect)
     def update(self):
+        if self.has_particles : 
+            self.particle_sys.spawner = self.rect
+            self.particle_sys.update(ticked)
         self.frame_index+=1
-        if self.animation == None : 
-            self.image = self.anim.update_animation(self.frame_index)
-        else : 
-            self.image = self.anim.rotate_animation(self.frame_index)
+
+        self.image = self.anim.update_animation(self.frame_index)
         self.move(self.direction,ticked)
         colliding_creatures = pygame.sprite.spritecollide(self,creature_group,False)
         if len(colliding_creatures) != 0  : 
@@ -558,7 +562,7 @@ class Spell(InventoryObject):
             mouse_pos = pygame.math.Vector2(pygame.mouse.get_pos())
             player_pos = pygame.math.Vector2(player.rect.center)
             direction = (mouse_pos - player_pos).normalize()
-            Projectile(player.origin_rect.center,[loadify("fireball.png",-25,True)],1,direction, self.damage)
+            Projectile(player.origin_rect.center,[loadify("fireball.png",-25,True)],1,direction, self.damage,particle=1)
 
 
 class Player(pygame.sprite.Sprite):
@@ -696,10 +700,10 @@ class Inventory(pygame.sprite.Sprite):
       player_inv_group.draw(screen)
 
 class Particle:
-    def __init__(self, coords, image=None, radius=None, lifetime=200):
+    def __init__(self, coords, image=None, radius=None, lifetime=200,color = (255,255,255)):
 
         self.lifetime = lifetime
-
+        self.color = color 
         self.image = image
         self.radius = radius
         if image != None:
@@ -720,7 +724,7 @@ class Particle:
         else:
             pygame.draw.circle(
                 plane,
-                (255, 255, 255, self.lifetime),
+                (self.color[0], self.color[1],self.color[2], self.lifetime),
                 radius=random.randint(1, 3),
                 center=(self.rect.x, self.rect.y),
             )
@@ -732,14 +736,14 @@ class Particle:
 
 class ParticleEffect:
     def __init__(
-        self, number=100, lifetime=200, images=None, forces=None, spawner=None
+        self, number=100, lifetime=200, images=None, forces=None, spawner=None , color = (255,255,255)
     ):
         self.number = number
         self.images = images or None
         self.forces = forces
         self.spawner = spawner
         self.lifetime = lifetime
-
+        self.color = color
         self.particle_list = []
         """
         for i in range(number):
@@ -759,7 +763,7 @@ class ParticleEffect:
                 y = random.randint(self.spawner.y, self.spawner.height + self.spawner.y)
                 self.particle_list.append(
                     Particle(
-                        (x, y), self.images, 10, self.lifetime + random.randint(-20, 20)
+                        (x, y), self.images, 10, self.lifetime + random.randint(-20, 20),color=self.color
                     )
                 )
         for i in range(len(self.particle_list)):
@@ -776,7 +780,7 @@ class ParticleEffect:
                 y = random.randint(self.spawner.y, self.spawner.height + self.spawner.y)
                 self.particle_list.append(
                     Particle(
-                        (x, y), self.images, 10, self.lifetime + random.randint(-20, 20)
+                        (x, y), self.images, 10, self.lifetime + random.randint(-20, 20),color=self.color
                     )
                 )
             self.particle_list[i].draw()
