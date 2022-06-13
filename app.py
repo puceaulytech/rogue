@@ -559,8 +559,8 @@ class Key(InventoryObject):
         super().__init__(initial_position)
 
     def use(self):
-        self.kill()
         player.inventory.remove(self)
+        self.kill()
 
 class Potion(InventoryObject):
     def __init__(self, initial_position):
@@ -738,13 +738,14 @@ class Inventory:
 
     def remove(self,thing):
         i = self.items.index(thing)
+        inv_slot_group.sprites()[i].has_picked_item = False
         self.items[i] = None
 
     def update(self):
         self.gui.update(self.picked_item)
         for i in player_inv_group.sprites():
             all_sprites.add(i)
-        [x.update() for x in player_inv_group.sprites() if isinstance(x, InvSlot)]
+        [x.update() for x in inv_slot_group.sprites()]
 
     @property
     def picked_item(self):
