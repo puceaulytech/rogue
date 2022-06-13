@@ -442,8 +442,8 @@ class InventoryObject(pygame.sprite.Sprite,metaclass=abc.ABCMeta):
             offset = player.inventory.first_empty_slot()
             if player.take(self):
                 self.kill()
-                self.origin_rect = pygame.Rect(player_inv_group.sprites()[offset].rect[0:2],self.rect[2:4])
                 self.image = pygame.transform.scale(self.image,(40,40))
+                self.origin_rect = self.image.get_rect(center = inv_slot_group.sprites()[offset].rect.center)
                 player_inv_group.add(self)
 
     @abc.abstractmethod
@@ -996,7 +996,7 @@ projectile_group = pygame.sprite.Group()
 Projectile.containers = projectile_group, all_sprites
 Player.containers = all_sprites
 InventoryObject.containers = all_sprites, inventoryobject_group, mapdependent_group
-InvSlot.containers = all_sprites, player_inv_group, inv_slot_group
+InvSlot.containers = all_sprites, inv_slot_group
 Ground.containers = all_sprites, mapdependent_group, toredraw_group
 Stairs.containers = all_sprites, mapdependent_group, stairs_group
 Treasure.containers = all_sprites, mapdependent_group, treasures_group
