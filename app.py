@@ -449,6 +449,7 @@ class InventoryObject(pygame.sprite.Sprite,metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def use(self):
         pass
+
 class Projectile(pygame.sprite.Sprite):
     def __init__(self,position,sprites,speed,direction,dmg,particle = None):
         super().__init__(self.containers)
@@ -660,9 +661,12 @@ class Player(pygame.sprite.Sprite):
         self.image = self.images[self.currimage]
 
     def take(self,thing):
-     if isinstance(thing,InventoryObject):
-       return self.inventory.add(thing)
-     raise TypeError("Not an item")
+       if isinstance(thing,InventoryObject):
+           return self.inventory.add(thing)
+       raise TypeError("Not an item")
+
+    def drop(self):
+        self.inventory.drop((self.rect.x + camera_x,self.rect.y + camera_y + dpi))
 
 class Text(pygame.sprite.Sprite):
     def __init__(self, text, color, position):
@@ -739,7 +743,18 @@ class Inventory:
     def remove(self,thing):
         i = self.items.index(thing)
         inv_slot_group.sprites()[i].has_picked_item = False
-        self.items[i] = None
+        self[i] = None
+
+    def drop(self, pos):
+        i = self.picked_item_index
+        if i:
+            item = self[i]
+            item.kill()
+            [j.add(item) for j in InventoryObject.containers]
+            item.image = pygame.transform.scale(item.image, (dpi + 10, dpi + 10))
+            item.origin_rect = item.image.get_rect(topleft = pos)
+            inv_slot_group.sprites()[i].has_picked_item = False
+            self[i] = None
 
     def update(self):
         self.gui.update(self.picked_item)
@@ -1111,8 +1126,10 @@ while True:
                     screen.blit(screen_backup, (0, 0))
                 pygame.display.flip()
                 fullscreen = not fullscreen
+            elif event.key == pygame.K_r:
+                player.drop()
             elif event.key in nums[:Player.inventory_size]:
-                clicked_slot_item = player.inventory.items[nums.index(event.key)]
+                clicked_slot_item = player.inventory[nums.index(event.key)]
                 if clicked_slot_item is not None:
                     old_state = clicked_slot_item.picked_up
                 for s in player.inventory.items:
