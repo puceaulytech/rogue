@@ -193,12 +193,25 @@ def draw_map():
                     if abstract_weapon.position == mapgen.Coord(x, y):
                         Weapon(
                             (x * dpi, y * dpi),
-                            abstract_weapon.id
+                            id=abstract_weapon.id,
+                            subid=abstract_weapon.sub_id,
+                            durability=abstract_weapon.durability,
+                            damage=abstract_weapon.damage,
+                            reach=abstract_weapon.reach,
+                            attack_cooldown=abstract_weapon.attack_cooldown
                         )
             elif elem == "L":
                 for abstract_spell in game_logic.current_map.spell:
                     if abstract_spell.position == mapgen.Coord(x,y):
-                        Spell((x*dpi,y*dpi),abstract_spell.id)
+                        Spell(
+                            (x*dpi,y*dpi),
+                            id=abstract_spell.id,
+                            subid=abstract_spell.sub_id,
+                            damage=abstract_spell.damage,
+                            radius=abstract_spell.radius,
+                            speed=abstract_spell.speed,
+                            attack_cooldown=abstract_spell.attack_cooldown
+                        )
 def get_adjacent_case(x,y,grid):
     if x > 0 and x < len(grid[0]) and y > 0 and y < len(grid):
         res = []
@@ -436,8 +449,8 @@ class InventoryObject(pygame.sprite.Sprite,metaclass=abc.ABCMeta):
             if player.take(self):
                 all_sprites.change_layer(self, hud_layer)
                 self.kill()
-                self.origin_rect = pygame.Rect(player_inv_group.sprites()[offset].rect[0:2],self.rect[2:4])
                 self.image = pygame.transform.scale(self.image,(40,40))
+                self.origin_rect = self.image.get_rect(center = inv_slot_group.sprites()[offset].rect.center)
                 player_inv_group.add(self)
 
     @abc.abstractmethod
@@ -501,25 +514,30 @@ class Projectile(pygame.sprite.Sprite):
 
 
 class Weapon(InventoryObject):
-    def __init__(self, initial_position, id, subid = None):
+    def __init__(self, initial_position, id, subid, durability, damage, reach, attack_cooldown):
         self.id = id
+        self.durability = durability
+        self.attack_cooldown = attack_cooldown
+        self.subid = subid
+        self.damage = damage
+        self.reach = reach * dpi
         if self.id == "sword":
-            self.attack_cooldown = 5
-            self.durability = 50
-            self.damage = 2
-            self.reach = 2 * dpi
             self.image = loadify("sword.png", 10, True) 
+            if subid == "diamond_sword" : 
+                self.image = loadify("diamond_sword.png", 10, True) 
+            if subid == "emerald_sword" : 
+                self.image = loadify("emerald_sword.png", 10, True) 
+            if subid == "amber_sword" : 
+                self.image = loadify("amber_sword.png", 10, True) 
         if self.id == "bow":
-            self.attack_cooldown = 10
-            self.durability = 20
-            self.damage = 3
             self.image = loadify("bow.png", 10, True) 
         self.last_attack = 0
         super().__init__(initial_position)
 
     def use(self):
+        if not (time.time() - self.last_attack > self.attack_cooldown):
+            return
         if self.id == "sword":
-        
             pos = pygame.mouse.get_pos()
             cos45 = 1 / math.sqrt(2)
             mouse_cos = (pos[0] - player.rect.center[0]) / math.sqrt((pos[0] - player.rect.center[0])**2 + (pos[1] - player.rect.center[1])**2)
@@ -532,7 +550,7 @@ class Weapon(InventoryObject):
                     or (creature.rect.center[1] > player.rect.center[1] and pos[1] > player.rect.center[1])
                     or (creature.rect.center[1] <= player.rect.center[1] and pos[1] <= player.rect.center[1])
                 ) and distance <= self.reach:
-                    creature.health -= self.damage 
+                    creature.health -= self.damage
                     
         if self.id == "bow":
             mouse_pos = pygame.math.Vector2(pygame.mouse.get_pos())
@@ -540,41 +558,48 @@ class Weapon(InventoryObject):
             direction = (mouse_pos - player_pos).normalize()
             Projectile(player.origin_rect.center,[loadify("arrow.png",-35,True)],1,direction, self.damage)
 
+        self.last_attack = time.time()
+
 class Key(InventoryObject):
     def __init__(self, initial_position):
         self.image = loadify("key.png", 5, True)
         super().__init__(initial_position)
 
     def use(self):
-        self.kill()
         player.inventory.remove(self)
+        self.kill()
 
 class Potion(InventoryObject):
     def __init__(self, initial_position):
         super().__init__(initial_position)
 
 class Spell(InventoryObject):
-    def __init__(self, initial_position, id):
+    def __init__(self, initial_position, id, subid, damage, radius, speed, attack_cooldown):
         self.id = id 
+        self.subid = subid
+        self.damage = damage
+        self.radius = radius
+        self.speed = speed
+        self.attack_cooldown = attack_cooldown
         if self.id == "fireball" : 
-            self.damage = 5
-            self.radius = 1
-            self.speed = 0.3
             self.image = loadify("fireball_spell.png",10,True)
             #self.origin_rect = self.image.get_rect()
+        self.last_attack = 0
         super().__init__(initial_position)
     def use(self):
+        if not (time.time() - self.last_attack > self.attack_cooldown):
+            return
         if self.id == "fireball":
             mouse_pos = pygame.math.Vector2(pygame.mouse.get_pos())
             player_pos = pygame.math.Vector2(player.rect.center)
             direction = (mouse_pos - player_pos).normalize()
             Projectile(player.origin_rect.center,[loadify("fireball.png",-25,True)],1,direction, self.damage,particle=1)
+        self.last_attack = time.time()
 
 
 class Player(pygame.sprite.Sprite):
     speed = 0.35
-    inventory_size = 5
-    show_inv = False
+    inventory_size = 8
 
     def __init__(self, initial_position=None):
         super().__init__(self.containers)
@@ -586,7 +611,7 @@ class Player(pygame.sprite.Sprite):
         self.last_trapped = 0
         if initial_position is not None:
             (self.origin_rect.x, self.origin_rect.y) = initial_position
-        self.inventory = Inventory([None for i in range(Player.inventory_size)],self.origin_rect[0:2])
+        self.inventory = Inventory([None for i in range(Player.inventory_size)])
 
     def take_damage(self, amount):
         player.health -= amount
@@ -609,13 +634,14 @@ class Player(pygame.sprite.Sprite):
             dialog.move((stair_object.origin_rect.x, stair_object.origin_rect.y - 0.5 * dpi))
         for treasure_object in pygame.sprite.spritecollide(self, treasures_group, False):
             if isinstance(self.inventory.picked_item,Key):
+                item = treasure_object.item
                 if isinstance(treasure_object.item,mapgen.Weapon):
-                    Weapon(treasure_object.origin_rect[:2],treasure_object.item.id)
+                    Weapon(treasure_object.origin_rect[:2],item.id, subid=item.sub_id, durability=item.durability, damage=item.damage, reach=item.reach, attack_cooldown=item.attack_cooldown)
                 elif isinstance(treasure_object.item,mapgen.Spell):
-                    Spell(treasure_object.origin_rect[:2],treasure_object.item.id)
+                    Spell(treasure_object.origin_rect[:2],treasure_object.item.id, subid=item.sub_id, damage=item.damage, radius=item.radius, speed=item.speed, attack_cooldown=item.attack_cooldown)
                 all_sprites.remove(treasure_object)
                 treasures_group.remove(treasure_object)
-                picked_item.use()
+                self.inventory.picked_item.use()
         if any(pygame.sprite.spritecollide(self, traps_group, False)):
             if time.time() - self.last_trapped > 5:
                 self.take_damage(1)
@@ -643,67 +669,99 @@ class Player(pygame.sprite.Sprite):
     def take(self,thing):
      if isinstance(thing,InventoryObject):
        return self.inventory.add(thing)
-     raise TypeError("Not an object")
+     raise TypeError("Not an item")
+
+class Text(pygame.sprite.Sprite):
+    def __init__(self, text, color, position):
+        super().__init__(self.containers)
+        self.text = str(text)
+        self.color = color
+        self.font = pygame.font.Font("assets/Retro_Gaming.ttf",30)
+        self.image = self.font.render(self.text, False, self.color)
+        self.rect = self.image.get_rect(topleft = position)
+
+class Stats_gui:
+    def __init__(self,item):
+        self.attributes = []
+        self.update(item)
+
+    def update(self, item):
+        self.kill()
+        if item:
+            if isinstance(item,Weapon) or isinstance(item,Spell):
+                self.name = Text(item.id, (0,0,0), (width - 4*dpi,height - 3*dpi))
+                self.damage = Text(item.damage, (0,0,0), (width - 4*dpi,height - 2*dpi))
+                self.other = Text(item.durability, (0,0,0), (width - 4*dpi,height - dpi)) if isinstance(item,Weapon) else Text(item.radius, (0,0,0), (width - 4*dpi,height - dpi))
+                self.attributes = [self.name, self.damage, self.other]
+                 
+    def kill(self):
+        for i in self.attributes:
+            i.kill()
+            del i
+        self.attributes = []
 
 class InvSlot(pygame.sprite.Sprite):
-    def __init__(self, offset):
+    def __init__(self, offset, total_nb):
         super().__init__(self.containers)
-        self.rect = self.image.get_rect().move((width/2)+dpi * (1+offset * 0.7),- dpi + (height/2))
+        self.has_picked_item = False
+        self.image = loadify("slot.png", size=-20)
+        center_p = (width/2,height-2)
+        self.rect = self.image.get_rect(center = center_p)
+        self.rect.move_ip(self.rect[2]*(offset - total_nb//2),-self.rect[3]/2)
+        if total_nb%2 == 0:
+            self.rect.move_ip(self.rect[2]/2,0)
 
-class Inventory(pygame.sprite.Sprite):
-  def __init__(self,items,position):
-    # super().__init__(self.containers)
-    self.items = items
-    self.size = len(self.items)
-    self.position = position
-    for i in range(len(self.items)):
-      InvSlot(i)
+    def update(self):
+        self.image = loadify("selected_slot.png", size=-20) if self.has_picked_item else loadify("slot.png", size=-20)
 
-  def __repr__(self):
-    return str(self.items)
+class Inventory:
+    def __init__(self,items):
+        self.items = items
+        self.size = len(self.items)
+        for i in range(self.size):
+            InvSlot(i, self.size)
+        self.gui = Stats_gui(self.picked_item)
 
-  def __getitem__(self,key):
-    return self.items[key]
+    def __repr__(self):
+        return str(self.items)
 
-  def __setitem__(self,key,value):
-    self.items[key] = value
+    def __getitem__(self,key):
+        return self.items[key]
+
+    def __setitem__(self,key,value):
+        self.items[key] = value
     
-  def has_empty_slot(self):
-    return None in self.items
+    def has_empty_slot(self):
+        return None in self.items
 
-  def first_empty_slot(self):
-    return min(list(i for i in range(len(self.items)) if self[i] is None)) if self.has_empty_slot() else None
+    def first_empty_slot(self):
+        return min(list(i for i in range(len(self.items)) if self[i] is None)) if self.has_empty_slot() else None
 
-  def add(self,thing):
-    if self.has_empty_slot():
-      self[self.first_empty_slot()] = thing
-      return True
-    return False
+    def add(self,thing):
+        if self.has_empty_slot():
+            self[self.first_empty_slot()] = thing
+            return True
+        return False
 
-  def remove(self,thing):
-      i = self.items.index(thing)
-      self.items[i] = None
+    def remove(self,thing):
+        i = self.items.index(thing)
+        inv_slot_group.sprites()[i].has_picked_item = False
+        self.items[i] = None
 
-  def update(self):
-    self.position = player.rect[0:2]
-    for i in player_inv_group.sprites():
-      if Player.show_inv:
-        all_sprites.add(i)
-      else:
-        all_sprites.remove(i)
+    def update(self):
+        self.gui.update(self.picked_item)
+        for i in player_inv_group.sprites():
+            all_sprites.add(i)
+        [x.update() for x in inv_slot_group.sprites()]
 
-  @property
-  def picked_item(self):
-    picked_items = [x for x in self.items if x is not None and x.picked_up]
-    return picked_items[0] if picked_items else None
+    @property
+    def picked_item(self):
+        picked_items = [x for x in self.items if x is not None and x.picked_up]
+        return picked_items[0] if picked_items else None
 
-  def draw(self):
-    for i in range(len(self.items)):
-      InvSlot(i,self.position)
-      item = self[i]
-      if item is not None:
-        item.rect = player_inv_group.sprites()[i].rect
-      player_inv_group.draw(screen)
+    @property
+    def picked_item_index(self):
+        return self.items.index(self.picked_item) if self.picked_item else None
 
 class Particle:
     def __init__(self, coords, image=None, radius=None, lifetime=200,color = (255,255,255)):
@@ -1044,11 +1102,13 @@ healthbar_group = pygame.sprite.Group()
 particle_group = pygame.sprite.Group()
 inventoryobject_group = pygame.sprite.Group()
 player_inv_group = pygame.sprite.Group()
+inv_slot_group = pygame.sprite.Group()
 projectile_group = pygame.sprite.Group()
+
 Projectile.containers = projectile_group, all_sprites
 Player.containers = all_sprites
 InventoryObject.containers = all_sprites, inventoryobject_group, mapdependent_group
-InvSlot.containers = all_sprites, player_inv_group
+InvSlot.containers = all_sprites, inv_slot_group
 Ground.containers = all_sprites, mapdependent_group, toredraw_group
 Stairs.containers = all_sprites, mapdependent_group, stairs_group
 Treasure.containers = all_sprites, mapdependent_group, treasures_group
@@ -1061,6 +1121,7 @@ FPSCounter.containers = all_sprites, hud_group
 HealthIcon.containers = all_sprites, hud_group, healthbar_group
 Dialog.containers = all_sprites, hud_group
 Mask.containers = all_sprites, hud_group
+Text.containers = all_sprites, hud_group
 
 Player.assets = ["terro.png", "terro_but_mad.png"]
 Wall.image = loadify("stonebrick_cracked.png")
@@ -1077,7 +1138,6 @@ Treasure.image = loadify("chest.png", size=3)
 Background.image = loadify("background.png", keep_ratio=True, size=2000)
 Cursor.image = loadify("cursor.png", size=60)
 HealthIcon.image = loadify("heart.png", size=-25)
-InvSlot.image = loadify("inv.png", size=-20)
 
 background_layer = 0
 tiles_layer = 1
@@ -1105,6 +1165,7 @@ CreatureHealthBar._layer = gameplay_characters_layer
 InventoryObject._layer = gameplay_characters_layer
 InvSlot._layer = hud_layer
 Projectile._layer = gameplay_characters_layer 
+Text._layer = hud_layer
 
 background_sprite = Background()
 Mask()
@@ -1150,6 +1211,7 @@ while running:
         if event.type == pygame.QUIT:
             running = False
         elif event.type == pygame.KEYDOWN:
+            nums = (pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4, pygame.K_5, pygame.K_6, pygame.K_7, pygame.K_8, pygame.K_9, pygame.K_0)
             if event.key == pygame.K_e:
                 for _ in pygame.sprite.spritecollide(player, stairs_group, False):
                     game_logic.move_up()
@@ -1173,22 +1235,36 @@ while running:
                     screen.blit(screen_backup, (0, 0))
                 pygame.display.flip()
                 fullscreen = not fullscreen
-            elif event.key == pygame.K_i or event.key == pygame.K_TAB:
-              Player.show_inv = not Player.show_inv
+            elif event.key in nums[:Player.inventory_size]:
+                clicked_slot_item = player.inventory.items[nums.index(event.key)]
+                if clicked_slot_item is not None:
+                    old_state = clicked_slot_item.picked_up
+                for s in player.inventory.items:
+                    if s is not None:
+                        s.picked_up = False
+                for s in inv_slot_group.sprites():
+                    s.has_picked_item = False
+                if clicked_slot_item is not None:
+                    clicked_slot_item.picked_up = not old_state
+                if player.inventory.picked_item:
+                    inv_slot_group.sprites()[player.inventory.picked_item_index].has_picked_item = True
+
         elif event.type == pygame.MOUSEBUTTONDOWN:
-          pos = pygame.mouse.get_pos()
-          if Player.show_inv:
+            pos = pygame.mouse.get_pos()
             # quand un item est récup on scale son image or ça ne change pas son rect donc je test les collisions avec le rect de l'image avec les topleft superposés
             clicked_inv_sprites = [s for s in player.inventory.items if s is not None and s.image.get_rect(topleft = s.rect.topleft).collidepoint(pos)]
             if clicked_inv_sprites:
-              old_state = clicked_inv_sprites[0].picked_up
-              for s in player.inventory.items:
-                if s is not None:
-                  s.picked_up = False
-              clicked_inv_sprites[0].picked_up = not old_state
-          picked_item = player.inventory.picked_item
-          if picked_item and not isinstance(picked_item,Key):
-            picked_item.use()
+                old_state = clicked_inv_sprites[0].picked_up
+                for s in player.inventory.items:
+                    if s is not None:
+                        s.picked_up = False
+                for s in inv_slot_group.sprites():
+                    s.has_picked_item = False
+                clicked_inv_sprites[0].picked_up = not old_state
+                inv_slot_group.sprites()[player.inventory.picked_item_index].has_picked_item = True
+            picked_item = player.inventory.picked_item
+            if picked_item and not isinstance(picked_item,Key):
+                picked_item.use()
 
     keys = pygame.key.get_pressed()
     if keys[pygame.K_ESCAPE]:
