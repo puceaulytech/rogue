@@ -184,7 +184,8 @@ def draw_map():
                             abstract_creature.id,
                             abstract_creature.speed,
                             abstract_creature.flying,
-                            key = abstract_creature.has_key
+                            key = abstract_creature.has_key,
+                            strength = abstract_creature.strength
                         )
                         c.health_bar = CreatureHealthBar()
                         c.health_bar.creature = c
@@ -612,6 +613,8 @@ class Player(pygame.sprite.Sprite):
         if initial_position is not None:
             (self.origin_rect.x, self.origin_rect.y) = initial_position
         self.inventory = Inventory([None for i in range(Player.inventory_size)])
+        self.level = 1
+        self.xp = 0
 
     def take_damage(self, amount):
         player.health -= amount
@@ -665,6 +668,10 @@ class Player(pygame.sprite.Sprite):
         else:
             self.currimage = 0
         self.image = self.images[self.currimage]
+        xp_cap = 20 + self.level * 5
+        if self.xp >= xp_cap:
+            self.level += 1
+            self.xp = self.xp % xp_cap
 
     def take(self,thing):
      if isinstance(thing,InventoryObject):
@@ -852,12 +859,13 @@ class ParticleEffect:
 
 
 class Creature(pygame.sprite.Sprite):
-    def __init__(self, initial_position, assets, speed=0.1, flying=False, hp = None, key = False):
+    def __init__(self, initial_position, assets, speed=0.1, flying=False, hp = None, key = False, strength = None):
         self.local_frame_index = random.randint(0, 100000)
         super().__init__(self.containers)
         self.angle = 0
         self.max_health = hp or random.randint(3, 10)
         self.health = self.max_health
+        self.strength = strength or 1
         self.flying = flying
         self.speed = speed + random.randint(-100,100)/1000
         self.last_attack = 0
@@ -881,6 +889,7 @@ class Creature(pygame.sprite.Sprite):
 
     def update(self):
         if self.health <= 0:
+            player.xp += self.max_health + self.strength
             self.kill()
             self.health_bar.kill()
             if self.has_key:
@@ -917,7 +926,7 @@ class Creature(pygame.sprite.Sprite):
                 pygame.sprite.collide_rect(player, self)
                 and time.time() - self.last_attack > self.attack_cooldown
             ):
-                player.take_damage(1)
+                player.take_damage(self.strength)
                 self.last_attack = time.time()
         if distance_to_player <10*dpi:
              playerx = player.origin_rect.center[0]
