@@ -1042,7 +1042,7 @@ InventoryObject._layer = 2
 InvSlot._layer = 2
 Projectile._layer = 3
 Text._layer = 2
-StatsBg._layer = 2
+StatsBg._layer = 1
 background_sprite = Background()
 Mask()
 
