@@ -800,7 +800,7 @@ class Inventory:
 
     def drop(self, pos):
         i = self.picked_item_index
-        if i:
+        if i is not None:
             item = self[i]
             item.kill()
             [j.add(item) for j in InventoryObject.containers]
