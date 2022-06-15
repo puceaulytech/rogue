@@ -696,7 +696,7 @@ class Stats_gui:
         self.kill()
         if item:
             self.texts["name"] = str(type(item)).split('.')[1][:-2]
-            self.texts["desc"] = item.description
+            self.texts["description"] = item.description
             if isinstance(item,Weapon) or isinstance(item,Spell):
                 self.texts["damage"] = item.damage
                 if isinstance(item,Weapon):
