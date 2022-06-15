@@ -585,6 +585,8 @@ class Spell(InventoryObject):
             self.images.append(loadify("fireball_spell.png",10,True))
             self.images.append(loadify("fireball_spell.png",-25,True))
             #self.origin_rect = self.image.get_rect()
+        if self.id == "lightning":
+            self.image = loadify("lightning_spell.png",10,True)
         self.last_attack = 0
         super().__init__(initial_position)
     def use(self):
@@ -595,9 +597,46 @@ class Spell(InventoryObject):
             player_pos = pygame.math.Vector2(player.rect.center)
             direction = (mouse_pos - player_pos).normalize()
             Projectile(player.origin_rect.center,[loadify("fireball.png",-25,True)],1,direction, self.damage,particle=1)
+        if self.id == "lightning":
+            mouse_pos = pygame.math.Vector2(pygame.mouse.get_pos())
+            player_pos = pygame.math.Vector2(player.rect.center)
+            direction = (mouse_pos - player_pos).normalize()
+            angle = math.atan2(direction[0],direction[1])
+            angle = (angle*180)/math.pi
+            print(angle)
+
+            LightingBolt([pygame.transform.rotate(loadify("lightning.png",100,True),angle),pygame.transform.rotate(loadify("lightning2.png",100,True),angle)],angle,20)
         self.last_attack = time.time()
 
+class LightingBolt(pygame.sprite.Sprite):
+    def __init__(self,images,angle,lifetime = 30):
+        self.frame = 0
+        self.lifetime = lifetime
+        self.anim = Animation(images,5)
+        self.image = self.anim.update_animation(0)
+        self.rect = self.image.get_rect()
+        self.rect.x = player.rect.center[0]
+        self.rect.y = player.rect.center[1]        
+        if angle < 90 and angle >0 : 
+            self.rect.x = player.rect.center[0]
+            self.rect.y = player.rect.center[1]
+        if angle< 0 and angle > -90 : 
+            self.rect.x = player.rect.center[0]- self.rect.width
+            self.rect.y = player.rect.center[1]
+        if angle < -90 and angle > -180 : 
+            self.rect.x = player.rect.center[0]- self.rect.width
+            self.rect.y = player.rect.center[1] - self.rect.height
+        if angle >90 :
+            self.rect.x = player.rect.center[0]
+            self.rect.y = player.rect.center[1] - self.rect.height
 
+        super().__init__(self.containers)
+    def update(self):
+        self.frame += 1 
+        self.image = self.anim.update_animation(self.frame)
+        if self.frame == self.lifetime:
+            self.kill()
+        
 class Player(pygame.sprite.Sprite):
     speed = 0.35
     inventory_size = 8
@@ -1032,7 +1071,7 @@ HealthIcon.containers = all_sprites, hud_group, healthbar_group
 Dialog.containers = all_sprites, hud_group
 Mask.containers = all_sprites, hud_group
 Text.containers = all_sprites, hud_group
-
+LightingBolt.containers = all_sprites, projectile_group
 Player.assets = ["terro.png", "terro_but_mad.png"]
 Wall.image = loadify("stonebrick_cracked.png")
 Ground.images = [
@@ -1066,6 +1105,7 @@ InventoryObject._layer = 2
 InvSlot._layer = 2
 Projectile._layer = 3
 Text._layer = 2
+LightingBolt._layer = 4 
 background_sprite = Background()
 Mask()
 
