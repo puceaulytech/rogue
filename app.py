@@ -586,7 +586,8 @@ class Spell(InventoryObject):
             self.images.append(loadify("fireball_spell.png",-25,True))
             #self.origin_rect = self.image.get_rect()
         if self.id == "lightning":
-            self.image = loadify("lightning_spell.png",10,True)
+            self.images.append(loadify("lightning_spell.png",10,True))
+            self.images.append(loadify("lightning_spell.png",-25,True))
         self.last_attack = 0
         super().__init__(initial_position)
     def use(self):
