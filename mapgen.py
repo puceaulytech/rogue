@@ -225,14 +225,14 @@ class Map:
             position=None,
             difficulty=1,
             speed=0.2,
-            flying=False,
+            flying=True,
         ),
         Creature(
             ["pac1.png","pac2.png","pac3.png"],
             position=None,
             difficulty=1,
             speed=0.15,
-            flying=False
+            flying=True
         )
     ]
     available_weapon = [

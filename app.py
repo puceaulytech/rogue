@@ -639,12 +639,13 @@ class Spell(InventoryObject):
             angle = (angle*180)/math.pi
             print(angle)
 
-            LightingBolt([pygame.transform.rotate(loadify("lightning.png",100,True),angle),pygame.transform.rotate(loadify("lightning2.png",100,True),angle)],angle,20)
+            LightingBolt([pygame.transform.rotate(loadify("lightning.png",100,True),angle),pygame.transform.rotate(loadify("lightning2.png",100,True),angle)],angle,0.2,20)
         self.last_attack = time.time()
 
 class LightingBolt(pygame.sprite.Sprite):
-    def __init__(self,images,angle,lifetime = 30):
+    def __init__(self,images,angle,dmg,lifetime = 30):
         self.frame = 0
+        self.dmg = dmg
         self.lifetime = lifetime
         self.anim = Animation(images,5)
         self.image = self.anim.update_animation(0)
@@ -670,6 +671,9 @@ class LightingBolt(pygame.sprite.Sprite):
         self.image = self.anim.update_animation(self.frame)
         if self.frame == self.lifetime:
             self.kill()
+        for i in creature_group.sprites():
+            if pygame.sprite.collide_mask(i,self):
+                i.health -= self.dmg
         
 class Player(pygame.sprite.Sprite):
     speed = 0.35
