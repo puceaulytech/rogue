@@ -475,7 +475,6 @@ class InventoryObject(pygame.sprite.Sprite,metaclass=abc.ABCMeta):
     def __init__(self, initial_position):
         super().__init__(self.containers)
         self.picked_up = False
-        self.images.append(pygame.transform.scale(self.images[0],(40,40)))
         self.image = self.images[0]
         self.origin_rect = self.image.get_rect()
         (self.origin_rect.x, self.origin_rect.y) = initial_position
@@ -516,14 +515,19 @@ class Weapon(InventoryObject):
         if self.id == "sword":
             if subid == "diamond_sword" : 
                 self.images.append(loadify("diamond_sword.png", 10, True))
+                self.images.append(loadify("diamond_sword.png", -10, True))
             elif subid == "emerald_sword" : 
                 self.images.append(loadify("emerald_sword.png", 10, True))
+                self.images.append(loadify("emerald_sword.png", -10, True))
             elif subid == "amber_sword" : 
                 self.images.append(loadify("amber_sword.png", 10, True))
+                self.images.append(loadify("amber_sword.png", -10, True))
             else:
                 self.images.append(loadify("sword.png", 10, True))
+                self.images.append(loadify("sword.png", -10, True))
         if self.id == "bow":
             self.images.append(loadify("bow.png", 10, True))
+            self.images.append(loadify("bow.png", -10, True))
         self.last_attack = 0
         super().__init__(initial_position)
 
@@ -557,6 +561,7 @@ class Key(InventoryObject):
     def __init__(self, initial_position):
         self.images = []
         self.images.append(loadify("key.png", 5, True))
+        self.images.append(loadify("key.png", -5, True))
         super().__init__(initial_position)
 
     def use(self):
@@ -578,6 +583,7 @@ class Spell(InventoryObject):
         self.images = []
         if self.id == "fireball" : 
             self.images.append(loadify("fireball_spell.png",10,True))
+            self.images.append(loadify("fireball_spell.png",-10,True))
             #self.origin_rect = self.image.get_rect()
         self.last_attack = 0
         super().__init__(initial_position)
