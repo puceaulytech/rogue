@@ -419,37 +419,6 @@ class Treasure(pygame.sprite.Sprite):
     def rect(self):
         return translated_rect(self.origin_rect)
 
-class InventoryObject(pygame.sprite.Sprite,metaclass=abc.ABCMeta):
-    def __init__(self, initial_position):
-        super().__init__(self.containers)
-        self.picked_up = False
-        self.origin_rect = self.image.get_rect()
-        (self.origin_rect.x, self.origin_rect.y) = initial_position
-
-    def __bool__(self):
-      return True
-
-    @property
-    def rect(self):
-        return self.origin_rect if self in player_inv_group.sprites() else translated_rect(self.origin_rect)
-
-    def move(self, direction, delta_time):
-        direction = tuple([round(delta_time * c) for c in direction])
-        self.rect.move_ip(inverse_direction(direction))
-
-    def update(self):
-        if pygame.sprite.collide_rect(player, self):
-            offset = player.inventory.first_empty_slot()
-            if player.take(self):
-                self.kill()
-                self.image = pygame.transform.scale(self.image,(40,40))
-                self.origin_rect = self.image.get_rect(center = inv_slot_group.sprites()[offset].rect.center)
-                player_inv_group.add(self)
-
-    @abc.abstractmethod
-    def use(self):
-        pass
-
 class Projectile(pygame.sprite.Sprite):
     def __init__(self,position,sprites,speed,direction,dmg,particle = None):
         super().__init__(self.containers)
@@ -502,10 +471,38 @@ class Projectile(pygame.sprite.Sprite):
         direction = tuple([round(self.speed * delta_time * c) for c in direction])
         self.origin_rect.move_ip(direction[0],direction[1])
 
+class InventoryObject(pygame.sprite.Sprite,metaclass=abc.ABCMeta):
+    def __init__(self, initial_position):
+        super().__init__(self.containers)
+        self.picked_up = False
+        self.images.append(pygame.transform.scale(self.images[0],(40,40)))
+        self.image = self.images[0]
+        self.origin_rect = self.image.get_rect()
+        (self.origin_rect.x, self.origin_rect.y) = initial_position
 
+    def __bool__(self):
+      return True
 
+    @property
+    def rect(self):
+        return self.origin_rect if self in player_inv_group.sprites() else translated_rect(self.origin_rect)
 
+    def move(self, direction, delta_time):
+        direction = tuple([round(delta_time * c) for c in direction])
+        self.rect.move_ip(inverse_direction(direction))
 
+    def update(self):
+        if pygame.sprite.collide_rect(player, self):
+            offset = player.inventory.first_empty_slot()
+            if player.take(self):
+                self.kill()
+                self.image = self.images[1]
+                self.origin_rect = self.image.get_rect(center = inv_slot_group.sprites()[offset].rect.center)
+                player_inv_group.add(self)
+
+    @abc.abstractmethod
+    def use(self):
+        pass
 
 class Weapon(InventoryObject):
     def __init__(self, initial_position, id, subid, durability, damage, reach, attack_cooldown):
@@ -515,16 +512,18 @@ class Weapon(InventoryObject):
         self.subid = subid
         self.damage = damage
         self.reach = reach * dpi
+        self.images = []
         if self.id == "sword":
-            self.image = loadify("sword.png", 10, True) 
             if subid == "diamond_sword" : 
-                self.image = loadify("diamond_sword.png", 10, True) 
-            if subid == "emerald_sword" : 
-                self.image = loadify("emerald_sword.png", 10, True) 
-            if subid == "amber_sword" : 
-                self.image = loadify("amber_sword.png", 10, True) 
+                self.images.append(loadify("diamond_sword.png", 10, True))
+            elif subid == "emerald_sword" : 
+                self.images.append(loadify("emerald_sword.png", 10, True))
+            elif subid == "amber_sword" : 
+                self.images.append(loadify("amber_sword.png", 10, True))
+            else:
+                self.images.append(loadify("sword.png", 10, True))
         if self.id == "bow":
-            self.image = loadify("bow.png", 10, True) 
+            self.images.append(loadify("bow.png", 10, True))
         self.last_attack = 0
         super().__init__(initial_position)
 
@@ -556,7 +555,8 @@ class Weapon(InventoryObject):
 
 class Key(InventoryObject):
     def __init__(self, initial_position):
-        self.image = loadify("key.png", 5, True)
+        self.images = []
+        self.images.append(loadify("key.png", 5, True))
         super().__init__(initial_position)
 
     def use(self):
@@ -575,8 +575,9 @@ class Spell(InventoryObject):
         self.radius = radius
         self.speed = speed
         self.attack_cooldown = attack_cooldown
+        self.images = []
         if self.id == "fireball" : 
-            self.image = loadify("fireball_spell.png",10,True)
+            self.images.append(loadify("fireball_spell.png",10,True))
             #self.origin_rect = self.image.get_rect()
         self.last_attack = 0
         super().__init__(initial_position)
@@ -751,7 +752,7 @@ class Inventory:
             item = self[i]
             item.kill()
             [j.add(item) for j in InventoryObject.containers]
-            item.image = pygame.transform.scale(item.image, (dpi + 10, dpi + 10))
+            item.image = item.images[0]
             item.origin_rect = item.image.get_rect(topleft = pos)
             inv_slot_group.sprites()[i].has_picked_item = False
             self[i] = None
