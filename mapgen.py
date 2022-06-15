@@ -38,24 +38,24 @@ class Trap:
         return f"<mapgen.Trap position={self.position},damage={self.damage}>"
 
 class Weapon(Item):
-  def __init__(self, weapon_id, sub_id, position, difficulty, attack_cooldown, durability, damage, reach):
-    super().__init__(weapon_id, sub_id, position,difficulty)
-    self.attack_cooldown = attack_cooldown
-    self.durability = durability
-    self.damage = damage
-    self.reach = reach
+    def __init__(self, weapon_id, sub_id, position, difficulty, attack_cooldown, durability, damage, reach):
+        super().__init__(weapon_id, sub_id, position,difficulty)
+        self.attack_cooldown = attack_cooldown
+        self.durability = durability
+        self.damage = damage
+        self.reach = reach
 
 class Potion(Item):
-  def __init__(self, potion_id, sub_id, position, difficulty):
-    super().__init__(potion_id, sub_id, position,difficulty)
+    def __init__(self, potion_id, sub_id, position, difficulty):
+        super().__init__(potion_id, sub_id, position,difficulty)
 
 class Spell(Item):
-  def __init__(self, spell_id, sub_id, position, difficulty, damage, radius, speed, attack_cooldown):
-    super().__init__(spell_id, sub_id, position,difficulty)
-    self.damage = damage
-    self.radius = radius
-    self.speed = speed
-    self.attack_cooldown = attack_cooldown
+    def __init__(self, spell_id, sub_id, position, difficulty, damage, radius, speed, attack_cooldown):
+        super().__init__(spell_id, sub_id, position,difficulty)
+        self.damage = damage
+        self.radius = radius
+        self.speed = speed
+        self.attack_cooldown = attack_cooldown
 
 class Coord:
     def __init__(self, x, y):
@@ -311,7 +311,12 @@ class Map:
                    )
     ]
     available_potion = [
-
+        Potion(
+          "healing",
+          sub_id = None,
+          position = None,
+          difficulty = 1
+        ),
     ]
 
     def __init__(self, width, height, max_rooms=4):

@@ -212,6 +212,13 @@ def draw_map():
                             speed=abstract_spell.speed,
                             attack_cooldown=abstract_spell.attack_cooldown
                         )
+            elif elem == "P":
+                for abstract_potion in game_logic.current_map.potion:
+                    if abstract_potion.position == mapgen.Coord(x,y):
+                        Potion(
+                            (x * dpi, y * dpi),
+                            id = abstract_potion.id
+                        )
 def get_adjacent_case(x,y,grid):
     if x > 0 and x < len(grid[0]) and y > 0 and y < len(grid):
         res = []
@@ -582,8 +589,21 @@ class Key(InventoryObject):
         self.kill()
 
 class Potion(InventoryObject):
-    def __init__(self, initial_position):
+    def __init__(self, initial_position, id):
+        self.images = []
+        self.id = id
+        if self.id == "healing":
+            self.images.append(loadify("potion_heal.png", -20, True))
+            self.images.append(loadify("potion_heal.png", -30, True))
         super().__init__(initial_position)
+
+    def use(self):
+        if self.id == "healing":
+            player.health += 2
+            for i in range(2):
+                HealthIcon(offset = len(healthbar_group.sprites()))
+        player.inventory.remove(self)
+        self.kill()
 
 class Spell(InventoryObject):
     def __init__(self, initial_position, id, subid, damage, radius, speed, attack_cooldown):
@@ -668,10 +688,10 @@ class Player(pygame.sprite.Sprite):
         self.inventory = Inventory([None for i in range(Player.inventory_size)])
 
     def take_damage(self, amount):
-        player.health -= amount
+        self.health -= amount
         hit_sound.play()
         for _ in range(amount):
-            if not player.health < 0:  # TODO: juste pour éviter le crash
+            if not self.health < 0:  # TODO: juste pour éviter le crash
                 healthbar_group.sprites()[-1].kill()
 
     def move(self, direction, delta_time):
@@ -1256,11 +1276,12 @@ for i in range(player.health):
 particle_system = ParticleEffect(10,200,spawner=screen.get_rect(),forces= [0.1,0.05])
 frame_index = 0
 
-Key(player.origin_rect[:2])
+Potion(player.origin_rect[:2],"healing")
 ###########################################   MAIN LOOP  ###########################################
 running = True
 
 while running:
+    print(player.health)
     if frame_index%1 ==0:
         update_map_near_player()
         
