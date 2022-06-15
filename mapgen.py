@@ -297,7 +297,18 @@ class Map:
           radius=1,
           speed=0.3,
           attack_cooldown=1
-        )
+        ),
+        Spell(
+            "lightning",
+            None,
+            None,
+            1,
+            1,
+            1,
+            0,
+            1
+            
+                   )
     ]
     available_potion = [
 
