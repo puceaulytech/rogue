@@ -308,7 +308,17 @@ class Map:
             0,
             1
             
-                   )
+                   ),
+        Spell(
+            "teleportation",
+            sub_id = None,
+            position = None,
+            difficulty = 2,
+            damage = None,
+            radius = 375,
+            speed = None,
+            attack_cooldown = 1
+        )
     ]
     available_potion = [
         Potion(
