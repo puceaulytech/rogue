@@ -554,6 +554,7 @@ class Weapon(InventoryObject):
                     or (creature.rect.center[1] <= player.rect.center[1] and pos[1] <= player.rect.center[1])
                 ) and distance <= self.reach:
                     creature.health -= self.damage
+                    self.durability -= 1
                     
         if self.id == "bow":
             mouse_pos = pygame.math.Vector2(pygame.mouse.get_pos())
@@ -562,6 +563,12 @@ class Weapon(InventoryObject):
             Projectile(player.origin_rect.center,[loadify("arrow.png",-35,True)],1,direction, self.damage)
 
         self.last_attack = time.time()
+
+    def update(self):
+        if self.durability <= 0:
+            player.inventory.remove(self)
+            self.kill()
+        super().update()    
 
 class Key(InventoryObject):
     def __init__(self, initial_position):
