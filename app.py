@@ -1281,7 +1281,6 @@ Potion(player.origin_rect[:2],"healing")
 running = True
 
 while running:
-    print(player.health)
     if frame_index%1 ==0:
         update_map_near_player()
         
