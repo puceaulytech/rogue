@@ -426,6 +426,18 @@ class Map:
                   item = copy.copy(random.choices(Map.available_potion, weights,k=1)[0])
                   item.position = position
                   self.potion.append(item)
+        #security to always have 1 mob x)
+        if not self.creatures:
+            weights = list(map(lambda c: 1 / c.difficulty, Map.available_creatures))
+            a = self.find_valid_random_coord(room)
+            while a.distance(room.center) > room.size - 2:
+                a = self.find_valid_random_coord(room)
+            position = a
+            creature = copy.copy(
+                random.choices(Map.available_creatures, weights, k=1)[0]
+            )
+            creature.position = position
+            self.creatures.append(creature)
         random.choice(self.creatures).has_key = True
 
     def generate_stairs(self):
