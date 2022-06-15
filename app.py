@@ -515,6 +515,7 @@ class Weapon(InventoryObject):
         self.damage = damage
         self.reach = reach * dpi
         if self.id == "sword":
+            self.description = "Slash your enemies!"
             self.image = loadify("sword.png", 10, True) 
             if subid == "diamond_sword" : 
                 self.image = loadify("diamond_sword.png", 10, True) 
@@ -526,6 +527,7 @@ class Weapon(InventoryObject):
                 self.image = loadify("axe.png", 10, True) 
         if self.id == "bow":
             self.image = loadify("bow.png", 10, True) 
+            self.description = "Pew pew!"
         self.last_attack = 0
         super().__init__(initial_position)
 
@@ -558,6 +560,7 @@ class Weapon(InventoryObject):
 class Key(InventoryObject):
     def __init__(self, initial_position):
         self.image = loadify("key.png", 5, True)
+        self.description = "Use it on a chest!"
         super().__init__(initial_position)
 
     def use(self):
@@ -579,6 +582,7 @@ class Spell(InventoryObject):
         if self.id == "fireball" : 
             self.image = loadify("fireball_spell.png",10,True)
             #self.origin_rect = self.image.get_rect()
+            self.description = "Burn your enemies !"
         self.last_attack = 0
         super().__init__(initial_position)
     def use(self):
@@ -671,36 +675,50 @@ class Text(pygame.sprite.Sprite):
         super().__init__(self.containers)
         self.text = str(text)
         self.color = color
-        self.font = pygame.font.Font("assets/Retro_Gaming.ttf",30)
+        self.font = pygame.font.Font("assets/Retro_Gaming.ttf",15)
         self.image = self.font.render(self.text, False, self.color)
         self.rect = self.image.get_rect(topleft = position)
+
 class StatsBg(pygame.sprite.Sprite):
      def __init__(self, position):
         super().__init__(self.containers)
-
-
-
         self.image = loadify("parchemin.png",200,True)
         self.rect = self.image.get_rect(topleft = position)   
+
 class Stats_gui:
     def __init__(self,item):
         self.attributes = []
+        self.texts = {}
+        self.bg = StatsBg((width - 5*dpi,height - 4*dpi))
         self.update(item)
-        self.bg = StatsBg((width - 4*dpi,height - 4*dpi))
+
     def update(self, item):
         self.kill()
         if item:
+            self.texts["name"] = str(type(item)).split('.')[1][:-2]
+            self.texts["desc"] = item.description
             if isinstance(item,Weapon) or isinstance(item,Spell):
-                self.name = Text(item.id, (0,0,0), (width - 4*dpi,height - 3*dpi))
-                self.damage = Text(item.damage, (0,0,0), (width - 4*dpi,height - 2*dpi))
-                self.other = Text(item.durability, (0,0,0), (width - 4*dpi,height - dpi)) if isinstance(item,Weapon) else Text(item.radius, (0,0,0), (width - 4*dpi,height - dpi))
-                self.attributes = [self.name, self.damage, self.other]
+                self.texts["damage"] = item.damage
+                if isinstance(item,Weapon):
+                    self.texts["durability"] = item.durability
+                else:
+                    self.texts["radius"] = item.radius
+
+            starting_height = 9 * height / 12 
+            for i in range(len(self.texts)):
+                tupel = list(self.texts.items())[i]
+                i *= 2
+                self.attributes.append(Text(tupel[0]+" :", (0,0,0), (width - 4.5 * dpi, starting_height + (i * dpi) / 3)))
+                self.attributes.append(Text(tupel[1], (0,0,0), (width - 4.5 * dpi, starting_height + ((1+i) * dpi) / 3)))
+            self.bg = StatsBg((width - 5*dpi,height - 4*dpi))
                  
     def kill(self):
         for i in self.attributes:
             i.kill()
             del i
         self.attributes = []
+        self.texts = {}
+        self.bg.kill()
 
 class InvSlot(pygame.sprite.Sprite):
     def __init__(self, offset, total_nb):
