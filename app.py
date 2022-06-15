@@ -11,6 +11,7 @@ import mapgen
 import itertools
 import time
 import abc
+import webbrowser
 
 size = width, height = 1280, 720
 black = 0, 0, 0
@@ -21,6 +22,10 @@ winstyle = 0
 fullscreen = False
 player = None
 dialog = None
+debug_mode = len(sys.argv) > 1 and sys.argv[1] == "--debug"
+
+if debug_mode:
+    print("/!\ Debug mode enabled")
 
 pygame.init()
 
@@ -31,11 +36,10 @@ screen = pygame.display.set_mode(
     SCREENRECT.size, winstyle | pygame.DOUBLEBUF, bestdepth
 )
 pygame.display.set_caption("ChadRogue")
-pygame.mouse.set_visible(False)
-pygame.mixer.music.load("assets/music.ogg")
-pygame.mixer.music.play(-1)
 
 hit_sound = pygame.mixer.Sound("assets/hitted.ogg")
+app_icon = pygame.image.load(os.path.join("assets", "icon.png"))
+pygame.display.set_icon(app_icon)
 clock = pygame.time.Clock()
 
 plane = pygame.Surface((size), pygame.SRCALPHA)
@@ -149,8 +153,10 @@ def update_map_near_player():
     for creature in creature_group.sprites():
         if get_creature_pos_grid(creature) in already_drawn:
             all_sprites.add(creature)
+            all_sprites.add(creature.health_bar)
         else:
             all_sprites.remove(creature)
+            all_sprites.remove(creature.health_bar)
 
     for item in inventoryobject_group.sprites():
         if get_creature_pos_grid(item) in already_drawn:
@@ -855,9 +861,10 @@ class Particle:
 
 class ParticleEffect:
     def __init__(
-        self, number=100, lifetime=200, images=None, forces=None, spawner=None , color = (255,255,255)
+        self, number=100, lifetime=200, images=None, forces=None, spawner=None , color = (255,255,255),rate = 1
     ):
         self.number = number
+        self.rate = rate
         self.images = images or None
         self.forces = forces
         self.spawner = spawner
@@ -876,8 +883,8 @@ class ParticleEffect:
 """
 
     def update(self, delta):
-        if len(self.particle_list) < self.number - 5:
-            for j in range(random.randint(0, 1)):
+        if len(self.particle_list) < self.number - 2*self.rate:
+            for j in range(random.randint(0, self.rate)):
                 x = random.randint(self.spawner.x, self.spawner.width + self.spawner.x)
                 y = random.randint(self.spawner.y, self.spawner.height + self.spawner.y)
                 self.particle_list.append(
@@ -1029,6 +1036,110 @@ class Cursor(pygame.sprite.Sprite):
     def update(self):
         self.update_pos()
 
+class MenuTitle:
+    def __init__(self):
+        self.font = pygame.font.Font("assets/Retro_Gaming.ttf", 50)
+        self.image = self.font.render("CHAD ROGUE", False, (0, 0, 0))
+        self.rect = self.image.get_rect(center=(width//2, height//2 - 220))
+
+    def draw(self):
+        screen.blit(self.image, self.rect)
+
+class MenuCredit:
+    def __init__(self):
+        self.font = pygame.font.Font("assets/Retro_Gaming.ttf", 20)
+        self.image = self.font.render("Credits : Romain Chardiny, Robin Perdreau, Logan Lucas", False, (0, 0, 0))
+        self.rect = self.image.get_rect(midleft=(10, height - 30))
+
+    def draw(self):
+        screen.blit(self.image, self.rect)
+
+class MenuGithub:
+    def __init__(self):
+        self.font = pygame.font.Font("assets/Retro_Gaming.ttf", 20)
+        self.image = self.font.render("View on GitHub", False, (0, 0, 0))
+        self.rect = self.image.get_rect(midright=(width - 10, height - 30))
+        self.underline_rect = pygame.Rect(self.rect.x, self.rect.y + 22, self.rect.width, 2)
+
+    def draw(self):
+        screen.blit(self.image, self.rect)
+        screen.fill((0, 0, 0), self.underline_rect)
+
+class MenuButton:
+    def __init__(self, text, offset):
+        self.font = pygame.font.Font("assets/Retro_Gaming.ttf", 30)
+        self.image = self.font.render(text, False, (255, 255, 255))
+        self.rect = self.image.get_rect(center=(width//2, offset + 300))
+        self.bigger_rect = self.rect.inflate(200, 55)
+
+    def draw(self):
+        screen.fill((0, 0, 0), self.bigger_rect)
+        screen.blit(self.image, self.rect)
+
+class MenuMusicLabel:
+    def __init__(self):
+        self.font = pygame.font.Font("assets/Retro_Gaming.ttf", 25)
+        self.image = self.font.render("Enable music", False, (0, 0, 0))
+        self.rect = self.image.get_rect(center=(width // 2 + 40, height // 2 + 200))
+
+    def draw(self):
+        screen.blit(self.image, self.rect)
+
+class MenuMusicCheckbox:
+    def __init__(self):
+        self.checked = True
+        self.rect = pygame.Rect(width // 2 - 130, height // 2 + 200 - 30, 60, 60)
+        self.smaller_rect = self.rect.inflate(-20, -20)
+
+    def draw(self):
+        screen.fill((0, 0, 0), self.rect)
+        if self.checked:
+            screen.fill((255, 255, 255), self.smaller_rect)
+# Menu
+screen.fill((132, 23, 10), SCREENRECT)
+
+menu = True
+
+MenuTitle().draw()
+MenuCredit().draw()
+MenuMusicLabel().draw()
+
+music_checkbox = MenuMusicCheckbox()
+music_checkbox.draw()
+
+github_link = MenuGithub()
+github_link.draw()
+
+play_button = MenuButton(text="PLAY", offset=0)
+play_button.draw()
+
+exit_button = MenuButton(text="EXIT", offset=120)
+exit_button.draw()
+
+
+pygame.display.flip()
+
+while menu:
+    for event in pygame.event.get():
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            mouse_pos = pygame.mouse.get_pos()
+            if play_button.bigger_rect.collidepoint(mouse_pos):
+                menu = False
+            elif exit_button.bigger_rect.collidepoint(mouse_pos):
+                sys.exit()
+            elif github_link.rect.collidepoint(mouse_pos):
+                webbrowser.open("https://github.com/puceaulytech/rogue", new=0, autoraise=True)
+            elif music_checkbox.rect.collidepoint(mouse_pos):
+                music_checkbox.checked = not music_checkbox.checked
+                music_checkbox.draw()
+                pygame.display.flip()
+
+    time.sleep(0.1)
+
+pygame.mouse.set_visible(False)
+if music_checkbox.checked:
+    pygame.mixer.music.load("assets/music.ogg")
+    pygame.mixer.music.play(-1)
 
 game_logic = mapgen.Game(max_levels=3)
 map_grid = None
@@ -1089,24 +1200,35 @@ Background.image = loadify("background.png", keep_ratio=True, size=2000)
 Cursor.image = loadify("cursor.png", size=60)
 HealthIcon.image = loadify("heart.png", size=-25)
 
-Player._layer = 2
-Wall._layer = 1
-Ground._layer = 1
-Stairs._layer = 2
-Treasure._layer = 2
-Background._layer = 0
-Mask._layer = 2
-Cursor._layer = 3 
-FPSCounter._layer = 2
-Dialog._layer = 2
-HealthIcon._layer = 2
-Creature._layer = 2
-CreatureHealthBar._layer = 3
-InventoryObject._layer = 2
-InvSlot._layer = 2
-Projectile._layer = 3
-Text._layer = 2
-LightingBolt._layer = 4 
+background_layer = 0
+tiles_layer = 1
+gameplay_tiles_layer = 2
+gameplay_characters_layer = 3
+dialog_layer = 4
+
+mask_layer = 8
+hud_layer = 9
+cursor_layer = 10
+
+Player._layer = gameplay_characters_layer
+Wall._layer = tiles_layer
+Ground._layer = tiles_layer
+Stairs._layer = gameplay_tiles_layer 
+Treasure._layer = gameplay_tiles_layer
+Background._layer = background_layer
+Mask._layer = mask_layer
+Cursor._layer = cursor_layer
+FPSCounter._layer = hud_layer
+Dialog._layer = dialog_layer 
+HealthIcon._layer = hud_layer
+Creature._layer = gameplay_characters_layer 
+CreatureHealthBar._layer = gameplay_characters_layer
+InventoryObject._layer = gameplay_characters_layer
+InvSlot._layer = hud_layer
+Projectile._layer = gameplay_characters_layer 
+Text._layer = hud_layer
+LightingBolt._layer = gameplay_characters_layer
+
 background_sprite = Background()
 Mask()
 
@@ -1128,9 +1250,10 @@ frame_index = 0
 
 Key(player.origin_rect[:2])
 ###########################################   MAIN LOOP  ###########################################
+running = True
 
-while True:
-    if frame_index%5 ==0: 
+while running:
+    if frame_index%1 ==0:
         update_map_near_player()
         
     frame_index += 1
@@ -1148,7 +1271,7 @@ while True:
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            sys.exit()
+            running = False
         elif event.type == pygame.KEYDOWN:
             nums = (pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4, pygame.K_5, pygame.K_6, pygame.K_7, pygame.K_8, pygame.K_9, pygame.K_0)
             if event.key == pygame.K_e:
