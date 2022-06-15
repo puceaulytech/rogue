@@ -806,6 +806,7 @@ class Inventory:
             [j.add(item) for j in InventoryObject.containers]
             item.image = item.images[0]
             item.origin_rect = item.image.get_rect(topleft = pos)
+            item.picked_up = False
             inv_slot_group.sprites()[i].has_picked_item = False
             self[i] = None
 
