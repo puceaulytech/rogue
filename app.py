@@ -515,19 +515,19 @@ class Weapon(InventoryObject):
         if self.id == "sword":
             if subid == "diamond_sword" : 
                 self.images.append(loadify("diamond_sword.png", 10, True))
-                self.images.append(loadify("diamond_sword.png", -10, True))
+                self.images.append(loadify("diamond_sword.png", -25, True))
             elif subid == "emerald_sword" : 
                 self.images.append(loadify("emerald_sword.png", 10, True))
-                self.images.append(loadify("emerald_sword.png", -10, True))
+                self.images.append(loadify("emerald_sword.png", -25, True))
             elif subid == "amber_sword" : 
                 self.images.append(loadify("amber_sword.png", 10, True))
-                self.images.append(loadify("amber_sword.png", -10, True))
+                self.images.append(loadify("amber_sword.png", -25, True))
             else:
                 self.images.append(loadify("sword.png", 10, True))
-                self.images.append(loadify("sword.png", -10, True))
+                self.images.append(loadify("sword.png", -25, True))
         if self.id == "bow":
             self.images.append(loadify("bow.png", 10, True))
-            self.images.append(loadify("bow.png", -10, True))
+            self.images.append(loadify("bow.png", -25, True))
         self.last_attack = 0
         super().__init__(initial_position)
 
@@ -561,7 +561,7 @@ class Key(InventoryObject):
     def __init__(self, initial_position):
         self.images = []
         self.images.append(loadify("key.png", 5, True))
-        self.images.append(loadify("key.png", -5, True))
+        self.images.append(loadify("key.png", -25, True))
         super().__init__(initial_position)
 
     def use(self):
@@ -583,7 +583,7 @@ class Spell(InventoryObject):
         self.images = []
         if self.id == "fireball" : 
             self.images.append(loadify("fireball_spell.png",10,True))
-            self.images.append(loadify("fireball_spell.png",-10,True))
+            self.images.append(loadify("fireball_spell.png",-25,True))
             #self.origin_rect = self.image.get_rect()
         self.last_attack = 0
         super().__init__(initial_position)
