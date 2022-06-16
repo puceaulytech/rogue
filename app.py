@@ -584,6 +584,21 @@ class Key(InventoryObject):
 class Potion(InventoryObject):
     def __init__(self, initial_position):
         super().__init__(initial_position)
+class Armor(InventoryObject):
+    def __init__(self, initial_position,id,armor):
+        super().__init__(initial_position)
+        self.id = id 
+        self.armor = armor
+        self.is_equiped = False
+    def use(self):
+        if not self.is_equiped:
+            player.armor += self.armor
+            self.is_equiped = True
+        else : 
+            player.armor -= self.armor
+            self.is_equiped = False            
+
+
 
 class Spell(InventoryObject):
     def __init__(self, initial_position, id, subid, damage, radius, speed, attack_cooldown):
@@ -659,6 +674,7 @@ class Player(pygame.sprite.Sprite):
         super().__init__(self.containers)
         self.images = [loadify(i, size=-10) for i in self.assets]
         self.currimage = 0
+        self.armor = 1
         self.image = self.images[self.currimage]
         self.health = 8
         self.origin_rect = self.image.get_rect(center=SCREENRECT.center)
@@ -668,7 +684,7 @@ class Player(pygame.sprite.Sprite):
         self.inventory = Inventory([None for i in range(Player.inventory_size)])
 
     def take_damage(self, amount):
-        player.health -= amount
+        player.health -= amount * (1+math.log(self.armor))
         hit_sound.play()
         for _ in range(amount):
             if not player.health < 0:  # TODO: juste pour éviter le crash
