@@ -335,7 +335,7 @@ class Map:
             sub_id = None,
             position = None,
             difficulty = 1
-        ),
+        )
     ]
 
     def __init__(self, width, height, max_rooms=4):
@@ -458,6 +458,10 @@ class Map:
             creature.position = position
             self.creatures.append(creature)
         random.choice(self.creatures).has_key = True
+        ### generating 1 resting potion ###
+        pos = self.find_valid_random_coord(room)
+        item = Potion("resting", sub_id = None, position = pos, difficulty = 1)
+        self.potion.append(item)
 
     def generate_stairs(self):
         last_room = self.rooms[-1]
@@ -539,12 +543,12 @@ class Map:
             return "x"
         elif any([coord == item.position for item in self.weapon]):
             return "w"
+        elif any([coord == item.position for item in self.potion]):
+            return "P"
         elif any([coord in room for room in self.rooms]):
             return "#"
         elif any([coord in path for path in self.paths]):
             return "%"
-        elif any([coord == item.position for item in self.potion]):
-            return "P"
         return "."
 
     def grid(self):

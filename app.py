@@ -600,6 +600,10 @@ class Potion(InventoryObject):
             self.images.append(loadify("potion_heal.png", -20, True))
             self.images.append(loadify("potion_heal.png", -30, True))
             self.description = "Gives you 2 HP!"
+        elif self.id == "resting":
+            self.images.append(loadify("potion_rest.png", -20, True))
+            self.images.append(loadify("potion_rest.png", -30, True))
+            self.description = "Watch out for the mobs!"
         super().__init__(initial_position)
 
     def use(self):
@@ -607,6 +611,13 @@ class Potion(InventoryObject):
             player.health += 2
             for i in range(2):
                 HealthIcon(offset = len(healthbar_group.sprites()))
+        elif self.id == "resting":
+            player.health += 5 
+            for i in range(5):
+                HealthIcon(offset = len(healthbar_group.sprites()))
+            for creature in creature_group.sprites():
+# does not work yet because creatures aren't updated when not in fog or idk
+                creature.sight_range = 50
         player.inventory.remove(self)
         self.kill()
 
@@ -1014,6 +1025,7 @@ class Creature(pygame.sprite.Sprite):
         self.collisions_rect = []
         self.direction = (0, 0)
         self.has_key = key
+        self.sight_range = 10
         
         for i in range(len(assets)):
             self.images.append(loadify(assets[i], size=-30, keep_ratio=True))
@@ -1040,7 +1052,7 @@ class Creature(pygame.sprite.Sprite):
             (self.origin_rect.x - player.origin_rect.x) ** 2
             + (self.origin_rect.y - player.origin_rect.y) ** 2
         )
-        if distance_to_player < 10 * dpi:
+        if distance_to_player < self.sight_range * dpi:
             self.path_to_player = bfs(self, map_grid)
             if self.path_to_player is not None and len(self.path_to_player) > 1:
                 if (self.direction[0] == 0 and self.direction[1] == 0) or any([rect.collidepoint(self.origin_rect.center) for rect in self.collisions_rect]):
