@@ -599,7 +599,17 @@ class Potion(InventoryObject):
         if self.id == "healing":
             self.images.append(loadify("potion_heal.png", -20, True))
             self.images.append(loadify("potion_heal.png", -30, True))
+            self.description = "Gives you 2 HP!"
         super().__init__(initial_position)
+
+    def use(self):
+        if self.id == "healing":
+            player.health += 2
+            for i in range(2):
+                HealthIcon(offset = len(healthbar_group.sprites()))
+        player.inventory.remove(self)
+        self.kill()
+
 class Armor(InventoryObject):
     def __init__(self, initial_position,id,armor):
         super().__init__(initial_position)
@@ -613,16 +623,6 @@ class Armor(InventoryObject):
         else : 
             player.armor -= self.armor
             self.is_equiped = False            
-
-
-
-    def use(self):
-        if self.id == "healing":
-            player.health += 2
-            for i in range(2):
-                HealthIcon(offset = len(healthbar_group.sprites()))
-        player.inventory.remove(self)
-        self.kill()
 
 class Spell(InventoryObject):
     def __init__(self, initial_position, id, subid, damage, radius, speed, attack_cooldown):
