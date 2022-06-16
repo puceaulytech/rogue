@@ -225,14 +225,14 @@ class Map:
             position=None,
             difficulty=1,
             speed=0.2,
-            flying=False,
+            flying=True,
         ),
         Creature(
             ["pac1.png","pac2.png","pac3.png"],
             position=None,
             difficulty=1,
             speed=0.15,
-            flying=False
+            flying=True
         )
     ]
     available_weapon = [
@@ -277,6 +277,16 @@ class Map:
         attack_cooldown=0.5
         ),
       Weapon(
+        "sword",
+        sub_id="axe",
+        position=None,
+        difficulty=1,
+        durability=50,
+        damage=10,
+        reach=3,
+        attack_cooldown=1
+        ),
+      Weapon(
         "bow",
         sub_id=None,
         position=None,
@@ -307,7 +317,6 @@ class Map:
             1,
             0,
             1
-            
                    )
     ]
     available_potion = [
