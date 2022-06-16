@@ -236,7 +236,7 @@ class Map:
         )
     ]
     available_weapon = [
-      Weapon(
+                Weapon(
         "sword",
         sub_id="diamond_sword",
         position=None,
@@ -296,7 +296,6 @@ class Map:
         reach=0,
         attack_cooldown=1
       )
-      
     ]
     available_spell = [
         Spell(
@@ -308,7 +307,17 @@ class Map:
           radius=1,
           speed=0.3,
           attack_cooldown=1
-        )
+        ),
+        Spell(
+            "lightning",
+            None,
+            None,
+            1,
+            1,
+            1,
+            0,
+            1
+                   )
     ]
     available_potion = [
 
