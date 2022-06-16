@@ -668,10 +668,10 @@ class Player(pygame.sprite.Sprite):
         else:
             self.currimage = 0
         self.image = self.images[self.currimage]
-        xp_cap = 20 + self.level * 5
-        if self.xp >= xp_cap:
+        self.xp_cap = 20 + self.level * 5
+        if self.xp >= self.xp_cap:
             self.level += 1
-            self.xp = self.xp % xp_cap
+            self.xp = self.xp % self.xp_cap
 
     def take(self,thing):
      if isinstance(thing,InventoryObject):
@@ -968,7 +968,21 @@ class CreatureHealthBar(pygame.sprite.Sprite):
             im.fill((0, 255, 0))
             return im
         return self.origin_image
-        
+
+class XPBar(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__(self.containers)
+        self.image = pygame.Surface((200, 15))
+        self.rect = self.image.get_rect()
+        self.rect.move_ip(5, height - 75)
+        self.image.fill((237, 210, 2))
+
+    def update(self):
+        size = 200 / player.xp_cap
+        self.image = pygame.Surface((player.xp * size, 15))
+        self.rect = self.image.get_rect()
+        self.rect.move_ip(5, height - 75)
+        self.image.fill((237, 210, 2))
 
 class Cursor(pygame.sprite.Sprite):
     def __init__(self):
@@ -1131,6 +1145,7 @@ HealthIcon.containers = all_sprites, hud_group, healthbar_group
 Dialog.containers = all_sprites, hud_group
 Mask.containers = all_sprites, hud_group
 Text.containers = all_sprites, hud_group
+XPBar.containers = all_sprites, hud_group
 
 Player.assets = ["terro.png", "terro_but_mad.png"]
 Wall.image = loadify("stonebrick_cracked.png")
@@ -1175,6 +1190,7 @@ InventoryObject._layer = gameplay_characters_layer
 InvSlot._layer = hud_layer
 Projectile._layer = gameplay_characters_layer 
 Text._layer = hud_layer
+XPBar._layer = hud_layer
 
 background_sprite = Background()
 Mask()
@@ -1192,6 +1208,7 @@ dialog.message = "MEGA CHEVALIER"
 
 for i in range(player.health):
     HealthIcon(offset=i)
+XPBar()
 particle_system = ParticleEffect(10,200,spawner=screen.get_rect(),forces= [0.1,0.05])
 frame_index = 0
 
