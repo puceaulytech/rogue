@@ -977,6 +977,7 @@ class XPBar(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.move_ip(5, height - 75)
         self.image.fill((237, 210, 2))
+        self.level = Text(player.level,(237, 210, 2),(100, height - 125))
 
     def update(self):
         size = 200 / player.xp_cap
@@ -984,6 +985,8 @@ class XPBar(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.move_ip(5, height - 75)
         self.image.fill((237, 210, 2))
+        self.level.kill()
+        self.level = Text(player.level,(237, 210, 2),(100, height - 125))
 
 class Cursor(pygame.sprite.Sprite):
     def __init__(self):
