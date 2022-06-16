@@ -615,6 +615,7 @@ class Player(pygame.sprite.Sprite):
         self.inventory = Inventory([None for i in range(Player.inventory_size)])
         self.level = 1
         self.xp = 0
+        self.xp_cap = 20
 
     def take_damage(self, amount):
         player.health -= amount
@@ -668,10 +669,10 @@ class Player(pygame.sprite.Sprite):
         else:
             self.currimage = 0
         self.image = self.images[self.currimage]
-        self.xp_cap = 20 + self.level * 5
         if self.xp >= self.xp_cap:
             self.level += 1
             self.xp = self.xp % self.xp_cap
+            self.xp_cap *= 1.2
 
     def take(self,thing):
      if isinstance(thing,InventoryObject):
