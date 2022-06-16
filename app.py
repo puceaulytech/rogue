@@ -643,8 +643,13 @@ class Spell(InventoryObject):
             self.images.append(loadify("lightning_spell.png",10,True))
             self.images.append(loadify("lightning_spell.png",-25,True))
             self.description = "220V in your enemies!"
+        if self.id == "teleportation":
+            self.images.append(loadify("teleportation_spell.png",10,True))
+            self.images.append(loadify("teleportation_spell.png",-25,True))
+            self.description = "Woosh!"
         self.last_attack = 0
         super().__init__(initial_position)
+
     def use(self):
         if not (time.time() - self.last_attack > self.attack_cooldown):
             return
@@ -659,9 +664,12 @@ class Spell(InventoryObject):
             direction = (mouse_pos - player_pos).normalize()
             angle = math.atan2(direction[0],direction[1])
             angle = (angle*180)/math.pi
-            print(angle)
-
             LightingBolt([pygame.transform.rotate(loadify("lightning.png",100,True),angle),pygame.transform.rotate(loadify("lightning2.png",100,True),angle)],angle,0.2,20)
+        if self.id == "teleportation":
+            mouse_pos = pygame.mouse.get_pos()
+            distance = math.sqrt((mouse_pos[0] - player.rect.center[0])**2 + (mouse_pos[1] - player.rect.center[1])**2)
+            if distance <= self.radius and any([i.rect.collidepoint(mouse_pos) for i in floor_group.sprites()]):
+                player.move((mouse_pos[0] - player.rect.center[0],mouse_pos[1] - player.rect.center[1]), 1, with_speed = False)
         self.last_attack = time.time()
 
 class LightingBolt(pygame.sprite.Sprite):
@@ -722,10 +730,10 @@ class Player(pygame.sprite.Sprite):
             if not self.health < 0:  # TODO: juste pour éviter le crash
                 healthbar_group.sprites()[-1].kill()
 
-    def move(self, direction, delta_time):
+    def move(self, direction, delta_time, with_speed = True):
         global camera_x, camera_y
         origin_direction = direction
-        direction = tuple([round(self.speed * delta_time * c) for c in direction])
+        direction = tuple([round(self.speed * delta_time * c) if with_speed else round(delta_time * c) for c in direction])
         camera_x += direction[0]
         camera_y += direction[1]
         self.origin_rect.move_ip(direction)
@@ -1242,12 +1250,13 @@ inventoryobject_group = pygame.sprite.Group()
 player_inv_group = pygame.sprite.Group()
 inv_slot_group = pygame.sprite.Group()
 projectile_group = pygame.sprite.Group()
+floor_group = pygame.sprite.Group()
 
 Projectile.containers = projectile_group, all_sprites
 Player.containers = all_sprites
 InventoryObject.containers = all_sprites, inventoryobject_group, mapdependent_group
 InvSlot.containers = all_sprites, inv_slot_group
-Ground.containers = all_sprites, mapdependent_group, toredraw_group
+Ground.containers = all_sprites, mapdependent_group, toredraw_group, floor_group
 Stairs.containers = all_sprites, mapdependent_group, stairs_group
 Treasure.containers = all_sprites, mapdependent_group, treasures_group
 Background.containers = all_sprites
@@ -1328,7 +1337,7 @@ for i in range(player.health):
 particle_system = ParticleEffect(10,200,spawner=screen.get_rect(),forces= [0.1,0.05])
 frame_index = 0
 
-Potion(player.origin_rect[:2],"healing")
+Spell(player.origin_rect[:2],"teleportation",None,None,375,None,1)
 ###########################################   MAIN LOOP  ###########################################
 running = True
 
