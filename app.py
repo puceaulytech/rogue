@@ -750,7 +750,7 @@ class StatsBg(pygame.sprite.Sprite):
         self.image = loadify("parchemin.png",200,True)
         self.rect = self.image.get_rect(topleft = position)   
 
-class Stats_gui:
+class StatsGui:
     def __init__(self,item):
         self.attributes = []
         self.texts = {}
@@ -805,7 +805,7 @@ class Inventory:
         self.size = len(self.items)
         for i in range(self.size):
             InvSlot(i, self.size)
-        self.gui = Stats_gui(self.picked_item)
+        self.gui = StatsGui(self.picked_item)
 
     def __repr__(self):
         return str(self.items)
@@ -1265,7 +1265,7 @@ InventoryObject._layer = gameplay_characters_layer
 InvSlot._layer = hud_layer
 Projectile._layer = gameplay_characters_layer 
 Text._layer = hud_layer
-StatsBg._layer = hud_layer
+StatsBg._layer = dialog_layer
 LightingBolt._layer = gameplay_characters_layer
 
 background_sprite = Background()
