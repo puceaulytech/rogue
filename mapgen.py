@@ -225,78 +225,78 @@ class Map:
             position=None,
             difficulty=1,
             speed=0.2,
-            flying=False,
+            flying=True,
         ),
         Creature(
             ["pac1.png","pac2.png","pac3.png"],
             position=None,
             difficulty=1,
             speed=0.15,
-            flying=False
+            flying=True
         )
     ]
     available_weapon = [
-                Weapon(
-        "sword",
-        sub_id="diamond_sword",
-        position=None,
-        difficulty=1,
-        durability=50,
-        damage=4,
-        reach=2,
-        attack_cooldown=0.2
+        Weapon(
+            "sword",
+            sub_id="diamond_sword",
+            position=None,
+            difficulty=1,
+            durability=50,
+            damage=4,
+            reach=2,
+            attack_cooldown=0.2
         ),
         Weapon(
-        "sword",
-        sub_id="amber_sword",
-        position=None,
-        difficulty=1,
-        durability=50,
-        damage=7,
-        reach=2,
-        attack_cooldown=0.5
+            "sword",
+            sub_id="amber_sword",
+            position=None,
+            difficulty=1,
+            durability=50,
+            damage=7,
+            reach=2,
+            attack_cooldown=0.5
         ),
-      Weapon(
-        "sword",
-        sub_id="emerald_sword",
-        position=None,
-        difficulty=1,
-        durability=50,
-        damage=1,
-        reach=2,
-        attack_cooldown=0.1
+        Weapon(
+            "sword",
+            sub_id="emerald_sword",
+            position=None,
+            difficulty=1,
+            durability=50,
+            damage=1,
+            reach=2,
+            attack_cooldown=0.1
         ),
-      Weapon(
-        "sword",
-        sub_id="normal_sword",
-        position=None,
-        difficulty=1,
-        durability=50,
-        damage=2,
-        reach=2,
-        attack_cooldown=0.5
+        Weapon(
+            "sword",
+            sub_id="normal_sword",
+            position=None,
+            difficulty=1,
+            durability=50,
+            damage=2,
+            reach=2,
+            attack_cooldown=0.5
         ),
-      Weapon(
-        "bow",
-        sub_id=None,
-        position=None,
-        difficulty=1,
-        durability=20,
-        damage=3,
-        reach=0,
-        attack_cooldown=1
-      )
+        Weapon(
+            "bow",
+            sub_id=None,
+            position=None,
+            difficulty=1,
+            durability=20,
+            damage=3,
+            reach=0,
+            attack_cooldown=1
+        )
     ]
     available_spell = [
         Spell(
-          "fireball",
-          sub_id="fireball",
-          position=None,
-          difficulty=1,
-          damage=5,
-          radius=1,
-          speed=0.3,
-          attack_cooldown=1
+            "fireball",
+            sub_id="fireball",
+            position=None,
+            difficulty=1,
+            damage=5,
+            radius=1,
+            speed=0.3,
+            attack_cooldown=1
         ),
         Spell(
             "lightning",
@@ -307,8 +307,7 @@ class Map:
             1,
             0,
             1
-            
-                   ),
+        ),
         Spell(
             "teleportation",
             sub_id = None,
@@ -322,10 +321,10 @@ class Map:
     ]
     available_potion = [
         Potion(
-          "healing",
-          sub_id = None,
-          position = None,
-          difficulty = 1
+            "healing",
+            sub_id = None,
+            position = None,
+            difficulty = 1
         ),
     ]
 

@@ -641,17 +641,13 @@ class Spell(InventoryObject):
             direction = (mouse_pos - player_pos).normalize()
             angle = math.atan2(direction[0],direction[1])
             angle = (angle*180)/math.pi
-            print(angle)
             LightingBolt([pygame.transform.rotate(loadify("lightning.png",100,True),angle),pygame.transform.rotate(loadify("lightning2.png",100,True),angle)],angle,20)
         if self.id == "teleportation":
             mouse_pos = pygame.mouse.get_pos()
             distance = math.sqrt((mouse_pos[0] - player.rect.center[0])**2 + (mouse_pos[1] - player.rect.center[1])**2)
-            print(distance)
             if distance <= self.radius and any([i.rect.collidepoint(mouse_pos) for i in floor_group.sprites()]):
-                print(f"rect : {player.rect} origin : {player.origin_rect}")
-                print(mouse_pos)
                 # faut réussir à faire fonctionner ça
-                player.move((mouse_pos[0] - camera_x,mouse_pos[1] - camera_y),1)
+                player.move((mouse_pos[0] - player.rect.center[0],mouse_pos[1] - player.rect.center[1]), 1, with_speed = False)
         self.last_attack = time.time()
 
 class LightingBolt(pygame.sprite.Sprite):
@@ -706,10 +702,10 @@ class Player(pygame.sprite.Sprite):
             if not self.health < 0:  # TODO: juste pour éviter le crash
                 healthbar_group.sprites()[-1].kill()
 
-    def move(self, direction, delta_time):
+    def move(self, direction, delta_time, with_speed = True):
         global camera_x, camera_y
         origin_direction = direction
-        direction = tuple([round(self.speed * delta_time * c) for c in direction])
+        direction = tuple([round(self.speed * delta_time * c) if with_speed else round(delta_time * c) for c in direction])
         camera_x += direction[0]
         camera_y += direction[1]
         self.origin_rect.move_ip(direction)
