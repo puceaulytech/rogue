@@ -348,9 +348,9 @@ class Map:
         self.creatures = []
         self.items = []
         self.traps = []
-        self.weapon = []
-        self.spell = []
-        self.potion = []
+        self.weapons = []
+        self.spells = []
+        self.potions = []
         self.next_level_stair = None
         self.treasure = None
 
@@ -397,7 +397,7 @@ class Map:
             valid_coord = all(
                 [
                     position != element.position
-                    for element in self.creatures + self.weapon + self.spell + self.potion
+                    for element in self.creatures + self.weapons + self.spells + self.potions
                 ]
             )
         return position
@@ -427,24 +427,21 @@ class Map:
                 position = self.find_valid_random_coord(room)
                 item = copy.copy(random.choices(Map.available_weapon, weights,k=1)[0])
                 item.position = position
-                self.weapon.append(item)
-            if True:
-              nb_spell = random.randint(0, 2)
-              weights = list(map(lambda c: 1 / c.difficulty, Map.available_spell))
-              for _ in range(nb_spell):
-
-                  position = self.find_valid_random_coord(room)
-                  item = copy.copy(random.choices(Map.available_spell, weights,k=1)[0])
-                  item.position = position
-                  self.spell.append(item)
-            if Map.available_potion:
-              nb_potion = random.randint(0, 2)
-              weights = list(map(lambda c: 1 / c.difficulty, Map.available_potion))
-              for _ in range(nb_potion):
-                  position = self.find_valid_random_coord(room)
-                  item = copy.copy(random.choices(Map.available_potion, weights,k=1)[0])
-                  item.position = position
-                  self.potion.append(item)
+                self.weapons.append(item)
+            nb_spell = random.randint(0, 2)
+            weights = list(map(lambda c: 1 / c.difficulty, Map.available_spell))
+            for _ in range(nb_spell):
+                position = self.find_valid_random_coord(room)
+                item = copy.copy(random.choices(Map.available_spell, weights,k=1)[0])
+                item.position = position
+                self.spells.append(item)
+            nb_potion = random.randint(0, 2)
+            weights = list(map(lambda c: 1 / c.difficulty, Map.available_potion))
+            for _ in range(nb_potion):
+                position = self.find_valid_random_coord(room)
+                item = copy.copy(random.choices(Map.available_potion, weights,k=1)[0])
+                item.position = position
+                self.potions.append(item)
         #security to always have 1 mob x)
         if not self.creatures:
             weights = list(map(lambda c: 1 / c.difficulty, Map.available_creatures))
@@ -461,7 +458,7 @@ class Map:
         ### generating 1 resting potion ###
         pos = self.find_valid_random_coord(room)
         item = Potion("resting", sub_id = None, position = pos, difficulty = 1)
-        self.potion.append(item)
+        self.potions.append(item)
 
     def generate_stairs(self):
         last_room = self.rooms[-1]
@@ -471,7 +468,7 @@ class Map:
         room = random.choice(self.rooms[1:])
         position = self.find_valid_random_coord(room)
         self.treasure = Treasure(position)
-        self.treasure.item = copy.copy(random.choice(self.weapon + self.spell + self.potion))
+        self.treasure.item = copy.copy(random.choice(self.weapons + self.spells + self.potions))
         self.treasure.item.position = None
 
 
@@ -533,7 +530,7 @@ class Map:
     def get_character_at(self, coord):
         if coord == self.next_level_stair.position:
             return "S"
-        elif any([coord == item.position for item in self.spell]):
+        elif any([coord == item.position for item in self.spells]):
             return "L"
         elif coord == self.treasure.position:
             return "€"
@@ -541,9 +538,9 @@ class Map:
             return "T"
         elif any([coord == creature.position for creature in self.creatures]):
             return "x"
-        elif any([coord == item.position for item in self.weapon]):
+        elif any([coord == item.position for item in self.weapons]):
             return "w"
-        elif any([coord == item.position for item in self.potion]):
+        elif any([coord == item.position for item in self.potions]):
             return "P"
         elif any([coord in room for room in self.rooms]):
             return "#"

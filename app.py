@@ -189,7 +189,7 @@ def draw_map():
                         c.health_bar = CreatureHealthBar()
                         c.health_bar.creature = c
             elif elem == "w":
-                for abstract_weapon in game_logic.current_map.weapon:
+                for abstract_weapon in game_logic.current_map.weapons:
                     if abstract_weapon.position == mapgen.Coord(x, y):
                         Weapon(
                             (x * dpi, y * dpi),
@@ -201,7 +201,7 @@ def draw_map():
                             attack_cooldown=abstract_weapon.attack_cooldown
                         )
             elif elem == "L":
-                for abstract_spell in game_logic.current_map.spell:
+                for abstract_spell in game_logic.current_map.spells:
                     if abstract_spell.position == mapgen.Coord(x,y):
                         Spell(
                             (x*dpi,y*dpi),
@@ -213,7 +213,7 @@ def draw_map():
                             attack_cooldown=abstract_spell.attack_cooldown
                         )
             elif elem == "P":
-                for abstract_potion in game_logic.current_map.potion:
+                for abstract_potion in game_logic.current_map.potions:
                     if abstract_potion.position == mapgen.Coord(x,y):
                         Potion(
                             (x * dpi, y * dpi),
