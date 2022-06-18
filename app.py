@@ -804,11 +804,11 @@ class Player(pygame.sprite.Sprite):
         self.inventory.drop((self.rect.x + camera_x,self.rect.y + camera_y + dpi))
 
 class Text(pygame.sprite.Sprite):
-    def __init__(self, text, color, position):
+    def __init__(self, text, color, position, size = 15):
         super().__init__(self.containers)
         self.text = str(text)
         self.color = color
-        self.font = pygame.font.Font("assets/Retro_Gaming.ttf",15)
+        self.font = pygame.font.Font("assets/Retro_Gaming.ttf", size)
         self.image = self.font.render(self.text, False, self.color)
         self.rect = self.image.get_rect(topleft = position)
 
@@ -1135,7 +1135,7 @@ class XPBar(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.move_ip(5, height - 75)
         self.image.fill((237, 210, 2))
-        self.level = Text(player.level,(237, 210, 2),(100, height - 125))
+        self.level = Text(player.level,(237, 210, 2),(100, height - 125), size = 30)
         self.border = pygame.sprite.Sprite()
         self.border.image = loadify("border.png", keep_size = True)
         self.border.rect = self.border.image.get_rect()
@@ -1150,7 +1150,7 @@ class XPBar(pygame.sprite.Sprite):
         self.rect.move_ip(5, height - 75)
         self.image.fill((237, 210, 2))
         self.level.kill()
-        self.level = Text(player.level,(237, 210, 2),(100, height - 125))
+        self.level = Text(player.level,(237, 210, 2),(100, height - 125), size = 30)
 
 class Cursor(pygame.sprite.Sprite):
     def __init__(self):
