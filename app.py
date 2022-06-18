@@ -978,6 +978,12 @@ class XPBar(pygame.sprite.Sprite):
         self.rect.move_ip(5, height - 75)
         self.image.fill((237, 210, 2))
         self.level = Text(player.level,(237, 210, 2),(100, height - 125))
+        self.border = pygame.sprite.Sprite()
+        self.border.image = loadify("border.png", keep_size = True)
+        self.border.rect = self.border.image.get_rect()
+        self.border.rect.move_ip((2, height - 78))
+        self.border._layer = self._layer
+        all_sprites.add(self.border)
 
     def update(self):
         size = 200 / player.xp_cap
