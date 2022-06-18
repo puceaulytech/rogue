@@ -323,10 +323,20 @@ class Map:
             sub_id = None,
             position = None,
             difficulty = 2,
-            damage = None,
+            damage = 0,
             radius = 375,
-            speed = None,
+            speed = 0,
             attack_cooldown = 1
+        ),
+        Spell(
+            "invisibility",
+            sub_id = None,
+            position = None,
+            difficulty = 2,
+            damage = 0,
+            radius = "inf",
+            speed = 0,
+            attack_cooldown = 4
         )
     ]
     available_potion = [

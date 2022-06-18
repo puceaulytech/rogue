@@ -470,6 +470,8 @@ class Projectile(pygame.sprite.Sprite):
         colliding_creatures = pygame.sprite.spritecollide(self,creature_group,False)
         if len(colliding_creatures) != 0  : 
             colliding_creatures[0].health -= self.dmg
+            if colliding_creatures[0].sight_range < 0:
+                colliding_creatures[0].invis_time = 200
             self.kill()
         colliding_walls = []
         for i in obstacle_group.sprites():
@@ -565,6 +567,8 @@ class Weapon(InventoryObject):
                     or (creature.rect.center[1] <= player.rect.center[1] and pos[1] <= player.rect.center[1])
                 ) and distance <= self.reach:
                     creature.health -= self.damage
+                    if creature.sight_range < 0:
+                        creature.invis_time = 200
                     self.durability -= 1
                     
         if self.id == "bow":
@@ -650,14 +654,18 @@ class Spell(InventoryObject):
             self.images.append(loadify("fireball_spell.png",-25,True))
             #self.origin_rect = self.image.get_rect()
             self.description = "Burn your enemies!"
-        if self.id == "lightning":
+        elif self.id == "lightning":
             self.images.append(loadify("lightning_spell.png",10,True))
             self.images.append(loadify("lightning_spell.png",-25,True))
             self.description = "220V in your enemies!"
-        if self.id == "teleportation":
+        elif self.id == "teleportation":
             self.images.append(loadify("teleportation_spell.png",10,True))
             self.images.append(loadify("teleportation_spell.png",-25,True))
             self.description = "Woosh!"
+        elif self.id == "invisibility":
+            self.images.append(loadify("invis_spell.png", 10, True))
+            self.images.append(loadify("invis_spell.png", -25, True))
+            self.description = "They won't see you!"
         self.last_attack = 0
         super().__init__(initial_position)
 
@@ -669,18 +677,21 @@ class Spell(InventoryObject):
             player_pos = pygame.math.Vector2(player.rect.center)
             direction = (mouse_pos - player_pos).normalize()
             Projectile(player.origin_rect.center,[loadify("fireball.png",-25,True)],1,direction, self.damage,particle=1)
-        if self.id == "lightning":
+        elif self.id == "lightning":
             mouse_pos = pygame.math.Vector2(pygame.mouse.get_pos())
             player_pos = pygame.math.Vector2(player.rect.center)
             direction = (mouse_pos - player_pos).normalize()
             angle = math.atan2(direction[0],direction[1])
             angle = (angle*180)/math.pi
             LightingBolt([pygame.transform.rotate(loadify("lightning.png",100,True),angle),pygame.transform.rotate(loadify("lightning2.png",100,True),angle)],angle,0.2,20)
-        if self.id == "teleportation":
+        elif self.id == "teleportation":
             mouse_pos = pygame.mouse.get_pos()
             distance = math.sqrt((mouse_pos[0] - player.rect.center[0])**2 + (mouse_pos[1] - player.rect.center[1])**2)
             if distance <= self.radius and any([i.rect.collidepoint(mouse_pos) for i in floor_group.sprites()]):
                 player.move((mouse_pos[0] - player.rect.center[0],mouse_pos[1] - player.rect.center[1]), 1, with_speed = False)
+        elif self.id == "invisibility":
+            for creature in creature_group.sprites():
+                creature.sight_range = -1
         self.last_attack = time.time()
 
 class LightingBolt(pygame.sprite.Sprite):
@@ -1026,6 +1037,7 @@ class Creature(pygame.sprite.Sprite):
         self.direction = (0, 0)
         self.has_key = key
         self.sight_range = 10
+        self.invis_time = 0
         
         for i in range(len(assets)):
             self.images.append(loadify(assets[i], size=-30, keep_ratio=True))
@@ -1047,6 +1059,11 @@ class Creature(pygame.sprite.Sprite):
         self.local_frame_index += 1
         self.image = self.anim.update_animation(self.local_frame_index)
         
+        if self.sight_range < 0:
+            self.invis_time += 1
+            if self.invis_time >= 200:
+                self.sight_range = 10
+                self.invis_time = 0
 
         distance_to_player = math.sqrt(
             (self.origin_rect.x - player.origin_rect.x) ** 2
@@ -1349,7 +1366,7 @@ for i in range(player.health):
 particle_system = ParticleEffect(10,200,spawner=screen.get_rect(),forces= [0.1,0.05])
 frame_index = 0
 
-Spell(player.origin_rect[:2],"teleportation",None,None,375,None,1)
+Spell(player.origin_rect[:2],"invisibility",None,0,"inf",0,4)
 ###########################################   MAIN LOOP  ###########################################
 running = True
 
