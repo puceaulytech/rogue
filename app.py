@@ -1,4 +1,3 @@
-
 import random
 from collections import defaultdict
 import math
@@ -1075,7 +1074,9 @@ class Creature(pygame.sprite.Sprite):
         self.id = id 
         self.ranged = ranged
         self.max_health = hp or random.randint(3, 10) 
-        self.health = (self.max_health*(game_logic.active_level + 1 ))
+        self.max_health = (self.max_health*(game_logic.active_level + 1 ))
+        self.max_health += random.randint(-2,2)
+        self.health = self.max_health
         self.strength = (strength* (game_logic.active_level + 1 )) or 1
         self.flying = flying
         self.speed = speed + random.randint(-100,100)/4000
@@ -1505,6 +1506,7 @@ frame_index = 0
 Spell(player.origin_rect[:2],"teleportation",None,None,375,None,1)
 ###########################################   MAIN LOOP  ###########################################
 running = True
+death = False
 
 while running:
 
@@ -1560,6 +1562,10 @@ while running:
                 fullscreen = not fullscreen
             elif event.key == pygame.K_r:
                 player.drop()
+# this is what is supposed to happen when you die
+            elif event.key == pygame.K_u:
+                Text("Wasted", (147, 16, 0), (width / 2, height / 2), 40, True)
+                death = True
             elif event.key in nums[:Player.inventory_size]:
                 clicked_slot_item = player.inventory[nums.index(event.key)]
                 if clicked_slot_item is not None:
@@ -1611,6 +1617,9 @@ while running:
     screen.blit(plane,(0,0))
     pygame.display.update(dirty)
 
+    if death:
+        time.sleep(3)
+        running = False
+
     fps = clock.get_fps()
 
-    
