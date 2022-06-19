@@ -1110,7 +1110,7 @@ class Creature(pygame.sprite.Sprite):
                         elif self.id == "lightning": 
                             angle = math.atan2(direction[0],direction[1])
                             angle = (angle*180)/math.pi
-                            LightingBolt(self,[pygame.transform.rotate(loadify("lightning.png",100,True),angle),pygame.transform.rotate(loadify("lightning2.png",100,True),angle)],angle,0.2,20,True)
+                            LightingBolt(self,[pygame.transform.rotate(loadify("lightning.png",100,True),angle),pygame.transform.rotate(loadify("lightning2.png",100,True),angle)],angle,0.05,20,True)
                         self.last_attack = time.time()
                 else :
                     if self.path_to_player is not None and len(self.path_to_player) > 1:
