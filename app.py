@@ -700,8 +700,10 @@ class Spell(InventoryObject):
 
 class LightingBolt(pygame.sprite.Sprite):
     def __init__(self,cast,images,angle,dmg,lifetime = 30,ff = False):
+        self.angle = angle
         self.frame = 0
         self.ff = ff
+        self.cast = cast
         self.dmg = dmg
         self.lifetime = lifetime
         self.anim = Animation(images,5)
@@ -724,6 +726,20 @@ class LightingBolt(pygame.sprite.Sprite):
 
         super().__init__(self.containers)
     def update(self):
+        cast = self.cast
+        angle = self.angle
+        if angle < 90 and angle >0 : 
+            self.rect.x = cast.rect.center[0]
+            self.rect.y = cast.rect.center[1]
+        if angle< 0 and angle > -90 : 
+            self.rect.x = cast.rect.center[0]- self.rect.width
+            self.rect.y = cast.rect.center[1]
+        if angle < -90 and angle > -180 : 
+            self.rect.x = cast.rect.center[0]- self.rect.width
+            self.rect.y = cast.rect.center[1] - self.rect.height
+        if angle >90 :
+            self.rect.x = cast.rect.center[0]
+            self.rect.y = cast.rect.center[1] - self.rect.height
         self.frame += 1 
         self.image = self.anim.update_animation(self.frame)
         if self.frame == self.lifetime:
