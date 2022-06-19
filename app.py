@@ -184,9 +184,11 @@ def draw_map():
                             abstract_creature.id,
                             abstract_creature.speed,
                             abstract_creature.flying,
+                            abstract_creature.hp,
                             key = abstract_creature.has_key,
                             strength = abstract_creature.strength,
-                            ranged= abstract_creature.ranged
+                            ranged= abstract_creature.ranged,
+                            cooldown=abstract_creature.cool
                         )
                         c.health_bar = CreatureHealthBar()
                         c.health_bar.creature = c
@@ -472,14 +474,14 @@ class Projectile(pygame.sprite.Sprite):
             if len(colliding_creatures) != 0  : 
                 colliding_creatures[0].health -= self.dmg
                 self.kill()
-            colliding_walls = []
-            for i in obstacle_group.sprites():
-                if i.origin_rect.collidepoint(self.origin_rect.center):
-                    colliding_walls.append(i)
+        colliding_walls = []
+        for i in obstacle_group.sprites():
+            if i.origin_rect.collidepoint(self.origin_rect.center):
+                colliding_walls.append(i)
             if len(colliding_walls) != 0 : 
                 self.kill()
-            if mapgen.Coord(player.origin_rect.center[0],player.origin_rect.center[1]).distance(mapgen.Coord(self.origin_rect.center[0],self.origin_rect.center[1])) > 20*dpi : 
-                self.kill()
+        if mapgen.Coord(player.origin_rect.center[0],player.origin_rect.center[1]).distance(mapgen.Coord(self.origin_rect.center[0],self.origin_rect.center[1])) > 20*dpi : 
+            self.kill()
     def move(self,direction,delta_time):
         direction = tuple([round(self.speed * delta_time * c) for c in direction])
         self.origin_rect.move_ip(direction[0],direction[1])
@@ -646,7 +648,7 @@ class Spell(InventoryObject):
             self.damage = (damage * (game_logic.active_level + 1 ))
         else :
             self.damage = 0
-        print(self.damage)
+
         self.radius = radius
         self.speed = speed
         self.attack_cooldown = attack_cooldown
@@ -1041,7 +1043,7 @@ class ParticleEffect:
 
 
 class Creature(pygame.sprite.Sprite):
-    def __init__(self, initial_position, assets, speed=0.1, flying=False, hp = None, key = False, strength = None,ranged = False):
+    def __init__(self, initial_position, assets, speed=0.1, flying=False, hp = None, key = False, strength = None,ranged = False,cooldown = 1):
         self.local_frame_index = random.randint(0, 100000)
         super().__init__(self.containers)
         self.angle = 0
@@ -1053,7 +1055,7 @@ class Creature(pygame.sprite.Sprite):
         self.flying = flying
         self.speed = speed + random.randint(-100,100)/4000
         self.last_attack = 0
-        self.attack_cooldown = 1
+        self.attack_cooldown = cooldown
         self.images = []
         self.currimage = 0
         self.path_to_player = []
@@ -1092,12 +1094,12 @@ class Creature(pygame.sprite.Sprite):
         if distance_to_player < self.sight_range * dpi:
             self.path_to_player = bfs(self, map_grid)
             if self.ranged :
-                if len(self.path_to_player) < 7 : 
+                if len(self.path_to_player) < self.ranged : 
                     mouse_pos = pygame.math.Vector2(self.rect.center)
                     player_pos = pygame.math.Vector2(player.rect.center)
                     direction = (player_pos - mouse_pos).normalize()
                     if time.time() - self.last_attack > self.attack_cooldown:
-                        Projectile(self.origin_rect.center,[loadify("fireball.png",-25,True)],1,direction, 0.5,particle=1,ff=True)
+                        Projectile(self.origin_rect.center,[loadify("fireball.png",-25,True)],1,direction, 0.1,particle=1,ff=True)
                         self.last_attack = time.time()
                 else :
                     if self.path_to_player is not None and len(self.path_to_player) > 1:
