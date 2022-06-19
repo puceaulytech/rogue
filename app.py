@@ -1081,12 +1081,12 @@ class Creature(pygame.sprite.Sprite):
         if distance_to_player < self.sight_range * dpi:
             self.path_to_player = bfs(self, map_grid)
             if self.ranged :
-                if len(self.path_to_player) < 5 : 
+                if len(self.path_to_player) < 7 : 
                     mouse_pos = pygame.math.Vector2(self.rect.center)
                     player_pos = pygame.math.Vector2(player.rect.center)
                     direction = (player_pos - mouse_pos).normalize()
                     if time.time() - self.last_attack > self.attack_cooldown:
-                        Projectile(self.origin_rect.center,[loadify("fireball.png",-25,True)],1,direction, 2,particle=1,ff=True)
+                        Projectile(self.origin_rect.center,[loadify("fireball.png",-25,True)],1,direction, 0.5,particle=1,ff=True)
                         self.last_attack = time.time()
                 else :
                     if self.path_to_player is not None and len(self.path_to_player) > 1:
