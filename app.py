@@ -643,7 +643,11 @@ class Spell(InventoryObject):
     def __init__(self, initial_position, id, subid, damage, radius, speed, attack_cooldown):
         self.id = id 
         self.subid = subid
-        self.damage = damage
+        if damage :
+            self.damage = (damage * (game_logic.active_level + 1 ))
+        else :
+            self.damage = 0
+        print(self.damage)
         self.radius = radius
         self.speed = speed
         self.attack_cooldown = attack_cooldown
@@ -1024,11 +1028,12 @@ class Creature(pygame.sprite.Sprite):
         self.local_frame_index = random.randint(0, 100000)
         super().__init__(self.containers)
         self.angle = 0
-        self.max_health = hp or random.randint(3, 10)
-        self.health = self.max_health
+        self.max_health = hp or random.randint(3, 10) 
+        self.health = (self.max_health*(game_logic.active_level + 1 ))
+        print(self.health)
         self.strength = strength or 1
         self.flying = flying
-        self.speed = speed + random.randint(-100,100)/1000
+        self.speed = speed + random.randint(-100,100)/4000
         self.last_attack = 0
         self.attack_cooldown = 1
         self.images = []
@@ -1050,6 +1055,7 @@ class Creature(pygame.sprite.Sprite):
 
 
     def update(self):
+        
         if self.health <= 0:
             player.xp += self.max_health + self.strength
             self.kill()
@@ -1493,4 +1499,4 @@ while running:
 
     fps = clock.get_fps()
 
-
+    

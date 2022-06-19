@@ -227,7 +227,7 @@ class Map:
             speed=0.2,
             flying=True,
         ),
-        Creature(["spider.png","spider2.png"],None,1,0.15,flying=True)
+        Creature(["spider.png","spider2.png"],None,1,0.1,flying=True)
         ,
 
         Creature(
