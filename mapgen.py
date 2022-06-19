@@ -327,7 +327,7 @@ class Map:
             0,
             6,
             speed=None,
-            attack_cooldown=5
+            attack_cooldown=8
         ),
         Spell(
             "fireball",

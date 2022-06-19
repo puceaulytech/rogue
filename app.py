@@ -707,7 +707,7 @@ class Spell(InventoryObject):
                     mobs.append(i)
                     
                 
-            Frozen(player.rect.center,mobs,5)
+            Frozen(player.origin_rect.center,mobs,5)
             self.last_attack = time.time()
             player.magic_points -= self.mp_usage
 class Frozen(pygame.sprite.Sprite): 
@@ -716,26 +716,26 @@ class Frozen(pygame.sprite.Sprite):
         self.mobs = mobs
         self.dur = dur
         self.time = time.time()
-        self.image = loadify("ice_spell_alpha.png",50,True)
+        self.image = loadify("ice_spell_alpha.png",200,True)
         self.origin_rect = self.image.get_rect(center=position)
 
         self.speeds = []
         for i in mobs:
             self.speeds.append(i.speed)
             i.speed = 0
-        self.frame = 0 
+
     @property
     def rect(self):
         return translated_rect(self.origin_rect)
     def update(self):
         
         if  time.time() < self.time + self.dur:
-            
-            plane.blit(self.image,self.rect)
+            print(self.rect)
+            plane.blit(self.image,translated_rect(self.origin_rect))
         else : 
             for i in range(len(self.mobs)):
                 self.mobs[i].speed = self.speeds[i]
-            self.kill
+            self.kill()
             del self
 
 class LightingBolt(pygame.sprite.Sprite):
