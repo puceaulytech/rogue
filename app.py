@@ -184,8 +184,12 @@ def draw_map():
                             abstract_creature.id,
                             abstract_creature.speed,
                             abstract_creature.flying,
+                            abstract_creature.hp,
                             key = abstract_creature.has_key,
-                            strength = abstract_creature.strength
+                            strength = abstract_creature.strength,
+                            ranged= abstract_creature.ranged,
+                            cooldown=abstract_creature.cool,
+                            id=abstract_creature.idd
                         )
                         c.health_bar = CreatureHealthBar()
                         c.health_bar.creature = c
@@ -385,7 +389,10 @@ class Background(pygame.sprite.Sprite):
 class Ground(pygame.sprite.Sprite):
     def __init__(self, initial_position=None, trapped=False):
         super().__init__(self.containers)
-        self.image = random.choice(random.choices(self.images, [1, 50, 1, 1, 1, 1]))
+        if trapped:
+            self.image = loadify("magma.png",0,True)
+        else :
+            self.image = random.choice(random.choices(self.images, [1, 50, 1, 1, 1, 1]))
         self.origin_rect = self.image.get_rect()
         self.trapped = trapped
         if initial_position is None:
@@ -425,9 +432,9 @@ class Treasure(pygame.sprite.Sprite):
         return translated_rect(self.origin_rect)
 
 class Projectile(pygame.sprite.Sprite):
-    def __init__(self,position,sprites,speed,direction,dmg,particle = None):
+    def __init__(self,position,sprites,speed,direction,dmg,particle = None,ff = False):
         super().__init__(self.containers)
-        
+        self.ff = ff
         self.speed = speed
         self.direction = direction
         self.dmg = dmg
@@ -459,17 +466,21 @@ class Projectile(pygame.sprite.Sprite):
 
         self.image = self.anim.update_animation(self.frame_index)
         self.move(self.direction,ticked)
+        if self.ff : 
+            if pygame.sprite.collide_mask(self,player) : 
+                player.take_damage(self.dmg)
+                self.kill()
         colliding_creatures = pygame.sprite.spritecollide(self,creature_group,False)
-        if len(colliding_creatures) != 0  : 
-            colliding_creatures[0].health -= self.dmg
-            self.kill()
+        if not self.ff : 
+            if len(colliding_creatures) != 0  : 
+                colliding_creatures[0].health -= self.dmg
+                self.kill()
         colliding_walls = []
         for i in obstacle_group.sprites():
             if i.origin_rect.collidepoint(self.origin_rect.center):
                 colliding_walls.append(i)
-
-        if len(colliding_walls) != 0 : 
-            self.kill()
+            if len(colliding_walls) != 0 : 
+                self.kill()
         if mapgen.Coord(player.origin_rect.center[0],player.origin_rect.center[1]).distance(mapgen.Coord(self.origin_rect.center[0],self.origin_rect.center[1])) > 20*dpi : 
             self.kill()
     def move(self,direction,delta_time):
@@ -514,7 +525,8 @@ class Weapon(InventoryObject):
         self.durability = durability
         self.attack_cooldown = attack_cooldown
         self.subid = subid
-        self.damage = damage
+        self.damage = (damage * (game_logic.active_level + 1 ))
+
         self.reach = reach * dpi
 
         self.images = []
@@ -635,7 +647,11 @@ class Spell(InventoryObject):
     def __init__(self, initial_position, id, subid, damage, radius, speed, attack_cooldown):
         self.id = id 
         self.subid = subid
-        self.damage = damage
+        if damage :
+            self.damage = (damage * (game_logic.active_level + 1 ))
+        else :
+            self.damage = 0
+
         self.radius = radius
         self.speed = speed
         self.attack_cooldown = attack_cooldown
@@ -675,7 +691,7 @@ class Spell(InventoryObject):
             direction = (mouse_pos - player_pos).normalize()
             angle = math.atan2(direction[0],direction[1])
             angle = (angle*180)/math.pi
-            LightingBolt([pygame.transform.rotate(loadify("lightning.png",100,True),angle),pygame.transform.rotate(loadify("lightning2.png",100,True),angle)],angle,0.2,20)
+            LightingBolt(player,[pygame.transform.rotate(loadify("lightning.png",100,True),angle),pygame.transform.rotate(loadify("lightning2.png",100,True),angle)],angle,0.2,20)
         if self.id == "teleportation":
             mouse_pos = pygame.mouse.get_pos()
             distance = math.sqrt((mouse_pos[0] - player.rect.center[0])**2 + (mouse_pos[1] - player.rect.center[1])**2)
@@ -685,38 +701,48 @@ class Spell(InventoryObject):
         player.magic_points -= self.mp_usage
 
 class LightingBolt(pygame.sprite.Sprite):
-    def __init__(self,images,angle,dmg,lifetime = 30):
+    def __init__(self,cast,images,angle,dmg,lifetime = 30,ff = False):
+        self.angle = angle
         self.frame = 0
+        self.ff = ff
+        self.cast = cast
         self.dmg = dmg
         self.lifetime = lifetime
         self.anim = Animation(images,5)
         self.image = self.anim.update_animation(0)
         self.rect = self.image.get_rect()
-        self.rect.x = player.rect.center[0]
-        self.rect.y = player.rect.center[1]        
-        if angle < 90 and angle >0 : 
-            self.rect.x = player.rect.center[0]
-            self.rect.y = player.rect.center[1]
-        if angle< 0 and angle > -90 : 
-            self.rect.x = player.rect.center[0]- self.rect.width
-            self.rect.y = player.rect.center[1]
-        if angle < -90 and angle > -180 : 
-            self.rect.x = player.rect.center[0]- self.rect.width
-            self.rect.y = player.rect.center[1] - self.rect.height
-        if angle >90 :
-            self.rect.x = player.rect.center[0]
-            self.rect.y = player.rect.center[1] - self.rect.height
-
+        self.rect.x = cast.rect.center[0]
+        self.rect.y = cast.rect.center[1]        
+        self.adjust()
         super().__init__(self.containers)
     def update(self):
+        self.adjust()
         self.frame += 1 
         self.image = self.anim.update_animation(self.frame)
         if self.frame == self.lifetime:
             self.kill()
-        for i in creature_group.sprites():
-            if pygame.sprite.collide_mask(i,self):
-                i.health -= self.dmg
-        
+        if not self.ff:
+            for i in creature_group.sprites():
+                if pygame.sprite.collide_mask(i,self):
+                    i.health -= self.dmg
+        if self.ff:
+            if pygame.sprite.collide_mask(self,player):
+                player.take_damage(self.dmg)
+    def adjust(self):
+        cast = self.cast
+        angle = self.angle
+        if angle < 90 and angle >0 : 
+            self.rect.x = cast.rect.center[0]
+            self.rect.y = cast.rect.center[1]
+        if angle< 0 and angle > -90 : 
+            self.rect.x = cast.rect.center[0]- self.rect.width
+            self.rect.y = cast.rect.center[1]
+        if angle < -90 and angle > -180 : 
+            self.rect.x = cast.rect.center[0]- self.rect.width
+            self.rect.y = cast.rect.center[1] - self.rect.height
+        if angle >90 :
+            self.rect.x = cast.rect.center[0]
+            self.rect.y = cast.rect.center[1] - self.rect.height
 class Player(pygame.sprite.Sprite):
     speed = 0.35
     inventory_size = 8
@@ -1042,17 +1068,20 @@ class ParticleEffect:
 
 
 class Creature(pygame.sprite.Sprite):
-    def __init__(self, initial_position, assets, speed=0.1, flying=False, hp = None, key = False, strength = None):
+    def __init__(self, initial_position, assets, speed=0.1, flying=False, hp = None, key = False, strength = None,ranged = False,cooldown = 1, id = None):
         self.local_frame_index = random.randint(0, 100000)
         super().__init__(self.containers)
         self.angle = 0
-        self.max_health = hp or random.randint(3, 10)
-        self.health = self.max_health
-        self.strength = strength or 1
+        self.id = id 
+        self.ranged = ranged
+        self.max_health = hp or random.randint(3, 10) 
+        self.health = (self.max_health*(game_logic.active_level + 1 ))
+        print(self.health)
+        self.strength = (strength* (game_logic.active_level + 1 )) or 1
         self.flying = flying
-        self.speed = speed + random.randint(-100,100)/1000
+        self.speed = speed + random.randint(-100,100)/4000
         self.last_attack = 0
-        self.attack_cooldown = 1
+        self.attack_cooldown = cooldown
         self.images = []
         self.currimage = 0
         self.path_to_player = []
@@ -1072,6 +1101,7 @@ class Creature(pygame.sprite.Sprite):
 
 
     def update(self):
+        
         if self.health <= 0:
             player.xp += self.max_health + self.strength
             self.kill()
@@ -1089,23 +1119,54 @@ class Creature(pygame.sprite.Sprite):
         )
         if distance_to_player < self.sight_range * dpi:
             self.path_to_player = bfs(self, map_grid)
-            if self.path_to_player is not None and len(self.path_to_player) > 1:
-                if (self.direction[0] == 0 and self.direction[1] == 0) or any([rect.collidepoint(self.origin_rect.center) for rect in self.collisions_rect]):
-                    self.collisions_rect.clear()
-                    for point in self.path_to_player[1:]:
-                        x = (point[0] * dpi) + dpi / 2
-                        y = (point[1] * dpi) + dpi / 2
-                        rect = pygame.Rect((x - 7, y - 7), (14, 14))
-                        self.collisions_rect.append(rect)
-                    start = pygame.math.Vector2(self.origin_rect.center)
-                    end = pygame.math.Vector2(self.collisions_rect[0].center)
-                    self.direction = (end - start).normalize()
-                if self.local_frame_index %50 == 0 : 
-                    start = pygame.math.Vector2(self.origin_rect.center)
-                    end = pygame.math.Vector2(self.collisions_rect[0].center)
-                    self.direction = (end - start).normalize()
-                self.move(self.direction, ticked)
-            
+            if self.ranged :
+                if self.path_to_player!=None and len(self.path_to_player) < self.ranged : 
+                    mouse_pos = pygame.math.Vector2(self.rect.center)
+                    player_pos = pygame.math.Vector2(player.rect.center)
+                    direction = (player_pos - mouse_pos).normalize()
+                    if time.time() - self.last_attack > self.attack_cooldown:
+                        if self.id == "fire":
+                            Projectile(self.origin_rect.center,[loadify("fireball.png",-25,True)],1,direction, 0.1,particle=1,ff=True)
+                        elif self.id == "lightning": 
+                            angle = math.atan2(direction[0],direction[1])
+                            angle = (angle*180)/math.pi
+                            LightingBolt(self,[pygame.transform.rotate(loadify("lightning.png",100,True),angle),pygame.transform.rotate(loadify("lightning2.png",100,True),angle)],angle,0.05,20,True)
+                        self.last_attack = time.time()
+                else :
+                    if self.path_to_player is not None and len(self.path_to_player) > 1:
+                        if (self.direction[0] == 0 and self.direction[1] == 0) or any([rect.collidepoint(self.origin_rect.center) for rect in self.collisions_rect]):
+                            self.collisions_rect.clear()
+                            for point in self.path_to_player[1:]:
+                                x = (point[0] * dpi) + dpi / 2
+                                y = (point[1] * dpi) + dpi / 2
+                                rect = pygame.Rect((x - 7, y - 7), (14, 14))
+                                self.collisions_rect.append(rect)
+                            start = pygame.math.Vector2(self.origin_rect.center)
+                            end = pygame.math.Vector2(self.collisions_rect[0].center)
+                            self.direction = (end - start).normalize()
+                        if self.local_frame_index %50 == 0 : 
+                            start = pygame.math.Vector2(self.origin_rect.center)
+                            end = pygame.math.Vector2(self.collisions_rect[0].center)
+                            self.direction = (end - start).normalize()
+                        self.move(self.direction, ticked)
+            else : 
+                if self.path_to_player is not None and len(self.path_to_player) > 1:
+                    if (self.direction[0] == 0 and self.direction[1] == 0) or any([rect.collidepoint(self.origin_rect.center) for rect in self.collisions_rect]):
+                        self.collisions_rect.clear()
+                        for point in self.path_to_player[1:]:
+                            x = (point[0] * dpi) + dpi / 2
+                            y = (point[1] * dpi) + dpi / 2
+                            rect = pygame.Rect((x - 7, y - 7), (14, 14))
+                            self.collisions_rect.append(rect)
+                        start = pygame.math.Vector2(self.origin_rect.center)
+                        end = pygame.math.Vector2(self.collisions_rect[0].center)
+                        self.direction = (end - start).normalize()
+                    if self.local_frame_index %50 == 0 : 
+                        start = pygame.math.Vector2(self.origin_rect.center)
+                        end = pygame.math.Vector2(self.collisions_rect[0].center)
+                        self.direction = (end - start).normalize()
+                    self.move(self.direction, ticked)
+                
             if (
                 pygame.sprite.collide_rect(player, self)
                 and time.time() - self.last_attack > self.attack_cooldown
@@ -1363,7 +1424,7 @@ Treasure.containers = all_sprites, mapdependent_group, treasures_group
 Background.containers = all_sprites
 Wall.containers = all_sprites, obstacle_group, mapdependent_group, toredraw_group
 Creature.containers = all_sprites, creature_group, mapdependent_group
-CreatureHealthBar.containers = all_sprites, hud_group
+CreatureHealthBar.containers = all_sprites, hud_group, mapdependent_group
 Cursor.containers = all_sprites, hud_group
 FPSCounter.containers = all_sprites, hud_group
 Dialog.containers = all_sprites, hud_group
@@ -1555,4 +1616,4 @@ while running:
 
     fps = clock.get_fps()
 
-
+    

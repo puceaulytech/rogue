@@ -18,13 +18,16 @@ class Element:
 
 
 class Creature(Element):
-    def __init__(self, elem_id, position, difficulty, speed, flying):
+    def __init__(self,health, elem_id, position, difficulty, speed, flying,ranged = False,cool = 1 ,idd = None):
         super().__init__(elem_id, position, difficulty)
+        self.hp = health
         self.speed = speed
         self.flying = flying
         self.has_key = False
         self.strength = difficulty
-
+        self.ranged = ranged
+        self.cool = cool
+        self.idd = idd
 class Item(Element):
     def __init__(self, elem_id, sub_id, position, difficulty):
         super().__init__(elem_id, position, difficulty)
@@ -220,19 +223,26 @@ class Room:
 
 class Map:
     available_creatures = [
-        Creature(
+        Creature(10,
             ["sprite_0.png", "sprite_1.png"],
             position=None,
             difficulty=1,
             speed=0.2,
             flying=True,
+            ranged = 4,
+            cool=1,
+            idd="lightning"
         ),
-        Creature(
+        Creature(6,["spider.png","spider2.png"],None,1,0.1,flying=True,ranged=6,cool=2,idd="fire")
+        ,
+
+        Creature(3,
             ["pac1.png","pac2.png","pac3.png"],
             position=None,
-            difficulty=1,
+            difficulty=0.2,
             speed=0.15,
-            flying=True
+            flying=True,
+            cool=0.1
         )
     ]
     available_weapon = [
@@ -426,7 +436,17 @@ class Map:
                     random.choices(Map.available_creatures, weights, k=1)[0]
                 )
                 creature.position = position
-                self.creatures.append(creature)
+                if creature.id == ["spider.png","spider1.png"]:
+                    self.creatures.append(creature)
+                    for i in range(30):
+                        while a.distance(room.center) > room.size - 1:
+                            a = self.find_valid_random_coord(room)
+                        position = a
+                        creature = copy.copy(Map.available_creatures[1])
+                        creature.position = position
+                        self.creatures.append(creature)
+                else : 
+                    self.creatures.append(creature)
             nb_weapon = random.randint(0, 2)
             weights = list(map(lambda c: 1 / c.difficulty, Map.available_weapon))
             for _ in range(nb_weapon):
