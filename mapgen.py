@@ -308,6 +308,16 @@ class Map:
         )
     ]
     available_spell = [
+        Spell("ice",
+        "ice",
+        None,
+        1,
+        None,
+        6,
+        speed=None,
+        attack_cooldown=5
+        )
+        ,
         Spell(
             "fireball",
             sub_id="fireball",

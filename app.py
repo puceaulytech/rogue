@@ -1,4 +1,5 @@
 
+
 import random
 from collections import defaultdict
 import math
@@ -533,19 +534,19 @@ class Weapon(InventoryObject):
         if self.id == "sword":
             self.description = "Slash your enemies!"
             if subid == "diamond_sword" : 
-                self.images.append(loadify("diamond_sword.png", 10, True))
+                self.images.append(loadify("diamond_sword.png", 0, True))
                 self.images.append(loadify("diamond_sword.png", -25, True))
             elif subid == "emerald_sword" : 
-                self.images.append(loadify("emerald_sword.png", 10, True))
+                self.images.append(loadify("emerald_sword.png", 0, True))
                 self.images.append(loadify("emerald_sword.png", -25, True))
             elif subid == "amber_sword" : 
-                self.images.append(loadify("amber_sword.png", 10, True))
+                self.images.append(loadify("amber_sword.png", 0, True))
                 self.images.append(loadify("amber_sword.png", -25, True))
             else:
-                self.images.append(loadify("sword.png", 10, True))
+                self.images.append(loadify("sword.png", 0, True))
                 self.images.append(loadify("sword.png", -25, True))
         if self.id == "bow":
-            self.images.append(loadify("bow.png", 10, True))
+            self.images.append(loadify("bow.png", -10, True))
             self.images.append(loadify("bow.png", -25, True))
             self.description = "Pew pew!"
 
@@ -630,7 +631,7 @@ class Potion(InventoryObject):
             player.magic_points += 0.2 * player.max_mp
         elif self.id == "armor":
             if player.armor < 50:
-                player.armor += 2
+                player.armor += 5
 
 # does not work yet because creatures aren't updated when not in fog or idk
 
@@ -653,20 +654,25 @@ class Spell(InventoryObject):
 
         self.images = []
         if self.id == "fireball" : 
-            self.images.append(loadify("fireball_spell.png",10,True))
+            self.images.append(loadify("fireball_spell.png",-10,True))
             self.images.append(loadify("fireball_spell.png",-25,True))
             self.description = "Burn your enemies!"
             self.mp_usage = 5
         if self.id == "lightning":
-            self.images.append(loadify("lightning_spell.png",10,True))
+            self.images.append(loadify("lightning_spell.png",-10,True))
             self.images.append(loadify("lightning_spell.png",-25,True))
             self.description = "220V in your enemies!"
             self.mp_usage = 7
         if self.id == "teleportation":
-            self.images.append(loadify("teleportation_spell.png",10,True))
+            self.images.append(loadify("teleportation_spell.png",-10,True))
             self.images.append(loadify("teleportation_spell.png",-25,True))
             self.description = "Woosh!"
             self.mp_usage = 15
+        if self.id == "ice":
+            self.images.append(loadify("ice_spell.png",0,True))
+            self.images.append(loadify("ice_spell.png",-25,True))
+            self.description = "Freeze your enemies"
+            self.mp_usage = 10
         self.last_attack = 0
         super().__init__(initial_position)
 
@@ -698,6 +704,43 @@ class Spell(InventoryObject):
                 player.move((mouse_pos[0] - player.rect.center[0],mouse_pos[1] - player.rect.center[1]), 1, with_speed = False)
                 self.last_attack = time.time()
                 player.magic_points -= self.mp_usage
+        if self.id == "ice" : 
+            mobs = []
+            for i in creature_group.sprites():
+                if math.sqrt((player.origin_rect.center[0]-i.origin_rect.center[0])**2+(player.origin_rect.center[1]-i.origin_rect.center[1])**2) <= self.radius*dpi:
+                    mobs.append(i)
+                    
+                
+            Frozen(player.rect.center,mobs,5)
+            self.last_attack = time.time()
+            player.magic_points -= self.mp_usage
+class Frozen(pygame.sprite.Sprite): 
+    def __init__(self,position, mobs, dur):
+        super().__init__(self.containers)
+        self.mobs = mobs
+        self.dur = dur
+        self.time = time.time()
+        self.image = loadify("ice_spell_alpha.png",50,True)
+        self.origin_rect = self.image.get_rect(center=position)
+
+        self.speeds = []
+        for i in mobs:
+            self.speeds.append(i.speed)
+            i.speed = 0
+        self.frame = 0 
+    @property
+    def rect(self):
+        return translated_rect(self.origin_rect)
+    def update(self):
+        
+        if  time.time() < self.time + self.dur:
+            
+            plane.blit(self.image,self.rect)
+        else : 
+            for i in range(len(self.mobs)):
+                self.mobs[i].speed = self.speeds[i]
+            self.kill
+            del self
 
 class LightingBolt(pygame.sprite.Sprite):
     def __init__(self,cast,images,angle,dmg,lifetime = 30,ff = False):
@@ -1417,7 +1460,7 @@ player_inv_group = pygame.sprite.Group()
 inv_slot_group = pygame.sprite.Group()
 projectile_group = pygame.sprite.Group()
 floor_group = pygame.sprite.Group()
-
+frozen_group = pygame.sprite.Group()
 Projectile.containers = projectile_group, all_sprites
 Player.containers = all_sprites
 InventoryObject.containers = all_sprites, inventoryobject_group, mapdependent_group
@@ -1439,7 +1482,7 @@ HPBar.containers = all_sprites, hud_group
 MPBar.containers = all_sprites, hud_group
 StatsBg.containers = all_sprites,hud_group
 LightingBolt.containers = all_sprites, projectile_group
-
+Frozen.containers = all_sprites, frozen_group
 Player.assets = ["terro.png", "terro_but_mad.png", "terro_but_striking.png"]
 Wall.image = loadify("stonebrick_cracked.png")
 Ground.images = [
@@ -1464,7 +1507,7 @@ dialog_layer = 4
 mask_layer = 8
 hud_layer = 9
 cursor_layer = 10
-
+Frozen._layer = hud_layer
 Player._layer = gameplay_characters_layer
 Wall._layer = tiles_layer
 Ground._layer = tiles_layer
