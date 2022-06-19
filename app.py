@@ -234,7 +234,7 @@ def get_adjacent_case(x,y,grid):
 
 def is_case_goodenough(coo,grid): 
     case = grid[coo.y][coo.x]
-    if case in ["#", "%","S","x","w","L","P", "€"]:
+    if case in ["#", "%","S","x","w","L","P", "€","T"]:
         return True
     return False
 
