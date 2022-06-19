@@ -18,7 +18,7 @@ class Element:
 
 
 class Creature(Element):
-    def __init__(self,health, elem_id, position, difficulty, speed, flying,ranged = False,cool = 1 ):
+    def __init__(self,health, elem_id, position, difficulty, speed, flying,ranged = False,cool = 1 ,idd = None):
         super().__init__(elem_id, position, difficulty)
         self.hp = health
         self.speed = speed
@@ -27,6 +27,7 @@ class Creature(Element):
         self.strength = difficulty
         self.ranged = ranged
         self.cool = cool
+        self.idd = idd
 class Item(Element):
     def __init__(self, elem_id, sub_id, position, difficulty):
         super().__init__(elem_id, position, difficulty)
@@ -227,9 +228,12 @@ class Map:
             position=None,
             difficulty=1,
             speed=0.2,
-            flying=True
+            flying=True,
+            ranged = 4,
+            cool=1,
+            idd="lightning"
         ),
-        Creature(6,["spider.png","spider2.png"],None,1,0.1,flying=True,ranged=6,cool=2)
+        Creature(6,["spider.png","spider2.png"],None,1,0.1,flying=True,ranged=6,cool=2,idd="fire")
         ,
 
         Creature(3,

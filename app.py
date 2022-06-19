@@ -188,7 +188,8 @@ def draw_map():
                             key = abstract_creature.has_key,
                             strength = abstract_creature.strength,
                             ranged= abstract_creature.ranged,
-                            cooldown=abstract_creature.cool
+                            cooldown=abstract_creature.cool,
+                            id=abstract_creature.idd
                         )
                         c.health_bar = CreatureHealthBar()
                         c.health_bar.creature = c
@@ -688,7 +689,7 @@ class Spell(InventoryObject):
             direction = (mouse_pos - player_pos).normalize()
             angle = math.atan2(direction[0],direction[1])
             angle = (angle*180)/math.pi
-            LightingBolt([pygame.transform.rotate(loadify("lightning.png",100,True),angle),pygame.transform.rotate(loadify("lightning2.png",100,True),angle)],angle,0.2,20)
+            LightingBolt(player,[pygame.transform.rotate(loadify("lightning.png",100,True),angle),pygame.transform.rotate(loadify("lightning2.png",100,True),angle)],angle,0.2,20)
         if self.id == "teleportation":
             mouse_pos = pygame.mouse.get_pos()
             distance = math.sqrt((mouse_pos[0] - player.rect.center[0])**2 + (mouse_pos[1] - player.rect.center[1])**2)
@@ -698,27 +699,28 @@ class Spell(InventoryObject):
         player.magic_points -= self.mp_usage
 
 class LightingBolt(pygame.sprite.Sprite):
-    def __init__(self,images,angle,dmg,lifetime = 30):
+    def __init__(self,cast,images,angle,dmg,lifetime = 30,ff = False):
         self.frame = 0
+        self.ff = ff
         self.dmg = dmg
         self.lifetime = lifetime
         self.anim = Animation(images,5)
         self.image = self.anim.update_animation(0)
         self.rect = self.image.get_rect()
-        self.rect.x = player.rect.center[0]
-        self.rect.y = player.rect.center[1]        
+        self.rect.x = cast.rect.center[0]
+        self.rect.y = cast.rect.center[1]        
         if angle < 90 and angle >0 : 
-            self.rect.x = player.rect.center[0]
-            self.rect.y = player.rect.center[1]
+            self.rect.x = cast.rect.center[0]
+            self.rect.y = cast.rect.center[1]
         if angle< 0 and angle > -90 : 
-            self.rect.x = player.rect.center[0]- self.rect.width
-            self.rect.y = player.rect.center[1]
+            self.rect.x = cast.rect.center[0]- self.rect.width
+            self.rect.y = cast.rect.center[1]
         if angle < -90 and angle > -180 : 
-            self.rect.x = player.rect.center[0]- self.rect.width
-            self.rect.y = player.rect.center[1] - self.rect.height
+            self.rect.x = cast.rect.center[0]- self.rect.width
+            self.rect.y = cast.rect.center[1] - self.rect.height
         if angle >90 :
-            self.rect.x = player.rect.center[0]
-            self.rect.y = player.rect.center[1] - self.rect.height
+            self.rect.x = cast.rect.center[0]
+            self.rect.y = cast.rect.center[1] - self.rect.height
 
         super().__init__(self.containers)
     def update(self):
@@ -726,10 +728,13 @@ class LightingBolt(pygame.sprite.Sprite):
         self.image = self.anim.update_animation(self.frame)
         if self.frame == self.lifetime:
             self.kill()
-        for i in creature_group.sprites():
-            if pygame.sprite.collide_mask(i,self):
-                i.health -= self.dmg
-        
+        if not self.ff:
+            for i in creature_group.sprites():
+                if pygame.sprite.collide_mask(i,self):
+                    i.health -= self.dmg
+        if self.ff:
+            if pygame.sprite.collide_mask(self,player):
+                player.take_damage(self.dmg)
 class Player(pygame.sprite.Sprite):
     speed = 0.35
     inventory_size = 8
@@ -1043,10 +1048,11 @@ class ParticleEffect:
 
 
 class Creature(pygame.sprite.Sprite):
-    def __init__(self, initial_position, assets, speed=0.1, flying=False, hp = None, key = False, strength = None,ranged = False,cooldown = 1):
+    def __init__(self, initial_position, assets, speed=0.1, flying=False, hp = None, key = False, strength = None,ranged = False,cooldown = 1, id = None):
         self.local_frame_index = random.randint(0, 100000)
         super().__init__(self.containers)
         self.angle = 0
+        self.id = id 
         self.ranged = ranged
         self.max_health = hp or random.randint(3, 10) 
         self.health = (self.max_health*(game_logic.active_level + 1 ))
@@ -1099,7 +1105,12 @@ class Creature(pygame.sprite.Sprite):
                     player_pos = pygame.math.Vector2(player.rect.center)
                     direction = (player_pos - mouse_pos).normalize()
                     if time.time() - self.last_attack > self.attack_cooldown:
-                        Projectile(self.origin_rect.center,[loadify("fireball.png",-25,True)],1,direction, 0.1,particle=1,ff=True)
+                        if self.id == "fire":
+                            Projectile(self.origin_rect.center,[loadify("fireball.png",-25,True)],1,direction, 0.1,particle=1,ff=True)
+                        elif self.id == "lightning": 
+                            angle = math.atan2(direction[0],direction[1])
+                            angle = (angle*180)/math.pi
+                            LightingBolt(self,[pygame.transform.rotate(loadify("lightning.png",100,True),angle),pygame.transform.rotate(loadify("lightning2.png",100,True),angle)],angle,0.2,20,True)
                         self.last_attack = time.time()
                 else :
                     if self.path_to_player is not None and len(self.path_to_player) > 1:
