@@ -394,7 +394,10 @@ class Background(pygame.sprite.Sprite):
 class Ground(pygame.sprite.Sprite):
     def __init__(self, initial_position=None, trapped=False):
         super().__init__(self.containers)
-        self.image = random.choice(random.choices(self.images, [1, 50, 1, 1, 1, 1]))
+        if trapped:
+            self.image = loadify("magma.png",0,True)
+        else :
+            self.image = random.choice(random.choices(self.images, [1, 50, 1, 1, 1, 1]))
         self.origin_rect = self.image.get_rect()
         self.trapped = trapped
         if initial_position is None:
@@ -1307,7 +1310,7 @@ Treasure.containers = all_sprites, mapdependent_group, treasures_group
 Background.containers = all_sprites
 Wall.containers = all_sprites, obstacle_group, mapdependent_group, toredraw_group
 Creature.containers = all_sprites, creature_group, mapdependent_group
-CreatureHealthBar.containers = all_sprites, hud_group
+CreatureHealthBar.containers = all_sprites, hud_group, mapdependent_group
 Cursor.containers = all_sprites, hud_group
 FPSCounter.containers = all_sprites, hud_group
 HealthIcon.containers = all_sprites, hud_group, healthbar_group

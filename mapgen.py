@@ -227,6 +227,9 @@ class Map:
             speed=0.2,
             flying=True,
         ),
+        Creature(["spider.png","spider2.png"],None,1,0.15,flying=True)
+        ,
+
         Creature(
             ["pac1.png","pac2.png","pac3.png"],
             position=None,
@@ -420,7 +423,17 @@ class Map:
                     random.choices(Map.available_creatures, weights, k=1)[0]
                 )
                 creature.position = position
-                self.creatures.append(creature)
+                if creature.id == ["spider.png","spider1.png"]:
+                    self.creatures.append(creature)
+                    for i in range(30):
+                        while a.distance(room.center) > room.size - 1:
+                            a = self.find_valid_random_coord(room)
+                        position = a
+                        creature = copy.copy(Map.available_creatures[1])
+                        creature.position = position
+                        self.creatures.append(creature)
+                else : 
+                    self.creatures.append(creature)
             nb_weapon = random.randint(0, 2)
             weights = list(map(lambda c: 1 / c.difficulty, Map.available_weapon))
             for _ in range(nb_weapon):
