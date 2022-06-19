@@ -858,7 +858,7 @@ class InvSlot(pygame.sprite.Sprite):
         super().__init__(self.containers)
         self.has_picked_item = False
         self.image = loadify("slot.png", size=-20)
-        center_p = (width/2,height-2)
+        center_p = (width / 2,height)
         self.rect = self.image.get_rect(center = center_p)
         self.rect.move_ip(self.rect[2]*(offset - total_nb//2),-self.rect[3]/2)
         if total_nb%2 == 0:
@@ -1131,23 +1131,23 @@ class CreatureHealthBar(pygame.sprite.Sprite):
 class XPBar(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__(self.containers)
-        self.image = pygame.Surface((200, 15))
+        self.image = pygame.Surface((296, 8))
         self.rect = self.image.get_rect()
-        self.rect.move_ip(5, height - 75)
+        self.rect.move_ip(67, height - 36)
         self.image.fill((237, 210, 2))
         self.level = Text(player.level,(237, 210, 2),(100, height - 125), size = 30)
         self.border = pygame.sprite.Sprite()
-        self.border.image = loadify("border.png", keep_size = True)
+        self.border.image = loadify("stat_bar.png", keep_size = True)
         self.border.rect = self.border.image.get_rect()
-        self.border.rect.move_ip((2, height - 78))
+        self.border.rect.move_ip((0, height - 64))
         self.border._layer = self._layer
         all_sprites.add(self.border)
 
     def update(self):
-        size = 200 / player.xp_cap
-        self.image = pygame.Surface((player.xp * size, 15))
+        size = 296 / player.xp_cap
+        self.image = pygame.Surface((player.xp * size, 8))
         self.rect = self.image.get_rect()
-        self.rect.move_ip(5, height - 75)
+        self.rect.move_ip(67, height - 36)
         self.image.fill((237, 210, 2))
         self.level.kill()
         self.level = Text(player.level,(237, 210, 2),(100, height - 125), size = 30)
