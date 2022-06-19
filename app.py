@@ -638,19 +638,24 @@ class Spell(InventoryObject):
             self.images.append(loadify("fireball_spell.png",-25,True))
             #self.origin_rect = self.image.get_rect()
             self.description = "Burn your enemies!"
+            self.mp_usage = 5
         if self.id == "lightning":
             self.images.append(loadify("lightning_spell.png",10,True))
             self.images.append(loadify("lightning_spell.png",-25,True))
             self.description = "220V in your enemies!"
+            self.mp_usage = 10
         if self.id == "teleportation":
             self.images.append(loadify("teleportation_spell.png",10,True))
             self.images.append(loadify("teleportation_spell.png",-25,True))
             self.description = "Woosh!"
+            self.mp_usage = 20
         self.last_attack = 0
         super().__init__(initial_position)
 
     def use(self):
         if not (time.time() - self.last_attack > self.attack_cooldown):
+            return
+        if not (player.magic_points >= self.mp_usage):
             return
         if self.id == "fireball":
             mouse_pos = pygame.math.Vector2(pygame.mouse.get_pos())
@@ -670,6 +675,7 @@ class Spell(InventoryObject):
             if distance <= self.radius and any([i.rect.collidepoint(mouse_pos) for i in floor_group.sprites()]):
                 player.move((mouse_pos[0] - player.rect.center[0],mouse_pos[1] - player.rect.center[1]), 1, with_speed = False)
         self.last_attack = time.time()
+        player.magic_points -= self.mp_usage
 
 class LightingBolt(pygame.sprite.Sprite):
     def __init__(self,images,angle,dmg,lifetime = 30):
@@ -724,6 +730,8 @@ class Player(pygame.sprite.Sprite):
         self.level = 1
         self.xp = 0
         self.xp_cap = 20
+        self.max_mp = 50
+        self.magic_points = self.max_mp
 
     def take_damage(self, amount):
         player.health -= amount * (1+math.log(self.armor))
@@ -781,6 +789,8 @@ class Player(pygame.sprite.Sprite):
             self.xp_cap *= 1.2
         if self.health > self.max_health:
             self.health = self.max_health
+        if self.magic_points < 0:
+            self.magic_points = 0
 
     def take(self,thing):
        if isinstance(thing,InventoryObject):
@@ -1140,6 +1150,21 @@ class XPBar(pygame.sprite.Sprite):
         self.level.kill()
         self.level = Text(player.level,(237, 210, 2),(31, height - 32), size = 30, centered = True)
 
+class MPBar(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__(self.containers)
+        self.image = pygame.Surface((296, 8))
+        self.rect = self.image.get_rect()
+        self.rect.move_ip(67, height - 24)
+        self.image.fill((0, 0, 255))
+
+    def update(self):
+        size = 296 / player.max_mp
+        self.image = pygame.Surface((player.magic_points * size, 8))
+        self.rect = self.image.get_rect()
+        self.rect.move_ip(67, height - 24)
+        self.image.fill((0, 0, 255))
+
 class HPBar(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__(self.containers)
@@ -1318,6 +1343,7 @@ Mask.containers = all_sprites, hud_group
 Text.containers = all_sprites, hud_group
 XPBar.containers = all_sprites, hud_group
 HPBar.containers = all_sprites, hud_group
+MPBar.containers = all_sprites, hud_group
 StatsBg.containers = all_sprites,hud_group
 LightingBolt.containers = all_sprites, projectile_group
 
@@ -1364,6 +1390,7 @@ Projectile._layer = gameplay_characters_layer
 Text._layer = hud_layer
 XPBar._layer = hud_layer
 HPBar._layer = hud_layer
+MPBar._layer = hud_layer
 StatsBg._layer = dialog_layer
 LightingBolt._layer = gameplay_characters_layer
 
@@ -1383,6 +1410,7 @@ dialog.message = "MEGA CHEVALIER"
 
 XPBar()
 HPBar()
+MPBar()
 particle_system = ParticleEffect(10,200,spawner=screen.get_rect(),forces= [0.1,0.05])
 frame_index = 0
 
