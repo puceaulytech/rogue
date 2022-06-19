@@ -1131,7 +1131,7 @@ class Creature(pygame.sprite.Sprite):
         self.health = self.max_health
         self.strength = (strength* (game_logic.active_level + 1 )) or 1
         self.flying = flying
-        self.speed = speed + random.randint(-100,100)/4000
+        self.speed = speed + random.randint(-100,100)/5000
         self.last_attack = 0
         self.attack_cooldown = cooldown
         self.images = []
@@ -1227,7 +1227,7 @@ class Creature(pygame.sprite.Sprite):
             ):
                 player.take_damage(self.strength)
                 self.last_attack = time.time()
-        if distance_to_player <10*dpi:
+        if distance_to_player <10*dpi and self.id != "golem":
              playerx = player.origin_rect.center[0]
              playery = player.origin_rect.center[1]
              angle_towards_player = get_angle(playerx,self.origin_rect.center[0],playery,self.origin_rect.center[1])

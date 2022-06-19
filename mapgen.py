@@ -254,7 +254,8 @@ class Map:
             speed=0.15,
             flying=True,
             cool=0.1
-        )
+        ),
+        Creature(30,["golem.png","golem.png"],None,3,0.05,True,False,cool=3,idd="golem")
     ]
     available_weapon = [
         Weapon(
