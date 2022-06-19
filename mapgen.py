@@ -351,6 +351,12 @@ class Map:
             sub_id = None,
             position = None,
             difficulty = 1
+        ),
+        Potion(
+            "armor",
+            sub_id=None,
+            position=None,
+            difficulty=1
         )
     ]
 

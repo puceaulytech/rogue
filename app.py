@@ -614,6 +614,10 @@ class Potion(InventoryObject):
             self.images.append(loadify("potion_mana.png", -20, True))
             self.images.append(loadify("potion_mana.png", -30, True))
             self.description = "+30% of your magic points!"
+        elif self.id == "armor":
+            self.images.append(loadify("armor.png", -20 , True))
+            self.images.append(loadify("armor.png", -30 , True))
+            self.description = "Upgrade your armor !"
         super().__init__(initial_position)
 
     def use(self):
@@ -623,25 +627,16 @@ class Potion(InventoryObject):
             player.magic_points += 0.3 * player.max_mp
         elif self.id == "resting":
             player.health += 5 
-            for creature in creature_group.sprites():
+            player.magic_points += 0.2 * player.max_mp
+        elif self.id == "armor":
+            if player.armor < 50:
+                player.armor += 2
+
 # does not work yet because creatures aren't updated when not in fog or idk
-                creature.sight_range = 50
+
         player.inventory.remove(self)
         self.kill()
 
-class Armor(InventoryObject):
-    def __init__(self, initial_position,id,armor):
-        super().__init__(initial_position)
-        self.id = id 
-        self.armor = armor
-        self.is_equiped = False
-    def use(self):
-        if not self.is_equiped:
-            player.armor += self.armor
-            self.is_equiped = True
-        else : 
-            player.armor -= self.armor
-            self.is_equiped = False            
 
 class Spell(InventoryObject):
     def __init__(self, initial_position, id, subid, damage, radius, speed, attack_cooldown):
@@ -666,12 +661,12 @@ class Spell(InventoryObject):
             self.images.append(loadify("lightning_spell.png",10,True))
             self.images.append(loadify("lightning_spell.png",-25,True))
             self.description = "220V in your enemies!"
-            self.mp_usage = 10
+            self.mp_usage = 7
         if self.id == "teleportation":
             self.images.append(loadify("teleportation_spell.png",10,True))
             self.images.append(loadify("teleportation_spell.png",-25,True))
             self.description = "Woosh!"
-            self.mp_usage = 20
+            self.mp_usage = 15
         self.last_attack = 0
         super().__init__(initial_position)
 
@@ -685,6 +680,8 @@ class Spell(InventoryObject):
             player_pos = pygame.math.Vector2(player.rect.center)
             direction = (mouse_pos - player_pos).normalize()
             Projectile(player.origin_rect.center,[loadify("fireball.png",-25,True)],1,direction, self.damage,particle=1)
+            self.last_attack = time.time()
+            player.magic_points -= self.mp_usage
         if self.id == "lightning":
             mouse_pos = pygame.math.Vector2(pygame.mouse.get_pos())
             player_pos = pygame.math.Vector2(player.rect.center)
@@ -692,13 +689,15 @@ class Spell(InventoryObject):
             angle = math.atan2(direction[0],direction[1])
             angle = (angle*180)/math.pi
             LightingBolt(player,[pygame.transform.rotate(loadify("lightning.png",100,True),angle),pygame.transform.rotate(loadify("lightning2.png",100,True),angle)],angle,0.2,20)
+            self.last_attack = time.time()
+            player.magic_points -= self.mp_usage
         if self.id == "teleportation":
             mouse_pos = pygame.mouse.get_pos()
             distance = math.sqrt((mouse_pos[0] - player.rect.center[0])**2 + (mouse_pos[1] - player.rect.center[1])**2)
             if distance <= self.radius and any([i.rect.collidepoint(mouse_pos) for i in floor_group.sprites()]):
                 player.move((mouse_pos[0] - player.rect.center[0],mouse_pos[1] - player.rect.center[1]), 1, with_speed = False)
-        self.last_attack = time.time()
-        player.magic_points -= self.mp_usage
+                self.last_attack = time.time()
+                player.magic_points -= self.mp_usage
 
 class LightingBolt(pygame.sprite.Sprite):
     def __init__(self,cast,images,angle,dmg,lifetime = 30,ff = False):
@@ -752,7 +751,7 @@ class Player(pygame.sprite.Sprite):
         super().__init__(self.containers)
         self.images = [loadify(i, size=-10) for i in self.assets]
         self.currimage = 0
-        self.armor = 1
+        self.armor = 0
         self.image = self.images[self.currimage]
         self.max_health = 8
         self.health = self.max_health
@@ -770,7 +769,9 @@ class Player(pygame.sprite.Sprite):
         self.time_striking = 0
 
     def take_damage(self, amount):
-        player.health -= amount * (1+math.log(self.armor))
+        damageMultiplier = ((100-self.armor)/100)
+        print(damageMultiplier)
+        player.health -= amount * damageMultiplier
         hit_sound.play()
 
     def move(self, direction, delta_time, with_speed = True):
@@ -1122,11 +1123,15 @@ class Creature(pygame.sprite.Sprite):
                 if self.path_to_player!=None and len(self.path_to_player) < self.ranged : 
                     mouse_pos = pygame.math.Vector2(self.rect.center)
                     player_pos = pygame.math.Vector2(player.rect.center)
-                    direction = (player_pos - mouse_pos).normalize()
+                    
+                    direction = (player_pos - mouse_pos)
+                    if direction.length()!= 0 : 
+                        direction = direction.normalize()
                     if time.time() - self.last_attack > self.attack_cooldown:
                         if self.id == "fire":
-                            Projectile(self.origin_rect.center,[loadify("fireball.png",-25,True)],1,direction, 0.1,particle=1,ff=True)
-                        elif self.id == "lightning": 
+                            if direction.length!=0:
+                                Projectile(self.origin_rect.center,[loadify("fireball.png",-25,True)],1,direction, 0.1,particle=1,ff=True)
+                        elif self.id == "lightning":
                             angle = math.atan2(direction[0],direction[1])
                             angle = (angle*180)/math.pi
                             LightingBolt(self,[pygame.transform.rotate(loadify("lightning.png",100,True),angle),pygame.transform.rotate(loadify("lightning2.png",100,True),angle)],angle,0.05,20,True)
@@ -1387,7 +1392,7 @@ if music_checkbox.checked:
     pygame.mixer.music.load("assets/music.ogg")
     pygame.mixer.music.play(-1)
 
-game_logic = mapgen.Game(max_levels=3)
+game_logic = mapgen.Game(max_levels=300)
 map_grid = None
 game_logic.current_map.display()
 
