@@ -3,6 +3,7 @@ import copy
 import math
 
 
+
 class Element:
     def __init__(self, elem_id, position, difficulty):
         self.id = elem_id
@@ -11,19 +12,64 @@ class Element:
 
     def __repr__(self):
         return f"<mapgen.Element id={self.id},position={self.position},difficulty={self.difficulty}>"
+    
+    def __str__(self):
+        return self.id
 
 
 class Creature(Element):
-    def __init__(self, elem_id, position, difficulty, speed, flying):
+    def __init__(self,health, elem_id, position, difficulty, speed, flying,ranged = False,cool = 1 ,idd = None):
         super().__init__(elem_id, position, difficulty)
+        self.hp = health
         self.speed = speed
         self.flying = flying
-
-
+        self.has_key = False
+        self.strength = difficulty
+        self.ranged = ranged
+        self.cool = cool
+        self.idd = idd
 class Item(Element):
-    def __init__(self, elem_id, position, difficulty):
+    def __init__(self, elem_id, sub_id, position, difficulty):
         super().__init__(elem_id, position, difficulty)
+        self.sub_id = sub_id
 
+class Trap:
+    def __init__(self, position):
+        self.position = position
+
+    def __repr__(self):
+        return f"<mapgen.Trap position={self.position},damage={self.damage}>"
+
+class Weapon(Item):
+    def __init__(self, weapon_id, sub_id, position, difficulty, attack_cooldown, durability, damage, reach):
+        super().__init__(weapon_id, sub_id, position,difficulty)
+        self.attack_cooldown = attack_cooldown
+        self.durability = durability
+        self.damage = damage
+        self.reach = reach
+
+    def upgrade(self):
+        self.durability = round(1.2 * self.durability)
+        self.damage += 5
+
+class Potion(Item):
+    def __init__(self, potion_id, sub_id, position, difficulty):
+        super().__init__(potion_id, sub_id, position,difficulty)
+
+    def upgrade(self):
+        pass
+
+class Spell(Item):
+    def __init__(self, spell_id, sub_id, position, difficulty, damage, radius, speed, attack_cooldown):
+        super().__init__(spell_id, sub_id, position,difficulty)
+        self.damage = damage
+        self.radius = radius
+        self.speed = speed
+        self.attack_cooldown = attack_cooldown
+
+    def upgrade(self):
+        self.damage += 5
+        self.radius += 100
 
 class Coord:
     def __init__(self, x, y):
@@ -59,6 +105,14 @@ class Coord:
         if not isinstance(other, Coord):
             raise TypeError("Not a coord")
         return math.sqrt((self.x - other.x) ** 2 + (self.y - other.y) ** 2)
+
+class Treasure:
+    def __init__(self, position):
+        self.position = position
+        self.item = None
+
+    def __repr__(self):
+        return f"<mapgen.Treasure position={self.position},item={self.item}>"
 
 class Stairs:
     def __init__(self, position):
@@ -97,7 +151,7 @@ class CircleRoom:
     def __init__(self, center, radius):
         self.center = center
         self.radius = radius
-
+        self.size = radius
     def __repr__(self):
         return f"<mapgen.CircleRoom center={self.center},radius={self.radius}>"
 
@@ -129,7 +183,7 @@ class Room:
         self.top_left = top_left
         self.width = width
         self.height = height
-
+        self.size = min(width,height)
     @property
     def bottom_right(self):
         return self.top_left + Coord(self.width - 1, self.height - 1)
@@ -180,20 +234,152 @@ class Room:
 
 class Map:
     available_creatures = [
-        Creature(
+        Creature(10,
             ["sprite_0.png", "sprite_1.png"],
             position=None,
             difficulty=1,
-            speed=0.1,
-            flying=True,
-        ),
-        Creature(
-            ["dragon.png"],
-            position=None,
-            difficulty=2,
             speed=0.2,
-            flying=False,
+            flying=True,
+            ranged = 4,
+            cool=1,
+            idd="lightning"
         ),
+        Creature(6,["spider.png","spider2.png"],None,1,0.1,flying=True,ranged=6,cool=2,idd="fire")
+        ,
+
+        Creature(3,
+            ["pac1.png","pac2.png","pac3.png"],
+            position=None,
+            difficulty=0.2,
+            speed=0.15,
+            flying=True,
+            cool=0.1
+        ),
+        Creature(30,["golem.png","golem.png"],None,3,0.05,True,False,cool=3,idd="golem")
+    ]
+    available_weapon = [
+        Weapon(
+            "sword",
+            sub_id="diamond_sword",
+            position=None,
+            difficulty=1,
+            durability=50,
+            damage=4,
+            reach=2,
+            attack_cooldown=0.2
+        ),
+        Weapon(
+            "sword",
+            sub_id="amber_sword",
+            position=None,
+            difficulty=1,
+            durability=50,
+            damage=7,
+            reach=2,
+            attack_cooldown=0.5
+        ),
+        Weapon(
+            "sword",
+            sub_id="emerald_sword",
+            position=None,
+            difficulty=1,
+            durability=50,
+            damage=1,
+            reach=2,
+            attack_cooldown=0.1
+        ),
+        Weapon(
+            "sword",
+            sub_id="normal_sword",
+            position=None,
+            difficulty=1,
+            durability=50,
+            damage=2,
+            reach=2,
+            attack_cooldown=0.5
+        ),
+        Weapon(
+            "sword",
+            sub_id="axe",
+            position=None,
+            difficulty=1,
+            durability=50,
+            damage=10,
+            reach=3,
+            attack_cooldown=3
+        ),
+        Weapon(
+            "bow",
+            sub_id=None,
+            position=None,
+            difficulty=1,
+            durability=20,
+            damage=5,
+            reach=0,
+            attack_cooldown=1
+        )
+    ]
+    available_spell = [
+        Spell(
+            "ice",
+            "ice",
+            None,
+            1,
+            0,
+            6,
+            speed=None,
+            attack_cooldown=8
+        ),
+        Spell(
+            "fireball",
+            sub_id="fireball",
+            position=None,
+            difficulty=1,
+            damage=5,
+            radius=1,
+            speed=0.3,
+            attack_cooldown=1
+        ),
+        Spell(
+            "lightning",
+            None,
+            None,
+            1,
+            1,
+            1,
+            0,
+            1
+        ),
+        Spell(
+            "teleportation",
+            sub_id = None,
+            position = None,
+            difficulty = 2,
+            damage = 0,
+            radius = 375,
+            speed = None,
+            attack_cooldown = 1
+        )
+    ]
+    available_potion = [
+        Potion(
+            "healing",
+            sub_id = None,
+            position = None,
+            difficulty = 1
+        ),
+        Potion(
+            "mana",
+            sub_id = None,
+            position = None,
+            difficulty = 1
+        ),
+        Potion(
+            "armor",
+            sub_id=None,
+            position=None,
+            difficulty=1
+        )
     ]
 
     def __init__(self, width, height, max_rooms=4):
@@ -205,7 +391,12 @@ class Map:
         self.paths = []
         self.creatures = []
         self.items = []
+        self.traps = []
+        self.weapons = []
+        self.spells = []
+        self.potions = []
         self.next_level_stair = None
+        self.treasure = None
 
     def __repr__(self):
         return f"<mapgen.Map width={self.width},height={self.height},nb_rooms={len(self.rooms)}>"
@@ -250,32 +441,93 @@ class Map:
             valid_coord = all(
                 [
                     position != element.position
-                    for element in self.creatures + self.items
+                    for element in self.creatures + self.weapons + self.spells + self.potions
                 ]
             )
         return position
 
     def fill_with_elements(self):
+        # Traps generation
+        selected_rooms = random.choices(self.rooms[1:], k=2)
+        for room in selected_rooms:
+            a = self.find_valid_random_coord(room)
+            self.traps.append(Trap(a))
         for room in self.rooms[1:]:
-            nb_creatures = random.randint(0, 2)
+            nb_creatures = random.randint(0, 4)
             weights = list(map(lambda c: 1 / c.difficulty, Map.available_creatures))
             for _ in range(nb_creatures):
-                position = self.find_valid_random_coord(room)
+                a = self.find_valid_random_coord(room)
+                while a.distance(room.center) > room.size - 2:
+                    a = self.find_valid_random_coord(room)
+                position = a
                 creature = copy.copy(
                     random.choices(Map.available_creatures, weights, k=1)[0]
                 )
                 creature.position = position
-                self.creatures.append(creature)
-            # nb_items = random.randint(0, 2)
-            # for _ in range(nb_items):
-            #     position = self.find_valid_random_coord(room)
-            #     item = copy.copy(random.choice(self.available_items))
-            #     item.position = position
-            #     self.items.append(item)
+                if creature.id == ["spider.png","spider1.png"]:
+                    self.creatures.append(creature)
+                    for i in range(30):
+                        while a.distance(room.center) > room.size - 1:
+                            a = self.find_valid_random_coord(room)
+                        position = a
+                        creature = copy.copy(Map.available_creatures[1])
+                        creature.position = position
+                        self.creatures.append(creature)
+                else : 
+                    self.creatures.append(creature)
+            nb_weapon = random.randint(0, 2)
+            weights = list(map(lambda c: 1 / c.difficulty, Map.available_weapon))
+            for _ in range(nb_weapon):
+                position = self.find_valid_random_coord(room)
+                item = copy.copy(random.choices(Map.available_weapon, weights,k=1)[0])
+                item.position = position
+                self.weapons.append(item)
+            nb_spell = random.randint(0, 2)
+            weights = list(map(lambda c: 1 / c.difficulty, Map.available_spell))
+            for _ in range(nb_spell):
+                position = self.find_valid_random_coord(room)
+                item = copy.copy(random.choices(Map.available_spell, weights,k=1)[0])
+                item.position = position
+                self.spells.append(item)
+            nb_potion = random.randint(0, 2)
+            weights = list(map(lambda c: 1 / c.difficulty, Map.available_potion))
+            for _ in range(nb_potion):
+                position = self.find_valid_random_coord(room)
+                item = copy.copy(random.choices(Map.available_potion, weights,k=1)[0])
+                item.position = position
+                self.potions.append(item)
+        #security to always have 1 mob x)
+        if not self.creatures:
+            weights = list(map(lambda c: 1 / c.difficulty, Map.available_creatures))
+            a = self.find_valid_random_coord(room)
+            while a.distance(room.center) > room.size - 2:
+                a = self.find_valid_random_coord(room)
+            position = a
+            creature = copy.copy(
+                random.choices(Map.available_creatures, weights, k=1)[0]
+            )
+            creature.position = position
+            self.creatures.append(creature)
+        random.choice(self.creatures).has_key = True
+        ### generating 1 resting potion ###
+        pos = self.find_valid_random_coord(room)
+        item = Potion("resting", sub_id = None, position = pos, difficulty = 1)
+        self.potions.append(item)
 
     def generate_stairs(self):
         last_room = self.rooms[-1]
         self.next_level_stair = Stairs(last_room.center)
+
+    def generate_treasure(self):
+        room = random.choice(self.rooms[1:])
+        position = self.find_valid_random_coord(room)
+        self.treasure = Treasure(position)
+        treasure_items = Map.available_weapon + Map.available_spell + Map.available_potion
+        for i in treasure_items:
+            i.upgrade()
+        self.treasure.item = copy.copy(random.choice(treasure_items))
+        self.treasure.item.position = None
+
 
     def generate_random_circle(self):
         for i in range(self.max_exot_rooms):
@@ -335,10 +587,18 @@ class Map:
     def get_character_at(self, coord):
         if coord == self.next_level_stair.position:
             return "S"
+        elif any([coord == item.position for item in self.spells]):
+            return "L"
+        elif coord == self.treasure.position:
+            return "€"
+        elif any([coord == trap.position for trap in self.traps]):
+            return "T"
         elif any([coord == creature.position for creature in self.creatures]):
             return "x"
-        elif any([coord == item.position for item in self.items]):
-            return "o"
+        elif any([coord == item.position for item in self.weapons]):
+            return "w"
+        elif any([coord == item.position for item in self.potions]):
+            return "P"
         elif any([coord in room for room in self.rooms]):
             return "#"
         elif any([coord in path for path in self.paths]):
@@ -373,6 +633,7 @@ class Game:
         new_map.make_paths()
         new_map.generate_stairs()
         new_map.fill_with_elements()
+        new_map.generate_treasure()
         self.levels.append(new_map)
 
     def move_up(self):
