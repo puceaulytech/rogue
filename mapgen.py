@@ -250,7 +250,7 @@ class Map:
         Creature(3,
             ["pac1.png","pac2.png","pac3.png"],
             position=None,
-            difficulty=0.2,
+            difficulty=1,
             speed=0.15,
             flying=True,
             cool=0.1
