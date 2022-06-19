@@ -1076,7 +1076,6 @@ class Creature(pygame.sprite.Sprite):
         self.ranged = ranged
         self.max_health = hp or random.randint(3, 10) 
         self.health = (self.max_health*(game_logic.active_level + 1 ))
-        print(self.health)
         self.strength = (strength* (game_logic.active_level + 1 )) or 1
         self.flying = flying
         self.speed = speed + random.randint(-100,100)/4000
@@ -1264,7 +1263,7 @@ class HPBar(pygame.sprite.Sprite):
 
     def update(self):
         size = 296 / player.max_health
-        self.image = pygame.Surface((player.health * size, 13))
+        self.image = pygame.Surface((player.health * size, 13)) if player.health >= 0 else pygame.Surface((0, 13))
         self.rect = self.image.get_rect()
         self.rect.move_ip(67, height - 53)
         self.image.fill((255, 0, 0))
@@ -1498,7 +1497,7 @@ dialog = Dialog()
 dialog.message = "MEGA CHEVALIER"
 
 XPBar()
-hp = HPBar()
+HPBar()
 MPBar()
 particle_system = ParticleEffect(10,200,spawner=screen.get_rect(),forces= [0.1,0.05])
 frame_index = 0
@@ -1529,8 +1528,6 @@ while running:
     player.inventory.update()
 
     if player.health <= 0:
-#to avoid crashing
-        hp.kill()
         player.kill()
 
     for event in pygame.event.get():
