@@ -335,6 +335,12 @@ class Map:
             sub_id = None,
             position = None,
             difficulty = 1
+        ),
+        Potion(
+            "mana",
+            sub_id = None,
+            position = None,
+            difficulty = 1
         )
     ]
 

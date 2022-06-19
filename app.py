@@ -596,11 +596,17 @@ class Potion(InventoryObject):
             self.images.append(loadify("potion_rest.png", -20, True))
             self.images.append(loadify("potion_rest.png", -30, True))
             self.description = "Watch out for the mobs!"
+        elif self.id == "mana":
+            self.images.append(loadify("potion_mana.png", -20, True))
+            self.images.append(loadify("potion_mana.png", -30, True))
+            self.description = "+30% of your magic points!"
         super().__init__(initial_position)
 
     def use(self):
         if self.id == "healing":
             player.health += 2
+        elif self.id == "mana":
+            player.magic_points += 0.3 * player.max_mp
         elif self.id == "resting":
             player.health += 5 
             for creature in creature_group.sprites():
@@ -636,7 +642,6 @@ class Spell(InventoryObject):
         if self.id == "fireball" : 
             self.images.append(loadify("fireball_spell.png",10,True))
             self.images.append(loadify("fireball_spell.png",-25,True))
-            #self.origin_rect = self.image.get_rect()
             self.description = "Burn your enemies!"
             self.mp_usage = 5
         if self.id == "lightning":
@@ -735,7 +740,6 @@ class Player(pygame.sprite.Sprite):
 
     def take_damage(self, amount):
         player.health -= amount * (1+math.log(self.armor))
-
         hit_sound.play()
 
     def move(self, direction, delta_time, with_speed = True):
@@ -783,6 +787,7 @@ class Player(pygame.sprite.Sprite):
         else:
             self.currimage = 0
         self.image = self.images[self.currimage]
+
         if self.xp >= self.xp_cap:
             self.level += 1
             self.xp = self.xp % self.xp_cap
@@ -791,6 +796,8 @@ class Player(pygame.sprite.Sprite):
             self.health = self.max_health
         if self.magic_points < 0:
             self.magic_points = 0
+        elif self.magic_points > self.max_mp:
+            self.magic_points = self.max_mp
 
     def take(self,thing):
        if isinstance(thing,InventoryObject):
@@ -1409,7 +1416,7 @@ dialog = Dialog()
 dialog.message = "MEGA CHEVALIER"
 
 XPBar()
-HPBar()
+hp = HPBar()
 MPBar()
 particle_system = ParticleEffect(10,200,spawner=screen.get_rect(),forces= [0.1,0.05])
 frame_index = 0
@@ -1433,6 +1440,8 @@ while running:
     player.inventory.update()
 
     if player.health <= 0:
+#to avoid crashing
+        hp.kill()
         player.kill()
 
     for event in pygame.event.get():
