@@ -45,7 +45,6 @@ camera_x, camera_y = 0, 0
 
 dpi = width / camera_size
 
-
 already_drawn = []
 
 def loadify(path, size=0, keep_ratio=False, keep_size=False):
@@ -55,6 +54,8 @@ def loadify(path, size=0, keep_ratio=False, keep_size=False):
     if keep_size:
         return image
     ratio = image.get_width() / image.get_height() if keep_ratio else 1
+    if keep_size:
+        return image
     return pygame.transform.scale(image, ((dpi + size) * ratio, dpi + size))
 
 def sign(x):
@@ -260,9 +261,7 @@ def propagate(start,grid, max_recursive_depth = 5 ):
         to_iter.clear()
         to_iter = to_iter_next.copy()
         to_iter_next.clear()
-
     return visible
-
 
 def get_neighbours(position):
     x, y = position
@@ -291,7 +290,6 @@ def bfs(creature, grid):
                 path.insert(0, current)
                 current = parents[current]
             return path
-
         neighbours = get_neighbours(current)
         for n in neighbours:
             if is_case_goodenough(mapgen.Coord(n[0], n[1]), grid) and n not in visited:
@@ -324,6 +322,7 @@ class Animation:
             img = rotate_image(self.spritelist[self.curr_sprite],45)
             return img
         else : return self.spritelist[self.curr_sprite]
+
 class FPSCounter(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__(self.containers)
