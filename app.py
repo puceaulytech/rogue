@@ -792,8 +792,15 @@ class Player(pygame.sprite.Sprite):
             self.level += 1
             self.xp = self.xp % self.xp_cap
             self.xp_cap *= 1.2
+            if self.level%5 == 0:
+                self.max_health += 2
+                self.max_mp += 20
+            self.health = self.max_health
+            self.magic_points = self.max_mp
+
         if self.health > self.max_health:
             self.health = self.max_health
+
         if self.magic_points < 0:
             self.magic_points = 0
         elif self.magic_points > self.max_mp:
