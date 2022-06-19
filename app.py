@@ -543,6 +543,8 @@ class Weapon(InventoryObject):
     def use(self):
         if not (time.time() - self.last_attack > self.attack_cooldown):
             return
+
+        player.is_striking = True
         if self.id == "sword":
             pos = pygame.mouse.get_pos()
             cos45 = 1 / math.sqrt(2)
@@ -718,6 +720,7 @@ class LightingBolt(pygame.sprite.Sprite):
 class Player(pygame.sprite.Sprite):
     speed = 0.35
     inventory_size = 8
+    flipped = False
 
     def __init__(self, initial_position=None):
         super().__init__(self.containers)
@@ -737,6 +740,8 @@ class Player(pygame.sprite.Sprite):
         self.xp_cap = 20
         self.max_mp = 50
         self.magic_points = self.max_mp
+        self.is_striking = False
+        self.time_striking = 0
 
     def take_damage(self, amount):
         player.health -= amount * (1+math.log(self.armor))
@@ -783,10 +788,19 @@ class Player(pygame.sprite.Sprite):
 
     def update(self):
         if any(list(i.picked_up for i in self.inventory if i is not None)):
-            self.currimage = 1
+            if self.is_striking:
+                self.currimage = 2
+            else:
+                self.currimage = 1
         else:
             self.currimage = 0
-        self.image = self.images[self.currimage]
+        self.image = self.images[self.currimage] if not Player.flipped else pygame.transform.flip(self.images[self.currimage], True, False)
+
+        if self.is_striking:
+            self.time_striking += 1
+        if self.time_striking >= 10:
+            self.is_striking = False
+            self.time_striking = 0
 
         if self.xp >= self.xp_cap:
             self.level += 1
@@ -1361,7 +1375,7 @@ MPBar.containers = all_sprites, hud_group
 StatsBg.containers = all_sprites,hud_group
 LightingBolt.containers = all_sprites, projectile_group
 
-Player.assets = ["terro.png", "terro_but_mad.png"]
+Player.assets = ["terro.png", "terro_but_mad.png", "terro_but_striking.png"]
 Wall.image = loadify("stonebrick_cracked.png")
 Ground.images = [
     loadify("floor1.png"),
@@ -1433,6 +1447,13 @@ Spell(player.origin_rect[:2],"teleportation",None,None,375,None,1)
 running = True
 
 while running:
+
+    mouse_pos = pygame.mouse.get_pos()
+    if mouse_pos[0] >= width / 2:
+        Player.flipped = False
+    else:
+        Player.flipped = True
+
     if frame_index%1 ==0:
         update_map_near_player()
         
@@ -1496,9 +1517,8 @@ while running:
                     inv_slot_group.sprites()[player.inventory.picked_item_index].has_picked_item = True
 
         elif event.type == pygame.MOUSEBUTTONDOWN:
-            pos = pygame.mouse.get_pos()
             # quand un item est récup on scale son image or ça ne change pas son rect donc je test les collisions avec le rect de l'image avec les topleft superposés
-            clicked_inv_sprites = [s for s in player.inventory.items if s is not None and s.image.get_rect(topleft = s.rect.topleft).collidepoint(pos)]
+            clicked_inv_sprites = [s for s in player.inventory.items if s is not None and s.image.get_rect(topleft = s.rect.topleft).collidepoint(mouse_pos)]
             if clicked_inv_sprites:
                 old_state = clicked_inv_sprites[0].picked_up
                 for s in player.inventory.items:
