@@ -711,21 +711,22 @@ class LightingBolt(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = cast.rect.center[0]
         self.rect.y = cast.rect.center[1]        
-        if angle < 90 and angle >0 : 
-            self.rect.x = cast.rect.center[0]
-            self.rect.y = cast.rect.center[1]
-        if angle< 0 and angle > -90 : 
-            self.rect.x = cast.rect.center[0]- self.rect.width
-            self.rect.y = cast.rect.center[1]
-        if angle < -90 and angle > -180 : 
-            self.rect.x = cast.rect.center[0]- self.rect.width
-            self.rect.y = cast.rect.center[1] - self.rect.height
-        if angle >90 :
-            self.rect.x = cast.rect.center[0]
-            self.rect.y = cast.rect.center[1] - self.rect.height
-
+        self.adjust()
         super().__init__(self.containers)
     def update(self):
+        self.adjust()
+        self.frame += 1 
+        self.image = self.anim.update_animation(self.frame)
+        if self.frame == self.lifetime:
+            self.kill()
+        if not self.ff:
+            for i in creature_group.sprites():
+                if pygame.sprite.collide_mask(i,self):
+                    i.health -= self.dmg
+        if self.ff:
+            if pygame.sprite.collide_mask(self,player):
+                player.take_damage(self.dmg)
+    def adjust(self):
         cast = self.cast
         angle = self.angle
         if angle < 90 and angle >0 : 
@@ -740,17 +741,6 @@ class LightingBolt(pygame.sprite.Sprite):
         if angle >90 :
             self.rect.x = cast.rect.center[0]
             self.rect.y = cast.rect.center[1] - self.rect.height
-        self.frame += 1 
-        self.image = self.anim.update_animation(self.frame)
-        if self.frame == self.lifetime:
-            self.kill()
-        if not self.ff:
-            for i in creature_group.sprites():
-                if pygame.sprite.collide_mask(i,self):
-                    i.health -= self.dmg
-        if self.ff:
-            if pygame.sprite.collide_mask(self,player):
-                player.take_damage(self.dmg)
 class Player(pygame.sprite.Sprite):
     speed = 0.35
     inventory_size = 8
@@ -1116,7 +1106,7 @@ class Creature(pygame.sprite.Sprite):
         if distance_to_player < self.sight_range * dpi:
             self.path_to_player = bfs(self, map_grid)
             if self.ranged :
-                if len(self.path_to_player) < self.ranged : 
+                if self.path_to_player!=None and len(self.path_to_player) < self.ranged : 
                     mouse_pos = pygame.math.Vector2(self.rect.center)
                     player_pos = pygame.math.Vector2(player.rect.center)
                     direction = (player_pos - mouse_pos).normalize()
