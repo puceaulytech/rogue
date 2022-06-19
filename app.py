@@ -185,7 +185,8 @@ def draw_map():
                             abstract_creature.speed,
                             abstract_creature.flying,
                             key = abstract_creature.has_key,
-                            strength = abstract_creature.strength
+                            strength = abstract_creature.strength,
+                            ranged= abstract_creature.ranged
                         )
                         c.health_bar = CreatureHealthBar()
                         c.health_bar.creature = c
@@ -437,9 +438,9 @@ class Treasure(pygame.sprite.Sprite):
         return translated_rect(self.origin_rect)
 
 class Projectile(pygame.sprite.Sprite):
-    def __init__(self,position,sprites,speed,direction,dmg,particle = None):
+    def __init__(self,position,sprites,speed,direction,dmg,particle = None,ff = False):
         super().__init__(self.containers)
-        
+        self.ff = ff
         self.speed = speed
         self.direction = direction
         self.dmg = dmg
@@ -471,19 +472,23 @@ class Projectile(pygame.sprite.Sprite):
 
         self.image = self.anim.update_animation(self.frame_index)
         self.move(self.direction,ticked)
+        if self.ff : 
+            if pygame.sprite.collide_mask(self,player) : 
+                player.take_damage(self.dmg)
+                self.kill()
         colliding_creatures = pygame.sprite.spritecollide(self,creature_group,False)
-        if len(colliding_creatures) != 0  : 
-            colliding_creatures[0].health -= self.dmg
-            self.kill()
-        colliding_walls = []
-        for i in obstacle_group.sprites():
-            if i.origin_rect.collidepoint(self.origin_rect.center):
-                colliding_walls.append(i)
-
-        if len(colliding_walls) != 0 : 
-            self.kill()
-        if mapgen.Coord(player.origin_rect.center[0],player.origin_rect.center[1]).distance(mapgen.Coord(self.origin_rect.center[0],self.origin_rect.center[1])) > 20*dpi : 
-            self.kill()
+        if not self.ff : 
+            if len(colliding_creatures) != 0  : 
+                colliding_creatures[0].health -= self.dmg
+                self.kill()
+            colliding_walls = []
+            for i in obstacle_group.sprites():
+                if i.origin_rect.collidepoint(self.origin_rect.center):
+                    colliding_walls.append(i)
+            if len(colliding_walls) != 0 : 
+                self.kill()
+            if mapgen.Coord(player.origin_rect.center[0],player.origin_rect.center[1]).distance(mapgen.Coord(self.origin_rect.center[0],self.origin_rect.center[1])) > 20*dpi : 
+                self.kill()
     def move(self,direction,delta_time):
         direction = tuple([round(self.speed * delta_time * c) for c in direction])
         self.origin_rect.move_ip(direction[0],direction[1])
@@ -526,7 +531,8 @@ class Weapon(InventoryObject):
         self.durability = durability
         self.attack_cooldown = attack_cooldown
         self.subid = subid
-        self.damage = damage
+        self.damage = (damage * (game_logic.active_level + 1 ))
+
         self.reach = reach * dpi
 
         self.images = []
@@ -1024,14 +1030,15 @@ class ParticleEffect:
 
 
 class Creature(pygame.sprite.Sprite):
-    def __init__(self, initial_position, assets, speed=0.1, flying=False, hp = None, key = False, strength = None):
+    def __init__(self, initial_position, assets, speed=0.1, flying=False, hp = None, key = False, strength = None,ranged = False):
         self.local_frame_index = random.randint(0, 100000)
         super().__init__(self.containers)
         self.angle = 0
+        self.ranged = ranged
         self.max_health = hp or random.randint(3, 10) 
         self.health = (self.max_health*(game_logic.active_level + 1 ))
         print(self.health)
-        self.strength = strength or 1
+        self.strength = (strength* (game_logic.active_level + 1 )) or 1
         self.flying = flying
         self.speed = speed + random.randint(-100,100)/4000
         self.last_attack = 0
@@ -1073,23 +1080,49 @@ class Creature(pygame.sprite.Sprite):
         )
         if distance_to_player < self.sight_range * dpi:
             self.path_to_player = bfs(self, map_grid)
-            if self.path_to_player is not None and len(self.path_to_player) > 1:
-                if (self.direction[0] == 0 and self.direction[1] == 0) or any([rect.collidepoint(self.origin_rect.center) for rect in self.collisions_rect]):
-                    self.collisions_rect.clear()
-                    for point in self.path_to_player[1:]:
-                        x = (point[0] * dpi) + dpi / 2
-                        y = (point[1] * dpi) + dpi / 2
-                        rect = pygame.Rect((x - 7, y - 7), (14, 14))
-                        self.collisions_rect.append(rect)
-                    start = pygame.math.Vector2(self.origin_rect.center)
-                    end = pygame.math.Vector2(self.collisions_rect[0].center)
-                    self.direction = (end - start).normalize()
-                if self.local_frame_index %50 == 0 : 
-                    start = pygame.math.Vector2(self.origin_rect.center)
-                    end = pygame.math.Vector2(self.collisions_rect[0].center)
-                    self.direction = (end - start).normalize()
-                self.move(self.direction, ticked)
-            
+            if self.ranged :
+                if len(self.path_to_player) < 5 : 
+                    mouse_pos = pygame.math.Vector2(self.rect.center)
+                    player_pos = pygame.math.Vector2(player.rect.center)
+                    direction = (player_pos - mouse_pos).normalize()
+                    if time.time() - self.last_attack > self.attack_cooldown:
+                        Projectile(self.origin_rect.center,[loadify("fireball.png",-25,True)],1,direction, 2,particle=1,ff=True)
+                        self.last_attack = time.time()
+                else :
+                    if self.path_to_player is not None and len(self.path_to_player) > 1:
+                        if (self.direction[0] == 0 and self.direction[1] == 0) or any([rect.collidepoint(self.origin_rect.center) for rect in self.collisions_rect]):
+                            self.collisions_rect.clear()
+                            for point in self.path_to_player[1:]:
+                                x = (point[0] * dpi) + dpi / 2
+                                y = (point[1] * dpi) + dpi / 2
+                                rect = pygame.Rect((x - 7, y - 7), (14, 14))
+                                self.collisions_rect.append(rect)
+                            start = pygame.math.Vector2(self.origin_rect.center)
+                            end = pygame.math.Vector2(self.collisions_rect[0].center)
+                            self.direction = (end - start).normalize()
+                        if self.local_frame_index %50 == 0 : 
+                            start = pygame.math.Vector2(self.origin_rect.center)
+                            end = pygame.math.Vector2(self.collisions_rect[0].center)
+                            self.direction = (end - start).normalize()
+                        self.move(self.direction, ticked)
+            else : 
+                if self.path_to_player is not None and len(self.path_to_player) > 1:
+                    if (self.direction[0] == 0 and self.direction[1] == 0) or any([rect.collidepoint(self.origin_rect.center) for rect in self.collisions_rect]):
+                        self.collisions_rect.clear()
+                        for point in self.path_to_player[1:]:
+                            x = (point[0] * dpi) + dpi / 2
+                            y = (point[1] * dpi) + dpi / 2
+                            rect = pygame.Rect((x - 7, y - 7), (14, 14))
+                            self.collisions_rect.append(rect)
+                        start = pygame.math.Vector2(self.origin_rect.center)
+                        end = pygame.math.Vector2(self.collisions_rect[0].center)
+                        self.direction = (end - start).normalize()
+                    if self.local_frame_index %50 == 0 : 
+                        start = pygame.math.Vector2(self.origin_rect.center)
+                        end = pygame.math.Vector2(self.collisions_rect[0].center)
+                        self.direction = (end - start).normalize()
+                    self.move(self.direction, ticked)
+                
             if (
                 pygame.sprite.collide_rect(player, self)
                 and time.time() - self.last_attack > self.attack_cooldown
