@@ -606,7 +606,7 @@ class Potion(InventoryObject):
         elif self.id == "resting":
             self.images.append(loadify("potion_rest.png", -20, True))
             self.images.append(loadify("potion_rest.png", -30, True))
-            self.description = "Watch out for the mobs!"
+            self.description = "Can't move for a bit"
         elif self.id == "mana":
             self.images.append(loadify("potion_mana.png", -20, True))
             self.images.append(loadify("potion_mana.png", -30, True))
@@ -614,7 +614,7 @@ class Potion(InventoryObject):
         elif self.id == "armor":
             self.images.append(loadify("armor.png", -20 , True))
             self.images.append(loadify("armor.png", -30 , True))
-            self.description = "Upgrade your armor !"
+            self.description = "Upgrade your armor!"
         super().__init__(initial_position)
 
     def use(self):
@@ -623,6 +623,7 @@ class Potion(InventoryObject):
         elif self.id == "mana":
             player.magic_points += 0.3 * player.max_mp
         elif self.id == "resting":
+            player.is_resting = True
             player.health += 5 
             player.magic_points += 0.2 * player.max_mp
         elif self.id == "armor":
@@ -730,7 +731,6 @@ class Frozen(pygame.sprite.Sprite):
     def update(self):
         
         if  time.time() < self.time + self.dur:
-            print(self.rect)
             plane.blit(self.image,translated_rect(self.origin_rect))
         else : 
             for i in range(len(self.mobs)):
@@ -807,10 +807,11 @@ class Player(pygame.sprite.Sprite):
         self.magic_points = self.max_mp
         self.is_striking = False
         self.time_striking = 0
+        self.is_resting = False
+        self.resting_time = 0
 
     def take_damage(self, amount):
         damageMultiplier = ((100-self.armor)/100)
-        print(damageMultiplier)
         player.health -= amount * damageMultiplier
         hit_sound.play()
 
@@ -854,7 +855,6 @@ class Player(pygame.sprite.Sprite):
         screen.blit(self.image, translated_rect(self.origin_rect))
 
     def update(self):
-
         if any(list(i.picked_up for i in self.inventory if i is not None)):
             if self.is_striking:
                 self.currimage = 2
@@ -869,6 +869,12 @@ class Player(pygame.sprite.Sprite):
         if self.time_striking >= 10:
             self.is_striking = False
             self.time_striking = 0
+
+        if self.is_resting:
+            self.resting_time += 1
+        if self.resting_time >= 100:
+            self.is_resting = False
+            self.resting_time = 0
 
         if self.xp >= self.xp_cap:
             self.level += 1
@@ -1645,18 +1651,19 @@ while running:
     keys = pygame.key.get_pressed()
     if keys[pygame.K_ESCAPE]:
         sys.exit(0)
-    if keys[pygame.K_z]:
-        direction = (0, -1)
-        player.move(direction, ticked)
-    if keys[pygame.K_q]:
-        direction = (-1, 0)
-        player.move(direction, ticked)
-    if keys[pygame.K_s]:
-        direction = (0, 1)
-        player.move(direction, ticked)
-    if keys[pygame.K_d]:
-        direction = (1, 0)
-        player.move(direction, ticked)
+    if not player.is_resting:
+        if keys[pygame.K_z]:
+            direction = (0, -1)
+            player.move(direction, ticked)
+        if keys[pygame.K_q]:
+            direction = (-1, 0)
+            player.move(direction, ticked)
+        if keys[pygame.K_s]:
+            direction = (0, 1)
+            player.move(direction, ticked)
+        if keys[pygame.K_d]:
+            direction = (1, 0)
+            player.move(direction, ticked)
 
     dirty = all_sprites.draw(screen)
     particle_system.update(ticked)
