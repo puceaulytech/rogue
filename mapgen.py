@@ -23,7 +23,7 @@ class Creature(Element):
         self.speed = speed
         self.flying = flying
         self.has_key = False
-
+        self.strength = difficulty
 
 class Item(Element):
     def __init__(self, elem_id, sub_id, position, difficulty):

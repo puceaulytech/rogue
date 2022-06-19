@@ -184,7 +184,8 @@ def draw_map():
                             abstract_creature.id,
                             abstract_creature.speed,
                             abstract_creature.flying,
-                            key = abstract_creature.has_key
+                            key = abstract_creature.has_key,
+                            strength = abstract_creature.strength
                         )
                         c.health_bar = CreatureHealthBar()
                         c.health_bar.creature = c
@@ -351,15 +352,6 @@ class Dialog(pygame.sprite.Sprite):
 
     def update(self):
         self.image = self.font.render(self.message, False, self.color)
-
-
-class HealthIcon(pygame.sprite.Sprite):
-    def __init__(self, offset):
-        super().__init__(self.containers)
-        self.rect = self.image.get_rect().move(
-            0 + offset * dpi * 0.8, height - dpi * 0.8
-        )
-
 
 class Wall(pygame.sprite.Sprite):
     def __init__(self, initial_position=None):
@@ -609,12 +601,8 @@ class Potion(InventoryObject):
     def use(self):
         if self.id == "healing":
             player.health += 2
-            for i in range(2):
-                HealthIcon(offset = len(healthbar_group.sprites()))
         elif self.id == "resting":
             player.health += 5 
-            for i in range(5):
-                HealthIcon(offset = len(healthbar_group.sprites()))
             for creature in creature_group.sprites():
 # does not work yet because creatures aren't updated when not in fog or idk
                 creature.sight_range = 50
@@ -726,20 +714,21 @@ class Player(pygame.sprite.Sprite):
         self.currimage = 0
         self.armor = 1
         self.image = self.images[self.currimage]
-        self.health = 8
+        self.max_health = 8
+        self.health = self.max_health
         self.origin_rect = self.image.get_rect(center=SCREENRECT.center)
         self.last_trapped = 0
         if initial_position is not None:
             (self.origin_rect.x, self.origin_rect.y) = initial_position
         self.inventory = Inventory([None for i in range(Player.inventory_size)])
+        self.level = 1
+        self.xp = 0
+        self.xp_cap = 20
 
     def take_damage(self, amount):
         player.health -= amount * (1+math.log(self.armor))
 
         hit_sound.play()
-        for _ in range(amount):
-            if not self.health < 0:  # TODO: juste pour éviter le crash
-                healthbar_group.sprites()[-1].kill()
 
     def move(self, direction, delta_time, with_speed = True):
         global camera_x, camera_y
@@ -786,6 +775,12 @@ class Player(pygame.sprite.Sprite):
         else:
             self.currimage = 0
         self.image = self.images[self.currimage]
+        if self.xp >= self.xp_cap:
+            self.level += 1
+            self.xp = self.xp % self.xp_cap
+            self.xp_cap *= 1.2
+        if self.health > self.max_health:
+            self.health = self.max_health
 
     def take(self,thing):
        if isinstance(thing,InventoryObject):
@@ -796,13 +791,13 @@ class Player(pygame.sprite.Sprite):
         self.inventory.drop((self.rect.x + camera_x,self.rect.y + camera_y + dpi))
 
 class Text(pygame.sprite.Sprite):
-    def __init__(self, text, color, position):
+    def __init__(self, text, color, position, size = 15, centered = False):
         super().__init__(self.containers)
         self.text = str(text)
         self.color = color
-        self.font = pygame.font.Font("assets/Retro_Gaming.ttf",15)
+        self.font = pygame.font.Font("assets/Retro_Gaming.ttf", size)
         self.image = self.font.render(self.text, False, self.color)
-        self.rect = self.image.get_rect(topleft = position)
+        self.rect = self.image.get_rect(topleft = position) if not centered else self.image.get_rect(center = position)
 
 class StatsBg(pygame.sprite.Sprite):
      def __init__(self, position):
@@ -850,7 +845,7 @@ class InvSlot(pygame.sprite.Sprite):
         super().__init__(self.containers)
         self.has_picked_item = False
         self.image = loadify("slot.png", size=-20)
-        center_p = (width/2,height-2)
+        center_p = (width / 2,height)
         self.rect = self.image.get_rect(center = center_p)
         self.rect.move_ip(self.rect[2]*(offset - total_nb//2),-self.rect[3]/2)
         if total_nb%2 == 0:
@@ -1009,12 +1004,13 @@ class ParticleEffect:
 
 
 class Creature(pygame.sprite.Sprite):
-    def __init__(self, initial_position, assets, speed=0.1, flying=False, hp = None, key = False):
+    def __init__(self, initial_position, assets, speed=0.1, flying=False, hp = None, key = False, strength = None):
         self.local_frame_index = random.randint(0, 100000)
         super().__init__(self.containers)
         self.angle = 0
         self.max_health = hp or random.randint(3, 10)
         self.health = self.max_health
+        self.strength = strength or 1
         self.flying = flying
         self.speed = speed + random.randint(-100,100)/1000
         self.last_attack = 0
@@ -1039,6 +1035,7 @@ class Creature(pygame.sprite.Sprite):
 
     def update(self):
         if self.health <= 0:
+            player.xp += self.max_health + self.strength
             self.kill()
             self.health_bar.kill()
             if self.has_key:
@@ -1075,7 +1072,7 @@ class Creature(pygame.sprite.Sprite):
                 pygame.sprite.collide_rect(player, self)
                 and time.time() - self.last_attack > self.attack_cooldown
             ):
-                player.take_damage(1)
+                player.take_damage(self.strength)
                 self.last_attack = time.time()
         if distance_to_player <10*dpi:
              playerx = player.origin_rect.center[0]
@@ -1117,7 +1114,46 @@ class CreatureHealthBar(pygame.sprite.Sprite):
             im.fill((0, 255, 0))
             return im
         return self.origin_image
-        
+
+# this is the class generating the bars overlay
+class XPBar(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__(self.containers)
+        self.image = pygame.Surface((296, 8))
+        self.rect = self.image.get_rect()
+        self.rect.move_ip(67, height - 36)
+        self.image.fill((237, 210, 2))
+        self.level = Text(player.level,(237, 210, 2),(31, height - 32), size = 30, centered = True)
+        self.border = pygame.sprite.Sprite()
+        self.border.image = loadify("stat_bar.png", keep_size = True)
+        self.border.rect = self.border.image.get_rect()
+        self.border.rect.move_ip((0, height - 64))
+        self.border._layer = 10
+        all_sprites.add(self.border)
+
+    def update(self):
+        size = 296 / player.xp_cap
+        self.image = pygame.Surface((player.xp * size, 8))
+        self.rect = self.image.get_rect()
+        self.rect.move_ip(67, height - 36)
+        self.image.fill((237, 210, 2))
+        self.level.kill()
+        self.level = Text(player.level,(237, 210, 2),(31, height - 32), size = 30, centered = True)
+
+class HPBar(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__(self.containers)
+        self.image = pygame.Surface((296, 13))
+        self.rect = self.image.get_rect()
+        self.rect.move_ip(67, height - 53)
+        self.image.fill((255, 0, 0))
+
+    def update(self):
+        size = 296 / player.max_health
+        self.image = pygame.Surface((player.health * size, 13))
+        self.rect = self.image.get_rect()
+        self.rect.move_ip(67, height - 53)
+        self.image.fill((255, 0, 0))
 
 class Cursor(pygame.sprite.Sprite):
     def __init__(self):
@@ -1277,10 +1313,11 @@ Creature.containers = all_sprites, creature_group, mapdependent_group
 CreatureHealthBar.containers = all_sprites, hud_group
 Cursor.containers = all_sprites, hud_group
 FPSCounter.containers = all_sprites, hud_group
-HealthIcon.containers = all_sprites, hud_group, healthbar_group
 Dialog.containers = all_sprites, hud_group
 Mask.containers = all_sprites, hud_group
 Text.containers = all_sprites, hud_group
+XPBar.containers = all_sprites, hud_group
+HPBar.containers = all_sprites, hud_group
 StatsBg.containers = all_sprites,hud_group
 LightingBolt.containers = all_sprites, projectile_group
 
@@ -1298,7 +1335,6 @@ Stairs.image = loadify("portal.png", size=20)
 Treasure.image = loadify("chest.png", size=3)
 Background.image = loadify("background.png", keep_ratio=True, size=2000)
 Cursor.image = loadify("cursor.png", size=60)
-HealthIcon.image = loadify("heart.png", size=-25)
 
 background_layer = 0
 tiles_layer = 1
@@ -1320,13 +1356,14 @@ Mask._layer = mask_layer
 Cursor._layer = cursor_layer
 FPSCounter._layer = hud_layer
 Dialog._layer = dialog_layer 
-HealthIcon._layer = hud_layer
 Creature._layer = gameplay_characters_layer 
 CreatureHealthBar._layer = gameplay_characters_layer
 InventoryObject._layer = gameplay_characters_layer
 InvSlot._layer = hud_layer
 Projectile._layer = gameplay_characters_layer 
 Text._layer = hud_layer
+XPBar._layer = hud_layer
+HPBar._layer = hud_layer
 StatsBg._layer = dialog_layer
 LightingBolt._layer = gameplay_characters_layer
 
@@ -1344,8 +1381,8 @@ FPSCounter()
 dialog = Dialog()
 dialog.message = "MEGA CHEVALIER"
 
-for i in range(player.health):
-    HealthIcon(offset=i)
+XPBar()
+HPBar()
 particle_system = ParticleEffect(10,200,spawner=screen.get_rect(),forces= [0.1,0.05])
 frame_index = 0
 
