@@ -751,6 +751,7 @@ class Player(pygame.sprite.Sprite):
         self.images = [loadify(i, size=-10) for i in self.assets]
         self.currimage = 0
         self.armor = 0
+        self.armor_text = Text(self.armor, (69, 69, 69), (381, height - 32), size = 30, centered = True)
         self.image = self.images[self.currimage]
         self.max_health = 8
         self.health = self.max_health
@@ -813,6 +814,7 @@ class Player(pygame.sprite.Sprite):
         screen.blit(self.image, translated_rect(self.origin_rect))
 
     def update(self):
+
         if any(list(i.picked_up for i in self.inventory if i is not None)):
             if self.is_striking:
                 self.currimage = 2
@@ -845,6 +847,9 @@ class Player(pygame.sprite.Sprite):
             self.magic_points = 0
         elif self.magic_points > self.max_mp:
             self.magic_points = self.max_mp
+
+        self.armor_text.kill()
+        self.armor_text = Text(self.armor, (69, 69, 69), (381, height - 32), size = 30, centered = True)
 
     def take(self,thing):
        if isinstance(thing,InventoryObject):
@@ -1100,9 +1105,7 @@ class Creature(pygame.sprite.Sprite):
     def rect(self):
         return translated_rect(self.origin_rect)
 
-
     def update(self):
-        
         if self.health <= 0:
             player.xp += self.max_health + self.strength
             self.kill()
@@ -1131,7 +1134,7 @@ class Creature(pygame.sprite.Sprite):
                     if time.time() - self.last_attack > self.attack_cooldown:
                         if self.id == "fire":
                             if direction.length!=0:
-                                Projectile(self.origin_rect.center,[loadify("fireball.png",-25,True)],1,direction, 0.1,particle=1,ff=True)
+                                Projectile(self.origin_rect.center,[loadify("fireball.png",-25,True)],1,direction, 1,particle=1,ff=True)
                         elif self.id == "lightning":
                             angle = math.atan2(direction[0],direction[1])
                             angle = (angle*180)/math.pi
@@ -1508,7 +1511,8 @@ MPBar()
 particle_system = ParticleEffect(10,200,spawner=screen.get_rect(),forces= [0.1,0.05])
 frame_index = 0
 
-Spell(player.origin_rect[:2],"teleportation",None,None,375,None,1)
+starting_weapon = Weapon(player.origin_rect[:2], id = "sword", subid = None, durability = 15, damage = 1, reach = 2, attack_cooldown = 1)
+starting_weapon.description = "A crappy sword"
 ###########################################   MAIN LOOP  ###########################################
 running = True
 death = False
@@ -1535,7 +1539,8 @@ while running:
     player.inventory.update()
 
     if player.health <= 0:
-        player.kill()
+        Text("Wasted", (147, 16, 0), (width / 2, height / 2), 40, True)
+        death = True
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -1567,10 +1572,6 @@ while running:
                 fullscreen = not fullscreen
             elif event.key == pygame.K_r:
                 player.drop()
-# this is what is supposed to happen when you die
-            elif event.key == pygame.K_u:
-                Text("Wasted", (147, 16, 0), (width / 2, height / 2), 40, True)
-                death = True
             elif event.key in nums[:Player.inventory_size]:
                 clicked_slot_item = player.inventory[nums.index(event.key)]
                 if clicked_slot_item is not None:

@@ -48,9 +48,16 @@ class Weapon(Item):
         self.damage = damage
         self.reach = reach
 
+    def upgrade(self):
+        self.durability = round(1.2 * self.durability)
+        self.damage += 5
+
 class Potion(Item):
     def __init__(self, potion_id, sub_id, position, difficulty):
         super().__init__(potion_id, sub_id, position,difficulty)
+
+    def upgrade(self):
+        pass
 
 class Spell(Item):
     def __init__(self, spell_id, sub_id, position, difficulty, damage, radius, speed, attack_cooldown):
@@ -59,6 +66,10 @@ class Spell(Item):
         self.radius = radius
         self.speed = speed
         self.attack_cooldown = attack_cooldown
+
+    def upgrade(self):
+        self.damage += 5
+        self.radius += 100
 
 class Coord:
     def __init__(self, x, y):
@@ -294,7 +305,7 @@ class Map:
             durability=50,
             damage=10,
             reach=3,
-            attack_cooldown=1
+            attack_cooldown=3
         ),
         Weapon(
             "bow",
@@ -302,7 +313,7 @@ class Map:
             position=None,
             difficulty=1,
             durability=20,
-            damage=3,
+            damage=5,
             reach=0,
             attack_cooldown=1
         )
@@ -333,7 +344,7 @@ class Map:
             sub_id = None,
             position = None,
             difficulty = 2,
-            damage = None,
+            damage = 0,
             radius = 375,
             speed = None,
             attack_cooldown = 1
@@ -500,7 +511,10 @@ class Map:
         room = random.choice(self.rooms[1:])
         position = self.find_valid_random_coord(room)
         self.treasure = Treasure(position)
-        self.treasure.item = copy.copy(random.choice(self.weapons + self.spells + self.potions))
+        treasure_items = Map.available_weapon + Map.available_spell + Map.available_potion
+        for i in treasure_items:
+            i.upgrade()
+        self.treasure.item = copy.copy(random.choice(treasure_items))
         self.treasure.item.position = None
 
 
